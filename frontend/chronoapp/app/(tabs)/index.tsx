@@ -1,4 +1,11 @@
-import { FlatList, Image, StyleSheet, Text, View } from "react-native";
+import {
+  FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 const valueTab = [
   { name: "blue", number: 1 },
@@ -25,35 +32,69 @@ const valueTab = [
 
 export default function HomeScreen() {
   return (
-    <View style={{ flex: 1, width: "100%", alignItems: "center" }}>
+    <View style={styles.container}>
       <Text style={styles.title}>Mon premier écran React Native</Text>
       <Image
         source={require("../../assets/image/wolf.png")}
         style={styles.logo}
-      ></Image>
+      />
+      <ScrollView style={styles.scroll}>
+        <View>
+          <Text>
+            Lorem ipsum, dolor sit amet consectetur adipisicing elit.
+            Consectetur voluptatum sunt quaerat nam voluptatibus expedita soluta
+            accusamus architecto, repellat velit aspernatur itaque officia
+            dolore fuga fugiat eligendi similique ratione. Assumenda? Lorem
+            ipsum dolor sit amet consectetur adipisicing elit. Illum, magnam ad
+            dolorum nulla numquam tempora excepturi nobis fugiat quas,
+            temporibus sed earum doloribus! Exercitationem adipisci, illum enim
+            assumenda itaque quidem! Lorem ipsum dolor sit amet consectetur
+            adipisicing elit. Laboriosam blanditiis sequi tenetur, possimus quo
+            impedit necessitatibus distinctio nihil numquam beatae. Omnis quas
+            minus explicabo sequi voluptatibus cupiditate impedit molestiae
+            assumenda! Lorem ipsum dolor sit amet consectetur adipisicing elit.
+            Omnis, eaque illum saepe asperiores deserunt voluptas illo nemo at
+            eveniet itaque minus ipsa harum ab nam quo placeat. Accusamus, amet.
+            Error.
+          </Text>
+        </View>
+      </ScrollView>
       <FlatList
+        style={styles.flat}
         data={valueTab}
         keyExtractor={(item) => item.name}
         renderItem={({ item }) => (
           <View
-            style={{
-              height: 100,
-              width: 200,
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: item.name,
-            }}
+            style={[{ backgroundColor: item.name }, styles.containerFatList]}
           >
             <Text>{item.number}</Text>
           </View>
         )}
-      ></FlatList>
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    width: "100%",
+    alignItems: "center",
+  },
+
+  scroll: {
+    height: 80,
+  },
+  flat: {
+    width: "100%",
+  },
+
+  containerFatList: {
+    height: 100,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   title: {
     color: "gray",
     textAlign: "left",
