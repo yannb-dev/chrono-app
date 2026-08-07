@@ -21,3 +21,31 @@ model User {
   image     String?
   createdAt DateTime @default(now())
 }
+
+model Seance {
+id String @id @default(cuid())
+totalRunner Int
+colorRunner String
+userId String
+createdAt DateTime @default(now())
+timerSessions TimerSession[]
+}
+
+model TimerSession {
+id String @id @default(cuid())
+numberRunner Int
+startedAt DateTime
+endedAt DateTime?
+duration Int?
+seanceId String
+seance Seance @relation(fields: [seanceId], references: [id])
+pauses TimerPause[]
+}
+
+model TimerPause {
+id String @id @default(cuid())
+timerSessionId String
+timerSession TimerSession @relation(fields: [timerSessionId], references: [id])
+pausedAt DateTime
+resumedAt DateTime?
+}
