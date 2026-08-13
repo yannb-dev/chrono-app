@@ -6,3 +6,9 @@ export const SeanceSchema = z.object({
 });
 
 export type SeanceSchema = z.infer<typeof SeanceSchema>;
+
+export const SeanceUpdateSchema = z.object({
+  sartedAt: z.coerce.date(),
+});
+
+export type SeanceUpdateSchema = z.infer<typeof SeanceUpdateSchema>;

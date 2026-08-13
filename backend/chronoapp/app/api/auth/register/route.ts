@@ -1,7 +1,7 @@
 // app/api/auth/register/route.ts
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   const { email, password } = await req.json();
@@ -21,5 +21,5 @@ export async function POST(req: Request) {
     data: { email, password: hashedPassword },
   });
 
-  return NextResponse.json({ id: user.id, email: user.email }); // ne jamais renvoyer le password
+  return NextResponse.json({ id: user.id, email: user.email }, { status: 201 }); // ne jamais renvoyer le password
 }

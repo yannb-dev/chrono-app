@@ -5,8 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -17,8 +16,10 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
+  password  String   @unique 
   name      String?
   image     String?
+  seances   Seance[]
   createdAt DateTime @default(now())
 }
 
@@ -26,26 +27,29 @@ model Seance {
 id String @id @default(cuid())
 totalRunner Int
 colorRunner String
+startedAt DateTime?
 userId String
+user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 createdAt DateTime @default(now())
-timerSessions TimerSession[]
+timerRunners TimerRunner[]
+timerpauses TimerPause[]
 }
 
-model TimerSession {
+model TimerRunner {
 id String @id @default(cuid())
 numberRunner Int
-startedAt DateTime
-endedAt DateTime?
-duration Int?
-seanceId String
-seance Seance @relation(fields: [seanceId], references: [id])
-pauses TimerPause[]
+endedAt DateTime
+duration Int
+seanceId String @unique
+seance Seance @relation(fields: [seanceId], references: [id], onDelete: Cascade)
+
 }
 
 model TimerPause {
-id String @id @default(cuid())
-timerSessionId String
-timerSession TimerSession @relation(fields: [timerSessionId], references: [id])
-pausedAt DateTime
-resumedAt DateTime?
+  id              String       @id @default(cuid())
+  pausedAt        DateTime
+  endedAt         DateTime?
+  resumedAt       Int?
+  seanceId  String
+  seance    Seance @relation(fields: [seanceId], references: [id], onDelete: Cascade)
 }
