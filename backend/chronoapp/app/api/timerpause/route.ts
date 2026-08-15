@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   try {
     const newTimerPause = await prisma.timerPause.create({
       data: {
-        seanceId: safeTimerPause.data.timerSessionId,
+        seanceId: safeTimerPause.data.seanceId,
         pausedAt: safeTimerPause.data.pausedAt,
       },
     });

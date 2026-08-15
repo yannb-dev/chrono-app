@@ -62,7 +62,7 @@ export async function PATCH(
     const udpateSeance = await prisma.seance.update({
       where: { id },
       data: {
-        startedAt: safeValuePatch.data.sartedAt,
+        startedAt: safeValuePatch.data.startedAt,
       },
     });
 

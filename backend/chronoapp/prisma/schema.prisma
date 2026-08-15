@@ -40,7 +40,7 @@ id String @id @default(cuid())
 numberRunner Int
 endedAt DateTime
 duration Int
-seanceId String @unique
+seanceId String
 seance Seance @relation(fields: [seanceId], references: [id], onDelete: Cascade)
 
 }

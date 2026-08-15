@@ -50,7 +50,7 @@ export async function DELETE(
       },
     });
 
-    return NextResponse.json(deleteSession, { status: 201 });
+    return NextResponse.json(deleteSession, { status: 200 });
   } catch (err) {
     console.error({ err }, { status: 500 });
     return NextResponse.json(

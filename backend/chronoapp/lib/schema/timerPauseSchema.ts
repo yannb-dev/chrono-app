@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const TimerPauseSchema = z.object({
-  timerSessionId: z.string().min(1),
+  seanceId: z.string().min(1),
   pausedAt: z.coerce.date(),
 });
 
