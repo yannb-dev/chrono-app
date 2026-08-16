@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 import { SeanceUpdateSchema } from "@/lib/schema/seanceSchema";
-import { error } from "console";
 
 export async function DELETE(
   req: Request,

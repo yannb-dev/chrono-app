@@ -17,7 +17,7 @@ export async function GET(
   try {
     const timerSessionSearch = await prisma.timerRunner.findUnique({
       where: {
-        seanceId: id,
+        id: id,
       },
     });
 

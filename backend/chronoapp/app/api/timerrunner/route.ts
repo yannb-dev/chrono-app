@@ -47,26 +47,53 @@ export async function POST(req: Request) {
     },
   });
 
-  const chrono =
-    safeTimerRunner.data.endedAt.getTime() - searchSeance?.startedAt?.getTime();
-  const resultWithPause = chrono - somPauses._sum.resumedAt;
+  if (!somPauses._sum.resumedAt) {
+    const chrono =
+      safeTimerRunner.data.endedAt.getTime() -
+      searchSeance?.startedAt?.getTime();
 
-  try {
-    const timerRunner = await prisma.timerRunner.create({
-      data: {
-        numberRunner: safeTimerRunner.data.numberRunner,
-        endedAt: safeTimerRunner.data.endedAt,
-        seanceId: safeTimerRunner.data.seanceId,
-        duration: resultWithPause,
-      },
-    });
+    try {
+      const timerRunner = await prisma.timerRunner.create({
+        data: {
+          numberRunner: safeTimerRunner.data.numberRunner,
+          endedAt: safeTimerRunner.data.endedAt,
+          seanceId: safeTimerRunner.data.seanceId,
+          duration: chrono,
+        },
+      });
 
-    return NextResponse.json(timerRunner, { status: 201 });
-  } catch (err) {
-    console.error("Erreur du POST API/TIMERSESSION", err);
-    return NextResponse.json(
-      { error: "Erreur du POST API/SESSION" },
-      { status: 500 },
-    );
+      return NextResponse.json(timerRunner, { status: 201 });
+    } catch (err) {
+      console.error("Erreur du POST API/TIMERSESSION", err);
+      return NextResponse.json(
+        { error: "Erreur du POST API/SESSION" },
+        { status: 500 },
+      );
+    }
+  } else {
+    const chrono =
+      safeTimerRunner.data.endedAt.getTime() -
+      searchSeance?.startedAt?.getTime();
+
+    const resultWithPause = chrono - somPauses._sum.resumedAt;
+
+    try {
+      const timerRunner = await prisma.timerRunner.create({
+        data: {
+          numberRunner: safeTimerRunner.data.numberRunner,
+          endedAt: safeTimerRunner.data.endedAt,
+          seanceId: safeTimerRunner.data.seanceId,
+          duration: resultWithPause,
+        },
+      });
+
+      return NextResponse.json(timerRunner, { status: 201 });
+    } catch (err) {
+      console.error("Erreur du POST API/TIMERSESSION", err);
+      return NextResponse.json(
+        { error: "Erreur du POST API/SESSION" },
+        { status: 500 },
+      );
+    }
   }
 }
