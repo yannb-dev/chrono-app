@@ -2,8 +2,8 @@
 
 ## Détail
 
-1. Premier temps un backend avec une base de donnée accessible sans authentification
-2. Enregistrement en base de donnée de deux models [seance] et [timerSession], créer un lien entre seance et chrono
+1. Premier temps un backend avec une base de donnée avec authentification simple (email + password)
+2. Enregistrement en base de donnée de trois models [seance], [timerRunner] et [timerPause]
 
 ## Modèle du schema.prisma
 
@@ -31,30 +31,71 @@ model Seance {
 id String @id @default(cuid())
 totalRunner Int
 colorRunner String
+startedAt DateTime?
+userId String
+user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 createdAt DateTime @default(now())
-chronos Chrono[]
+timerRunners TimerRunner[]
+timerpauses TimerPause[]
 }
 
-model TimerSession {
+model TimerRunner {
 id String @id @default(cuid())
-numberRunner String
-startedAt DateTime
-endedAt DateTime?
-duration Int?
-seanceId String
-seance Seance @relation(fields: [seanceId], references: [id])
-pauses TimerPause[]
+numberRunner Int
+endedAt DateTime
+duration Int
+seanceId String @unique
+seance Seance @relation(fields: [seanceId], references: [id], onDelete: Cascade)
+
 }
 
 model TimerPause {
 id String @id @default(cuid())
-timerSessionId String
-timerSession TimerSession @relation(fields: [timerSessionId], references: [id])
 pausedAt DateTime
-resumedAt DateTime? // null si la pause est en cours
+endedAt DateTime?
+resumedAt Int?
+seanceId String
+seance Seance @relation(fields: [seanceId], references: [id], onDelete: Cascade)
 }
 
 ## Principe du chrono
 
-Déclenchement via un OnPress pour enregistrer en BDD la date de départ et de fin. Côté client pour la lecture calculer la différence. Chaque pause reprise sera enregistré en TimerPause et soustrait au total.
-Côté client l'affichage se réalise avec un calcul à la volée.
+Déclenchement via un OnPress pour enregistrer en BDD la date de départ et de fin. Côté serveur on enregistre et on calcul les cumul de pause à soustraire au [TimerRunner]
+Côté client l'affichage se réalise avec un calcul à la volée pour le chrono et via un calcul de nombre de milisecond converti en mm:ss pour les listes de résultats.
+
+## Valeurs POST
+
+- [x] SEANCE
+      data: {
+      totalRunner: safeSeance.data.totalRunner,
+      colorRunner: safeSeance.data.colorRunner,
+      }
+- [x] TIMERRUNNER
+      data: {
+      numberRunner: safeTimerRunner.data.numberRunner,
+      endedAt: safeTimerRunner.data.endedAt,
+      seanceId: safeTimerRunner.data.seanceId,
+      },
+- [x] TIMERPAUSE
+      data: {
+      seanceId: safeTimerPause.data.timerSessionId,
+      pausedAt: safeTimerPause.data.pausedAt,
+      },
+
+  ## Valeurs UPDATE
+
+- [x] SEANCE
+      data: {
+      startedAt: safeValuePatch.data.sartedAt,
+      },
+
+- [x] TIMERPAUSE
+      data: {
+      endedAt: safeValue.data?.endedAt,
+      },
+
+## Contrôle de l'ensemble des routes VALIDES
+
+## Déploiement sur Vercel
+
+nom de deploy : chronoappepms.vercel.app
