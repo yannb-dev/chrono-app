@@ -25,7 +25,7 @@ model User {
 
 model Seance {
 id String @id @default(cuid())
-totalRunner Int
+totalRunner String
 colorRunner String
 startedAt DateTime?
 userId String
@@ -41,6 +41,7 @@ numberRunner Int
 endedAt DateTime
 duration Int
 seanceId String
+userId String
 seance Seance @relation(fields: [seanceId], references: [id], onDelete: Cascade)
 
 }
@@ -49,7 +50,8 @@ model TimerPause {
   id              String       @id @default(cuid())
   pausedAt        DateTime
   endedAt         DateTime?
-  resumedAt       Int?
+  pauseDurationMs       Int?
   seanceId  String
+  userId String
   seance    Seance @relation(fields: [seanceId], references: [id], onDelete: Cascade)
 }

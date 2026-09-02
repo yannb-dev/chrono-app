@@ -1,13 +1,21 @@
 import { View, Text, Pressable } from "react-native";
-import { StyleSheet } from "react-native";
+import { styles } from "@/lib/styles";
 import { router } from "expo-router";
 
+import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
+
 export default function HomeScreen() {
+  const { token, logout } = useAuth();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Configuration de la course</Text>
+      <Text style={styles.titlePage}>Chronomètre de groupe</Text>
       <Pressable
-        style={styles.btnNew}
+        style={({ pressed }) => [
+          styles.btnSelect,
+          pressed && styles.btnPressed,
+        ]}
         onPress={() =>
           router.push({
             pathname: "/formSeance/page",
@@ -16,28 +24,15 @@ export default function HomeScreen() {
       >
         <Text>Créer</Text>
       </Pressable>
+      <Pressable
+        style={({ pressed }) => [
+          styles.btnSelect,
+          pressed && styles.btnPressed,
+        ]}
+        onPress={logout}
+      >
+        <Text>Se déconnecter</Text>
+      </Pressable>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgb(114, 46, 190)",
-  },
-
-  title: {
-    fontFamily: "mono",
-    fontSize: 24,
-  },
-
-  btnNew: {
-    padding: 5,
-    backgroundColor: "rgb(255,255,255)",
-    borderRadius: 3,
-    marginTop: 20,
-  },
-});

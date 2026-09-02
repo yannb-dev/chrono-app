@@ -15,6 +15,9 @@ export async function POST(req: Request) {
 
   const safeTimerPause = TimerPauseSchema.safeParse(valuePost);
 
+  // ici je dois contrôler que le numéro de seanceId fournit par la requête appartient bien à l'utilisateur
+  // const prisma.seance avec un findUnique where id et userId si response null ne pas envoyer le timerPause.create
+
   if (!safeTimerPause.success) {
     console.error("Erreur de contrôle Zod POST API/TIMERPAUSE");
     return NextResponse.json(
@@ -24,14 +27,26 @@ export async function POST(req: Request) {
   }
 
   try {
-    const newTimerPause = await prisma.timerPause.create({
-      data: {
-        seanceId: safeTimerPause.data.seanceId,
-        pausedAt: safeTimerPause.data.pausedAt,
-      },
+    const controleSeance = await prisma.seance.findUnique({
+      where: { id: safeTimerPause.data?.seanceId, userId: userId },
     });
 
-    return NextResponse.json(newTimerPause, { status: 201 });
+    if (controleSeance) {
+      const newTimerPause = await prisma.timerPause.create({
+        data: {
+          seanceId: safeTimerPause.data.seanceId,
+          pausedAt: safeTimerPause.data.pausedAt,
+          userId: userId,
+        },
+      });
+
+      return NextResponse.json(newTimerPause, { status: 201 });
+    } else {
+      return NextResponse.json(
+        { error: "La séance liée n'appartient pas à l'utilisateur" },
+        { status: 500 },
+      );
+    }
   } catch (err) {
     console.error("Erreur POST timerPause", err);
     return NextResponse.json(

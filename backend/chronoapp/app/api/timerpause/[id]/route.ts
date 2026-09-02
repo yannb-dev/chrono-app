@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 import { TimerPauseSchemaUpdate } from "@/lib/schema/timerPauseSchema";
 
+// Function GET recherche l'ensemble des timerPause VIA l'ID de la séance liée celui ci fourni par [id]
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -17,7 +18,7 @@ export async function GET(
   const { id } = await params;
   try {
     const timerPause = await prisma.timerPause.findMany({
-      where: { seanceId: id },
+      where: { seanceId: id, userId: userId },
     });
 
     return NextResponse.json(timerPause, { status: 201 });
@@ -51,7 +52,7 @@ export async function PATCH(
   }
 
   const searchPausedAt = await prisma.timerPause.findUnique({
-    where: { id },
+    where: { id, userId },
     select: { pausedAt: true },
   });
 
@@ -72,13 +73,36 @@ export async function PATCH(
       },
       data: {
         endedAt: safeValue.data?.endedAt,
-        resumedAt: calcul,
+        pauseDurationMs: calcul,
       },
     });
 
     return NextResponse.json(updateTimerPause, { status: 201 });
   } catch (err) {
     console.error("Erreur du PATCH API/TIMERPAUSE", err);
+    return NextResponse.json({ err }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const userId = getUserIdFromRequest(req);
+
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  try {
+    const timerPause = await prisma.timerPause.deleteMany({
+      where: { seanceId: id, userId: userId },
+    });
+
+    return NextResponse.json(timerPause, { status: 201 });
+  } catch (err) {
+    console.error("Erreur du POST API/TIMERPAUSE", err);
     return NextResponse.json({ err }, { status: 500 });
   }
 }

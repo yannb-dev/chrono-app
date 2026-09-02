@@ -18,6 +18,7 @@ export async function GET(
     const timerSessionSearch = await prisma.timerRunner.findUnique({
       where: {
         id: id,
+        userId: userId,
       },
     });
 
@@ -47,6 +48,7 @@ export async function DELETE(
     const deleteSession = await prisma.timerRunner.delete({
       where: {
         id: id,
+        userId: userId,
       },
     });
 

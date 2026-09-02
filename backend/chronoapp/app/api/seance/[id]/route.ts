@@ -4,6 +4,30 @@ import { prisma } from "@/lib/prisma";
 
 import { SeanceUpdateSchema } from "@/lib/schema/seanceSchema";
 
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const userId = getUserIdFromRequest(req);
+
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  try {
+    const seance = await prisma.seance.findUnique({
+      where: { id: id, userId: userId },
+      include: { timerRunners: true, timerpauses: true },
+    });
+
+    return NextResponse.json(seance, { status: 200 });
+  } catch (err) {
+    console.error("Erreur du GET API/SEANCE", err);
+    return NextResponse.json({ err }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -59,7 +83,7 @@ export async function PATCH(
 
   try {
     const udpateSeance = await prisma.seance.update({
-      where: { id },
+      where: { id, userId: userId },
       data: {
         startedAt: safeValuePatch.data.startedAt,
       },

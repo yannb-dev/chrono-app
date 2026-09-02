@@ -29,6 +29,7 @@ export async function POST(req: Request) {
   const searchSeance = await prisma.seance.findUnique({
     where: {
       id: safeTimerRunner.data.seanceId,
+      userId: userId,
     },
     select: { startedAt: true },
   });
@@ -40,60 +41,70 @@ export async function POST(req: Request) {
     );
   }
 
-  const somPauses = await prisma.timerPause.aggregate({
-    where: { seanceId: safeTimerRunner.data.seanceId },
-    _sum: {
-      resumedAt: true,
-    },
-  });
+  if (searchSeance) {
+    const somPauses = await prisma.timerPause.aggregate({
+      where: { seanceId: safeTimerRunner.data.seanceId },
+      _sum: {
+        pauseDurationMs: true,
+      },
+    });
 
-  if (!somPauses._sum.resumedAt) {
     const chrono =
       safeTimerRunner.data.endedAt.getTime() -
       searchSeance?.startedAt?.getTime();
+    const resultWithPause = chrono - (somPauses._sum.pauseDurationMs ?? 0);
 
-    try {
-      const timerRunner = await prisma.timerRunner.create({
-        data: {
-          numberRunner: safeTimerRunner.data.numberRunner,
-          endedAt: safeTimerRunner.data.endedAt,
-          seanceId: safeTimerRunner.data.seanceId,
-          duration: chrono,
-        },
-      });
+    if (
+      !somPauses._sum.pauseDurationMs ||
+      somPauses._sum.pauseDurationMs === 0
+    ) {
+      try {
+        const timerRunner = await prisma.timerRunner.create({
+          data: {
+            numberRunner: safeTimerRunner.data.numberRunner,
+            endedAt: safeTimerRunner.data.endedAt,
+            seanceId: safeTimerRunner.data.seanceId,
+            duration: chrono,
+            userId: userId,
+          },
+        });
 
-      return NextResponse.json(timerRunner, { status: 201 });
-    } catch (err) {
-      console.error("Erreur du POST API/TIMERSESSION", err);
-      return NextResponse.json(
-        { error: "Erreur du POST API/SESSION" },
-        { status: 500 },
-      );
+        return NextResponse.json(timerRunner, { status: 201 });
+      } catch (err) {
+        console.error("Erreur du POST API/TIMERSESSION", err);
+        return NextResponse.json(
+          { error: "Erreur du POST API/SESSION" },
+          { status: 500 },
+        );
+      }
+    } else {
+      try {
+        const timerRunner = await prisma.timerRunner.create({
+          data: {
+            numberRunner: safeTimerRunner.data.numberRunner,
+            endedAt: safeTimerRunner.data.endedAt,
+            seanceId: safeTimerRunner.data.seanceId,
+            duration: resultWithPause,
+            userId: userId,
+          },
+        });
+
+        return NextResponse.json(timerRunner, { status: 201 });
+      } catch (err) {
+        console.error("Erreur du POST API/TIMERSESSION", err);
+        return NextResponse.json(
+          { error: "Erreur du POST API/TIMERRUNNER" },
+          { status: 500 },
+        );
+      }
     }
   } else {
-    const chrono =
-      safeTimerRunner.data.endedAt.getTime() -
-      searchSeance?.startedAt?.getTime();
-
-    const resultWithPause = chrono - somPauses._sum.resumedAt;
-
-    try {
-      const timerRunner = await prisma.timerRunner.create({
-        data: {
-          numberRunner: safeTimerRunner.data.numberRunner,
-          endedAt: safeTimerRunner.data.endedAt,
-          seanceId: safeTimerRunner.data.seanceId,
-          duration: resultWithPause,
-        },
-      });
-
-      return NextResponse.json(timerRunner, { status: 201 });
-    } catch (err) {
-      console.error("Erreur du POST API/TIMERSESSION", err);
-      return NextResponse.json(
-        { error: "Erreur du POST API/SESSION" },
-        { status: 500 },
-      );
-    }
+    return NextResponse.json(
+      {
+        error:
+          "La seance liée n'appartient pas à l'utilisateur POST API/TIMERRUNNER",
+      },
+      { status: 500 },
+    );
   }
 }
