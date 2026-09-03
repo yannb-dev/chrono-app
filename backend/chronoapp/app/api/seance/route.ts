@@ -64,3 +64,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Erreur POST seance" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  const userId = getUserIdFromRequest(req);
+
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const deleteSeance = await prisma.seance.deleteMany({
+      where: {
+        userId: userId,
+      },
+    });
+
+    return NextResponse.json(deleteSeance, { status: 200 });
+  } catch (err) {
+    console.error({ err }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur DELETE seance" },
+      { status: 500 },
+    );
+  }
+}

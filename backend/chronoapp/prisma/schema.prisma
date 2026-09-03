@@ -23,11 +23,18 @@ model User {
   createdAt DateTime @default(now())
 }
 
+enum StateSeance {
+  NoStart
+  InProgress
+  Finish
+}
+
 model Seance {
 id String @id @default(cuid())
 totalRunner String
 colorRunner String
 startedAt DateTime?
+state StateSeance @default(NoStart)
 userId String
 user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 createdAt DateTime @default(now())

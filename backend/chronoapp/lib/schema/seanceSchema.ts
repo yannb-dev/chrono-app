@@ -9,6 +9,7 @@ export type SeanceSchema = z.infer<typeof SeanceSchema>;
 
 export const SeanceUpdateSchema = z.object({
   startedAt: z.coerce.date().nullable(),
+  state: z.enum(["NoStart", "InProgress", "Finish"]),
 });
 
 export type SeanceUpdateSchema = z.infer<typeof SeanceUpdateSchema>;

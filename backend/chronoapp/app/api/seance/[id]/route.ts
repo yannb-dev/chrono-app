@@ -72,7 +72,12 @@ export async function PATCH(
 
   const valuePatch = await req.json();
 
-  const safeValuePatch = SeanceUpdateSchema.safeParse(valuePatch);
+  const patchSchema = SeanceUpdateSchema.partial().refine(
+    (data) => Object.keys(data).length > 0,
+    { message: "Au moins un cham doit être fourni" },
+  );
+
+  const safeValuePatch = patchSchema.safeParse(valuePatch);
 
   if (!safeValuePatch.success) {
     return NextResponse.json(
@@ -84,9 +89,7 @@ export async function PATCH(
   try {
     const udpateSeance = await prisma.seance.update({
       where: { id, userId: userId },
-      data: {
-        startedAt: safeValuePatch.data.startedAt,
-      },
+      data: safeValuePatch.data,
     });
 
     return NextResponse.json(udpateSeance, { status: 200 });

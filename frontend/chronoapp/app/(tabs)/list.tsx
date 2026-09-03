@@ -4,7 +4,10 @@ import { styles } from "@/lib/styles";
 import { router } from "expo-router";
 
 import { getSeance } from "@/services/api";
-import { useState, useEffect } from "react";
+import { deleteManySeance } from "@/services/api";
+
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "expo-router";
 
 import { SeanceResponse } from "@/types/api";
 
@@ -13,31 +16,66 @@ export default function DetailScreen() {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
 
-    async function fetchSeance() {
-      try {
-        const data = await getSeance();
-        if (!cancelled) setList(data);
-      } catch (e) {
-        console.log("Erreur du fetch API/SEANCE", e);
-        if (!cancelled) setError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
+      async function fetchSeance() {
+        try {
+          const data = await getSeance();
+          if (!cancelled) setList(data);
+        } catch (e) {
+          console.log("Erreur du fetch API/SEANCE", e);
+          if (!cancelled) setError(true);
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
       }
+
+      fetchSeance();
+
+      return () => {
+        cancelled = true;
+      };
+    }, []),
+  );
+
+  const handleRedirectSeance = (seance: SeanceResponse) => {
+    if (seance.state === "Finish") {
+      router.push({
+        pathname: `/result/[id]`,
+        params: { id: seance.id },
+      });
+    } else {
+      router.push({
+        pathname: `/run/[id]`,
+        params: { id: seance.id },
+      });
     }
+  };
 
-    fetchSeance();
+  const handleDelete = async () => {
+    try {
+      const response = await deleteManySeance();
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      if (response) {
+        setList([]);
+      }
+    } catch (err) {
+      console.error("Erreur du fetch DELETE api/seance", err);
+      setError(true);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.titlePage}>Liste des courses</Text>
+      <View>
+        <Text style={styles.titlePage}>Liste des courses</Text>
+        <Pressable style={styles.btnPressed} onPress={handleDelete}>
+          <Text>Delete</Text>
+        </Pressable>
+      </View>
+
       {loading ? (
         <View>
           <Text>En cours de chargement</Text>
@@ -54,12 +92,7 @@ export default function DetailScreen() {
                     styles.btnCourse,
                     pressed && styles.btnPressed,
                   ]}
-                  onPress={() =>
-                    router.push({
-                      pathname: `/run/[id]`,
-                      params: { id: item.id },
-                    })
-                  }
+                  onPress={() => handleRedirectSeance(item)}
                 >
                   <View
                     style={{
@@ -70,6 +103,7 @@ export default function DetailScreen() {
                     }}
                   ></View>
                   <Text>Nombre de coureur :{item.totalRunner}</Text>
+                  <Text>{item.state}</Text>
                 </Pressable>
               )}
             />

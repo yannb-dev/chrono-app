@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { View, Text, Pressable, FlatList } from "react-native";
 import { styles } from "@/lib/styles";
-import { useLocalSearchParams, Stack } from "expo-router";
+import { useLocalSearchParams, Stack, router } from "expo-router";
 
 import { getSeanceId } from "@/services/api";
 import { postTimerRunner } from "@/services/api";
+import { patchSeance } from "@/services/api";
 
 import { TimerRunnerSchema } from "@/lib/schema/timerRunnerSchema";
+import { PatchChronoSchema } from "@/lib/schema/patchChronoSchema";
 
 import { TimerRunner } from "@/types/api";
 import { SeanceResponse } from "@/types/api";
@@ -22,7 +24,7 @@ type List = {
   color: string;
 };
 
-export default function TestPage() {
+export default function RunPage() {
   const [errorFetch, setErrorFetch] = useState(false);
   const [loading, setLoading] = useState(true);
   const [seanceGet, setSeanceGet] = useState<SeanceResponse>();
@@ -93,6 +95,29 @@ export default function TestPage() {
     }
   };
 
+  // Changement du status de séance en "finish"
+
+  const handleEnded = async (id: string) => {
+    const data = {
+      state: "Finish",
+    };
+
+    const safePatch = PatchChronoSchema.safeParse(data);
+
+    if (safePatch.success) {
+      try {
+        const response = await patchSeance(safePatch.data, id);
+
+        if (response) router.push("/");
+      } catch (err) {
+        console.error("Erreur du fetch api/seance", err);
+        setErrorFetch(true);
+      }
+    } else {
+      console.error("Erreur de validation des données fetch api/seance");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: "Chronomètre" }} />
@@ -138,6 +163,9 @@ export default function TestPage() {
           />
         )}
       </View>
+      <Pressable style={styles.btnSelect} onPress={() => handleEnded(id)}>
+        <Text>Save</Text>
+      </Pressable>
     </View>
   );
 }

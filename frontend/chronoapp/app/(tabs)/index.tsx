@@ -3,7 +3,6 @@ import { styles } from "@/lib/styles";
 import { router } from "expo-router";
 
 import { useAuth } from "@/context/AuthContext";
-import { useState } from "react";
 
 export default function HomeScreen() {
   const { token, logout } = useAuth();

@@ -4,21 +4,13 @@ import { API_BASE_URL } from "@/config/api";
 
 import { FormSchema } from "@/lib/schema/formSchema";
 import { TimerRunnerSchema } from "@/lib/schema/timerRunnerSchema";
-import { StartChronoSchema } from "@/lib/schema/startChronoSchema";
+import { PatchChronoSchema } from "@/lib/schema/patchChronoSchema";
 import { PausedChronoSchema } from "@/lib/schema/pausedSchema";
 import { EndedPausedSchema } from "@/lib/schema/endedSchema";
 
 import { TimerRunner } from "@/types/api";
 import { TimerPause } from "@/types/api";
 import { SeanceResponse } from "@/types/api";
-
-type PatchSeance = {
-  startedAt: string;
-};
-
-type CleanSeance = {
-  startedAt: Date | null;
-};
 
 async function apiFetch<T>(
   endpoint: string,
@@ -57,7 +49,7 @@ export function getSeanceId(id: string) {
   });
 }
 
-export function patchSeance(data: StartChronoSchema, id: string) {
+export function patchSeance(data: PatchChronoSchema, id: string) {
   return apiFetch<SeanceResponse>(`/api/seance/${id}`, {
     method: "PATCH",
     body: JSON.stringify(data),
@@ -67,6 +59,12 @@ export function patchSeance(data: StartChronoSchema, id: string) {
 export function getSeance() {
   return apiFetch<SeanceResponse[]>("/api/seance", {
     method: "GET",
+  });
+}
+
+export function deleteManySeance() {
+  return apiFetch<SeanceResponse[]>("/api/seance", {
+    method: "DELETE",
   });
 }
 

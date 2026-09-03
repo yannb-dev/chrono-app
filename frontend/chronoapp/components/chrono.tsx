@@ -2,7 +2,7 @@ import { View, Text, Pressable } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import { styles } from "@/lib/styles";
 
-import { StartChronoSchema } from "@/lib/schema/startChronoSchema";
+import { PatchChronoSchema } from "@/lib/schema/patchChronoSchema";
 import { PausedChronoSchema } from "@/lib/schema/pausedSchema";
 import { EndedPausedSchema } from "@/lib/schema/endedSchema";
 
@@ -54,6 +54,8 @@ export default function Chrono({ seance }: ChronoProps) {
       } else {
         setElapsed(Math.floor((Date.now() - startedAt) / 1000));
       }
+
+      handlePlay();
     }
   }, [seance]);
 
@@ -94,16 +96,16 @@ export default function Chrono({ seance }: ChronoProps) {
 
       const data = {
         startedAt: new Date(),
+        state: "InProgress",
       };
 
-      const safeData = StartChronoSchema.safeParse(data);
+      const safeData = PatchChronoSchema.safeParse(data);
 
       if (safeData.success && seance) {
         try {
           const response = await patchSeance(safeData.data, seance.id);
 
           if (response.startedAt) {
-            // setDisabledPause(false);
             setSeanceGet(response);
             handleStartChrono(new Date(response.startedAt));
           }
@@ -150,20 +152,28 @@ export default function Chrono({ seance }: ChronoProps) {
     setStateChrono(false);
     setTimerPauseInProgress(null);
 
-    try {
-      const data = {
-        startedAt: null,
-      };
+    const data = {
+      startedAt: null,
+      state: "NoStart",
+    };
 
-      const responseTimerPause = await deleteTimerPause(seance.id);
-      const responseSeance = await patchSeance(data, seance.id);
+    const safePatch = PatchChronoSchema.safeParse(data);
 
-      if (responseTimerPause && responseSeance) {
-        setElapsed(0);
+    if (safePatch.success) {
+      try {
+        const responseTimerPause = await deleteTimerPause(seance.id);
+
+        const responseSeance = await patchSeance(safePatch.data, seance.id);
+
+        if (responseTimerPause && responseSeance) {
+          setElapsed(0);
+        }
+      } catch (err) {
+        console.error("Erreur du fetch API/TIMERPAUSE", err);
+        setErrorFetch(true);
       }
-    } catch (err) {
-      console.error("Erreur du fetch API/TIMERPAUSE", err);
-      setErrorFetch(true);
+    } else {
+      console.error("Erreur de validation des données api/seance");
     }
   };
 

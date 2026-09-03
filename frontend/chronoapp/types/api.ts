@@ -21,6 +21,7 @@ export type SeanceResponse = {
   id: string;
   createdAt: Date;
   startedAt: Date | null;
+  state: string;
   userId: string;
   timerRunners: TimerRunner[];
   timerpauses: TimerPause[];
