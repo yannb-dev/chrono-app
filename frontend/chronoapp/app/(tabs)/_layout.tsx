@@ -25,7 +25,9 @@ export default function TabLayout() {
         name="list"
         options={{
           title: "Liste",
-          tabBarIcon: () => <IconSymbol size={28} name={"paperplane.fill"} />,
+          tabBarIcon: () => (
+            <IconSymbol size={28} name={"list.bullet.circle.fill"} />
+          ),
         }}
       />
     </Tabs>

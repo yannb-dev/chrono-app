@@ -7,11 +7,8 @@ import Form from "@/components/form";
 export default function FormSeance() {
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: "Configuration" }} />
-      <Text style={styles.titlePage}>
-        Ajouter le nombre de coureur et la couleur des dossards
-      </Text>
-      <View>
+      <Stack.Screen options={{ title: "Creating" }} />
+      <View style={styles.containerSupForm}>
         <Form />
       </View>
     </View>

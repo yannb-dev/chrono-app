@@ -2,6 +2,10 @@ import { View, Text, Pressable } from "react-native";
 import { styles } from "@/lib/styles";
 import { router } from "expo-router";
 
+import { IconSymbol } from "@/components/ui/IconSymbol";
+
+import SvgComponent from "@/components/LogoApp";
+
 import { useAuth } from "@/context/AuthContext";
 
 export default function HomeScreen() {
@@ -9,29 +13,29 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.titlePage}>Chronomètre de groupe</Text>
-      <Pressable
-        style={({ pressed }) => [
-          styles.btnSelect,
-          pressed && styles.btnPressed,
-        ]}
-        onPress={() =>
-          router.push({
-            pathname: "/formSeance/page",
-          })
-        }
-      >
-        <Text>Créer</Text>
-      </Pressable>
-      <Pressable
-        style={({ pressed }) => [
-          styles.btnSelect,
-          pressed && styles.btnPressed,
-        ]}
-        onPress={logout}
-      >
-        <Text>Se déconnecter</Text>
-      </Pressable>
+      <View style={styles.containerLogout}>
+        <Pressable onPress={logout}>
+          <IconSymbol size={30} name={"door.french.open"} />
+        </Pressable>
+      </View>
+      <View style={styles.containerLogoIndex}>
+        <SvgComponent />
+      </View>
+      <View style={styles.containerBtnNew}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.btnSelect,
+            pressed && styles.btnPressed,
+          ]}
+          onPress={() =>
+            router.push({
+              pathname: "/formSeance/page",
+            })
+          }
+        >
+          <Text style={{ fontFamily: "Orbitron-Medium" }}>New</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

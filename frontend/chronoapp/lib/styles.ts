@@ -1,32 +1,115 @@
 import { StyleSheet } from "react-native";
 
+const rose = "rgb(240,76,139)";
+const green = "rgb(139,241,77)";
+const blue = "rgb(76,139,240)";
+const black = "rgb(38,8,21)";
+const gray = "rgb(212,212,212)";
+const white = "rgb(240,240,240)";
+
 export const styles = StyleSheet.create({
+  // all page
+
   container: {
     height: "100%",
-    paddingTop: 90,
-    padding: 20,
-    backgroundColor: "rgb(218, 234, 233)",
+    width: "100%",
+    padding: 10,
+    backgroundColor: white,
+    alignItems: "center",
   },
 
   btnSelect: {
-    backgroundColor: "rgb(54, 235, 84)",
+    backgroundColor: green,
     width: 130,
-    padding: 10,
+    padding: 6,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 10,
-    marginTop: 50,
+    borderRadius: 6,
   },
 
   btnPressed: {
-    backgroundColor: "rgb(248, 246, 246)",
-    borderColor: "black",
+    backgroundColor: white,
+    borderColor: green,
     borderWidth: 1,
+  },
+
+  // login.tsx
+
+  containerLogo: {
+    height: "25%",
+    width: "75%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  containerInput: {
+    height: "50%",
+    width: "75%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  containerBtnLogin: {
+    height: "25%",
+    width: "75%",
+    justifyContent: "flex-start",
+    alignItems: "center",
+  },
+
+  inputEmailLogin: {
+    width: "100%",
+    borderBottomColor: gray,
+    borderBottomWidth: 1,
+  },
+
+  inputPasswordLogin: {
+    width: "100%",
+    borderBottomColor: gray,
+    borderBottomWidth: 1,
+    marginBottom: 30,
+  },
+
+  btnRegister: {
+    color: black,
+    fontSize: 14,
+    fontWeight: 600,
+  },
+
+  // register page
+
+  // index.tsx
+
+  containerLogout: {
+    height: "20%",
+    width: "100%",
+    alignItems: "flex-end",
+    justifyContent: "center",
+  },
+
+  containerLogoIndex: {
+    height: "20%",
+    width: "100%",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+  },
+
+  containerBtnNew: {
+    height: "60%",
+    width: "75%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  // formSeance page.tsx
+
+  containerSupForm: {
+    height: "100%",
+    justifyContent: "center",
   },
 
   titlePage: {
     fontFamily: "mono",
-    fontSize: 20,
+    fontSize: 10,
     color: "rgb(29, 28, 28)",
   },
 

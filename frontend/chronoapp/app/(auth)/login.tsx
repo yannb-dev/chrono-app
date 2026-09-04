@@ -1,16 +1,13 @@
 import { useState } from "react";
-import {
-  View,
-  TextInput,
-  Button,
-  Text,
-  StyleSheet,
-  Pressable,
-} from "react-native";
+import { View, TextInput, Text, Pressable, Image } from "react-native";
 import { styles } from "@/lib/styles";
 import { useAuth } from "@/context/AuthContext";
 import { API_BASE_URL } from "@/config/api";
 import { Stack } from "expo-router";
+
+import { router } from "expo-router";
+
+import SvgComponent from "@/components/LogoApp";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -44,30 +41,46 @@ export default function LoginScreen() {
 
   return (
     <View>
-      <Stack.Screen options={{ title: "Connexion" }} />
+      <Stack.Screen options={{ headerShown: false }} />
+
       {!loading ? (
         <View style={styles.container}>
-          <TextInput
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-          />
-          <TextInput
-            placeholder="Mot de passe"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-          {error && <Text>{error}</Text>}
-          <Pressable
-            style={({ pressed }) => [
-              styles.btnSelect,
-              pressed && styles.btnPressed,
-            ]}
-            onPress={handleLogin}
-          >
-            <Text>Se connecter</Text>
-          </Pressable>
+          <View style={styles.containerLogo}>
+            <SvgComponent />
+          </View>
+          <View style={styles.containerInput}>
+            <TextInput
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              style={styles.inputEmailLogin}
+            />
+            <TextInput
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              style={styles.inputPasswordLogin}
+            />
+            {error && <Text>{error}</Text>}
+            <Pressable
+              style={({ pressed }) => [pressed && styles.btnPressed]}
+              onPress={() => router.push("/(auth)/register")}
+            >
+              <Text style={styles.btnRegister}>S'inscrire</Text>
+            </Pressable>
+          </View>
+          <View style={styles.containerBtnLogin}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.btnSelect,
+                pressed && styles.btnPressed,
+              ]}
+              onPress={handleLogin}
+            >
+              <Text>Se connecter</Text>
+            </Pressable>
+          </View>
         </View>
       ) : (
         <View style={styles.container}>

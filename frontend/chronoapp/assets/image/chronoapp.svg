@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="123.89579mm"
+   height="38.55677mm"
+   viewBox="0 0 123.89579 38.556771"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
+   sodipodi:docname=".svg"
+   inkscape:export-filename="../Documents/1_Dev_Web/3_Projets/projet-chrono-app/frontend/chronoapp/assets/image/.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.71535494"
+     inkscape:cx="376.73606"
+     inkscape:cy="-106.93992"
+     inkscape:window-width="1920"
+     inkscape:window-height="1043"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1">
+    <inkscape:page
+       x="0"
+       y="0"
+       width="123.89579"
+       height="38.55677"
+       id="page2"
+       margin="0"
+       bleed="0" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-72.805954,-111.53393)">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:800;font-stretch:normal;font-size:25.4px;font-family:Orbitron;-inkscape-font-specification:'Orbitron Ultra-Bold';writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:1.235;stroke-linejoin:round;stroke-miterlimit:3.6"
+       x="71.38356"
+       y="129.82191"
+       id="text1"><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:800;font-stretch:normal;font-family:Orbitron;-inkscape-font-specification:'Orbitron Ultra-Bold';fill:#000000;stroke-width:1.235"
+         x="71.38356"
+         y="129.82191"
+         id="tspan3">CHRONO</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-weight:800;font-size:25.4px;font-family:Roboto;-inkscape-font-specification:'Roboto Ultra-Bold';writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:1.235;stroke-linejoin:round;stroke-miterlimit:3.6"
+       x="71.332741"
+       y="149.69737"
+       id="text4"><tspan
+         sodipodi:role="line"
+         id="tspan4"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:Orbitron;-inkscape-font-specification:'Orbitron Bold';stroke-width:1.235"
+         x="71.332741"
+         y="149.69737">APP</tspan></text>
+    <path
+       id="rect4"
+       style="fill:#000000;stroke-width:1.24968;stroke-linejoin:round;stroke-miterlimit:3.6"
+       d="m 136.15254,131.80272 6.91482,8.36904 4.03796,-6.14601 3.25336,4.05375 5.86869,-6.40755 4.03795,6.53832 c 0,0 0.76966,-0.46381 2.23819,-0.98024 1.46854,-0.51643 4.15903,5.19131 6.43151,4.45779 2.27247,-0.73352 4.12694,-5.68527 6.53876,-6.33655 2.41182,-0.65127 4.20409,-3.27885 6.09066,-3.54855 2.49749,-0.35703 5.60716,8.63058 5.60716,8.63058 l 9.53014,-8.63058 v 18.28798 h -60.5492 z"
+       sodipodi:nodetypes="ccccccssssccccc" />
+  </g>
+</svg>
