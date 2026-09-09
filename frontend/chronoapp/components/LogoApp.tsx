@@ -14,7 +14,6 @@ export default function SvgComponent() {
             x="71.38356"
             y="129.82191"
             fontFamily="Orbitron-ExtraBold"
-            fontWeight="800"
             fontSize="25.4"
             fill="#000000"
             strokeWidth={1.235}
@@ -28,7 +27,6 @@ export default function SvgComponent() {
             x="71.332741"
             y="149.69737"
             fontFamily="Orbitron-ExtraBold"
-            fontWeight="bold"
             fontSize="25.4"
             fill="#000000"
             strokeWidth={1.235}

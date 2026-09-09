@@ -1,36 +1,46 @@
-import { useEffect, useState } from "react";
-import { View, Text, Pressable, FlatList } from "react-native";
+import { useEffect, useState, useRef } from "react";
+import { View, Text, Pressable } from "react-native";
+import { useLocalSearchParams, Stack } from "expo-router";
+
 import { styles } from "@/lib/styles";
-import { useLocalSearchParams, Stack, router } from "expo-router";
 
 import { getSeanceId } from "@/services/api";
-import { postTimerRunner } from "@/services/api";
 import { patchSeance } from "@/services/api";
+import { patchTimerPause } from "@/services/api";
+import { deleteTimerPause } from "@/services/api";
+import { postTimerPause } from "@/services/api";
+import { deleteAllTimerRunner } from "@/services/api";
 
-import { TimerRunnerSchema } from "@/lib/schema/timerRunnerSchema";
 import { PatchChronoSchema } from "@/lib/schema/patchChronoSchema";
+import { EndedPausedSchema } from "@/lib/schema/endedSchema";
+import { PausedChronoSchema } from "@/lib/schema/pausedSchema";
 
-import { TimerRunner } from "@/types/api";
 import { SeanceResponse } from "@/types/api";
+import { TimerPause } from "@/types/api";
 
-import Chrono from "@/components/chrono";
 import ViewChrono from "@/components/viewChrono";
-
-// Function pour convertir des secondes en hh:mm:ss
-
-type List = {
-  number: number;
-  state: boolean;
-  color: string;
-};
+import { IconSymbol } from "@/components/ui/IconSymbol";
+import BtnAndList from "@/components/BtnAndList";
 
 export default function RunPage() {
-  const [errorFetch, setErrorFetch] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [seanceGet, setSeanceGet] = useState<SeanceResponse>();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [arrayResult, setArrayResult] = useState<TimerRunner[]>([]);
-  const [arrayNumber, setArrayNumber] = useState<List[]>([]);
+
+  const [errorFetch, setErrorFetch] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const [seanceGet, setSeanceGet] = useState<SeanceResponse>();
+
+  const [stateChrono, setStateChrono] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+
+  const [timerPauseInProgress, setTimerPauseInProgress] =
+    useState<TimerPause | null>(null);
+  const [viewPaused, setViewPaused] = useState(false);
+  const timerPausesLocal = useRef<TimerPause[]>([]);
+
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [reset, setReset] = useState(false);
 
   // Chargement de la seance depuis id via URL ===============================================
   useEffect(() => {
@@ -39,17 +49,31 @@ export default function RunPage() {
     async function fetchSeance() {
       try {
         const data = await getSeanceId(id);
-        const listNumber = Array.from(
-          { length: Number(data.totalRunner) },
-          (_, index) => ({
-            number: index + 1,
-            state: false,
-            color: data.colorRunner,
-          }),
-        );
+
+        if (!data) {
+          setErrorFetch(true);
+          return;
+        }
+
         if (!cancelled) {
+          if (data?.startedAt) {
+            const pausedInProgress = data.timerpauses.filter(
+              (item) => !item.endedAt,
+            );
+
+            const pausedEnded = data.timerpauses.filter((item) => item.endedAt);
+
+            if (pausedInProgress.length > 0) {
+              timerPausesLocal.current = pausedEnded;
+              setViewPaused(true);
+              setTimerPauseInProgress(pausedInProgress[0]);
+            } else {
+              timerPausesLocal.current = pausedEnded;
+              handleStartChrono(data.startedAt);
+            }
+          }
+
           setSeanceGet(data);
-          setArrayNumber(listNumber);
         }
       } catch (e) {
         console.log("Erreur du fetch API/SEANCE", e);
@@ -66,106 +90,236 @@ export default function RunPage() {
     };
   }, [id]);
 
-  // Déclenchement de l'arrivée du coureur ===============================================
+  // ========== Gestion de setInterval et des pauses localement pour l'affichage,
 
-  const handleEndRunner = async (id: string, numberRunner: number) => {
-    const data = {
-      numberRunner: numberRunner,
-      endedAt: new Date(),
-      seanceId: id,
-    };
+  const handleStartChrono = (start: Date) => {
+    setStateChrono(true);
+    setViewPaused(false);
 
-    const safeData = TimerRunnerSchema.safeParse(data);
+    intervalRef.current = setInterval(() => {
+      const startedAt = new Date(start).getTime();
 
-    if (safeData.success) {
-      try {
-        const timerRunner = await postTimerRunner(safeData.data);
-        setArrayResult((prev) => [...prev, timerRunner]);
+      const totalPause = timerPausesLocal.current.reduce((totalpause, item) => {
+        return item.pauseDurationMs
+          ? totalpause + Number(item.pauseDurationMs)
+          : totalpause;
+      }, 0);
 
-        const newArrayNumber = arrayNumber.map((item) =>
-          item.number === timerRunner.numberRunner
-            ? { ...item, state: true }
-            : item,
-        );
-        setArrayNumber(newArrayNumber);
-      } catch (err) {
-        console.error("Erreur du fetch api/timerrunner", err);
-        setErrorFetch(true);
+      setElapsed(
+        Math.floor((Date.now() - startedAt - Number(totalPause)) / 1000),
+      );
+    }, 1000);
+  };
+
+  // ========== Gestion du button [play] soit pour le démarrage, soit pour mettre fin à la pause
+
+  const handlePlay = async () => {
+    // répond à la question, il y a t'il une pause en cours ou non ?
+
+    if (!timerPauseInProgress) {
+      if (stateChrono) return;
+
+      const data = {
+        startedAt: new Date(),
+        state: "InProgress",
+      };
+
+      const safeData = PatchChronoSchema.safeParse(data);
+
+      if (safeData.success && seanceGet) {
+        try {
+          const response = await patchSeance(safeData.data, seanceGet.id);
+
+          if (response.startedAt) {
+            setSeanceGet(response);
+            setReset(false);
+            handleStartChrono(response.startedAt);
+          }
+        } catch (err) {
+          console.error("Erreur du fetch api/seance", err);
+          setErrorFetch(true);
+        }
+      }
+    } else {
+      const data = {
+        endedAt: new Date(),
+      };
+
+      const safeData = EndedPausedSchema.safeParse(data);
+
+      if (safeData.success) {
+        try {
+          const response = await patchTimerPause(
+            safeData.data,
+            timerPauseInProgress.id,
+          );
+
+          if (response.endedAt && seanceGet?.startedAt) {
+            setTimerPauseInProgress(null);
+
+            timerPausesLocal.current = [...timerPausesLocal.current, response];
+
+            setReset(false);
+            handleStartChrono(seanceGet.startedAt);
+          }
+        } catch (err) {
+          console.error("Erreur du fetch api/seance", err);
+          setErrorFetch(true);
+        }
       }
     }
   };
 
-  // Changement du status de séance en "finish"
+  //========== Remise à zero du chronomètre et du startedAt de "seance" + suppression de l'ensemble des timerPause
+  const handleReset = async () => {
+    if (!seanceGet) return;
 
-  const handleEnded = async (id: string) => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    setStateChrono(false);
+    setTimerPauseInProgress(null);
+
     const data = {
-      state: "Finish",
+      startedAt: null,
+      state: "NoStart",
     };
 
     const safePatch = PatchChronoSchema.safeParse(data);
 
     if (safePatch.success) {
       try {
-        const response = await patchSeance(safePatch.data, id);
+        const responseTimerPause = await deleteTimerPause(seanceGet.id);
+        const responseTimerRunner = await deleteAllTimerRunner(seanceGet.id);
+        const responseSeance = await patchSeance(safePatch.data, seanceGet.id);
 
-        if (response) router.push("/");
+        if (responseTimerPause && responseSeance && responseTimerRunner) {
+          setElapsed(0);
+          setReset(true);
+        }
       } catch (err) {
-        console.error("Erreur du fetch api/seance", err);
+        console.error("Erreur du fetch API/TIMERPAUSE", err);
         setErrorFetch(true);
       }
     } else {
-      console.error("Erreur de validation des données fetch api/seance");
+      console.error("Erreur de validation des données api/seance");
     }
   };
 
+  // ========== Démarrage d'un timerPause en BDD avec pause du chronomètre
+  const handlePause = async () => {
+    if (!seanceGet) return;
+
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setStateChrono(false);
+    // setDisabledPause(true);
+
+    const data = {
+      pausedAt: new Date(),
+      seanceId: seanceGet.id,
+    };
+
+    const safeData = PausedChronoSchema.safeParse(data);
+
+    if (safeData.success && seanceGet) {
+      try {
+        const response = await postTimerPause(safeData.data);
+        setTimerPauseInProgress(response);
+      } catch (err) {
+        console.error("Erreur du fetch API/SEANCE", err);
+        setErrorFetch(true);
+      }
+    }
+  };
+
+  // =========== Remise à zéro forcé de l'interval au montage
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
+
+  if (errorFetch)
+    return (
+      <View style={styles.container}>
+        <View style={styles.containerError}>
+          <Text style={styles.text}>Oups, une erreur !</Text>
+          <Pressable onPress={() => setErrorFetch(false)}>
+            <Text style={styles.text}>Réessayer</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: "Chronomètre" }} />
-      {loading && <Text>Chargement...</Text>}
-      {errorFetch && <Text>Erreur de chargement</Text>}
-      {seanceGet && <Chrono seance={seanceGet} />}
-
-      <View style={styles.containerBtnRunner}>
-        {seanceGet && (
-          <FlatList
-            data={arrayNumber}
-            numColumns={5}
-            keyExtractor={(item) => item.number.toString()}
-            renderItem={({ item }) => (
+      <Stack.Screen
+        options={{
+          title: "Chronomètre",
+          headerTitleStyle: { fontFamily: "Orbitron-Medium" },
+        }}
+      />
+      <View style={styles.containerChrono}>
+        <View style={styles.boxChrono}>
+          <View style={styles.time}>
+            {viewPaused ? (
+              <Text style={styles.text}>Pause</Text>
+            ) : (
+              <ViewChrono second={elapsed} size={34} />
+            )}
+          </View>
+          {seanceGet && (
+            <View style={styles.containerBtnChrono}>
               <Pressable
-                style={({ pressed }) => [
-                  styles.btnRunner,
-                  pressed && styles.btnPressed,
-                  item.state
-                    ? { backgroundColor: "gray" }
-                    : { backgroundColor: item.color },
+                style={[
+                  styles.btnChrono,
+                  {
+                    backgroundColor: stateChrono
+                      ? "rgb(176, 171, 171)"
+                      : "rgb(139,241,77)",
+                  },
                 ]}
-                key={item.number}
-                onPress={() => handleEndRunner(seanceGet?.id, item.number)}
+                onPress={handlePlay}
+                disabled={stateChrono}
               >
-                <Text>{` ${item.number}`}</Text>
+                <IconSymbol name={"play"} />
               </Pressable>
-            )}
-          />
-        )}
+              <Pressable
+                style={[
+                  styles.btnChrono,
+                  {
+                    backgroundColor: !stateChrono
+                      ? "rgb(176, 171, 171)"
+                      : "rgb(139,241,77)",
+                  },
+                ]}
+                onPress={handlePause}
+                disabled={!stateChrono}
+              >
+                <IconSymbol name={"pause"} />
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.btnChrono,
+                  {
+                    backgroundColor: !stateChrono
+                      ? "rgb(176, 171, 171)"
+                      : "rgb(139,241,77)",
+                  },
+                ]}
+                disabled={!stateChrono}
+                onPress={handleReset}
+              >
+                <IconSymbol name={"repeat.circle.fill"} />
+              </Pressable>
+            </View>
+          )}
+        </View>
       </View>
-      <View style={styles.containerListChrono}>
-        {arrayResult.length > 0 && (
-          <FlatList
-            data={arrayResult}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.list}>
-                <Text>N°{item.numberRunner}</Text>
-                <ViewChrono second={item.duration / 1000} />
-              </View>
-            )}
-          />
-        )}
-      </View>
-      <Pressable style={styles.btnSelect} onPress={() => handleEnded(id)}>
-        <Text>Save</Text>
-      </Pressable>
+      {seanceGet && <BtnAndList seance={seanceGet} reset={reset} />}
     </View>
   );
 }

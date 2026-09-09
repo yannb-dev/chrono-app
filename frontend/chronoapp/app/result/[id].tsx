@@ -1,4 +1,4 @@
-import { View, Text, FlatList } from "react-native";
+import { View, Text, FlatList, Pressable } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useState, useEffect } from "react";
 import { Stack } from "expo-router";
@@ -7,6 +7,10 @@ import { getSeanceId } from "@/services/api";
 
 import { SeanceResponse } from "@/types/api";
 
+import { styles } from "@/lib/styles";
+import ViewChrono from "@/components/viewChrono";
+import LoadingAnim from "@/components/LoadingAnim";
+
 export default function Result() {
   const [seance, setSeance] = useState<SeanceResponse>();
   const [error, setError] = useState(false);
@@ -14,9 +18,7 @@ export default function Result() {
 
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  // constamment utilisé quand l'on souhaite charger des valeurs au montage du composant
-  // attention pas de async sur la function
-  useEffect(() => {
+  const initPage = () => {
     let cancelled = false;
 
     async function fetchSeance() {
@@ -39,30 +41,53 @@ export default function Result() {
     return () => {
       cancelled = true;
     };
+  };
+
+  useEffect(() => {
+    initPage();
   }, []);
 
+  const handleCloseError = () => {
+    setError(false);
+    setLoading(true);
+    initPage();
+  };
+
+  if (error)
+    return (
+      <View>
+        <View>
+          <Text style={styles.text}>Oups une erreur !</Text>
+          <Pressable onPress={handleCloseError}>
+            <Text style={styles.btnSelect}>Réessayer</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+
   return (
-    <View>
-      <Stack.Screen options={{ title: "Résultat" }} />
+    <View style={styles.container}>
+      <Stack.Screen
+        options={{
+          title: "Result",
+          headerTitleStyle: { fontFamily: "Orbitron-Medium" },
+        }}
+      />
       {loading ? (
         <View>
-          <Text>Chargement en cours</Text>
+          <LoadingAnim />
         </View>
       ) : (
-        <View>
+        <View style={styles.containerResult}>
           <FlatList
             data={seance?.timerRunners}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <View
-                style={{
-                  backgroundColor: "gray",
-                  height: 20,
-                  width: 20,
-                  borderRadius: 10,
-                }}
-              >
-                <Text>{item.duration}</Text>
+              <View style={styles.containerFlatListResultPage}>
+                <Text style={[styles.text, { marginRight: 20 }]}>
+                  N°{item.numberRunner}
+                </Text>
+                <ViewChrono second={item.duration / 1000} size={20} />
               </View>
             )}
           />

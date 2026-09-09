@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, TextInput, Text, Pressable, Image } from "react-native";
+import { View, TextInput, Text, Pressable } from "react-native";
 import { styles } from "@/lib/styles";
 import { useAuth } from "@/context/AuthContext";
 import { API_BASE_URL } from "@/config/api";
@@ -8,6 +8,7 @@ import { Stack } from "expo-router";
 import { router } from "expo-router";
 
 import SvgComponent from "@/components/LogoApp";
+import LoadingAnim from "@/components/LoadingAnim";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -27,6 +28,7 @@ export default function LoginScreen() {
       });
 
       if (!res.ok) {
+        setLoading(false);
         setError("Identifiants invalides");
         return;
       }
@@ -62,7 +64,11 @@ export default function LoginScreen() {
               secureTextEntry
               style={styles.inputPasswordLogin}
             />
-            {error && <Text>{error}</Text>}
+            {error && (
+              <Text style={[styles.text, { marginBottom: 30, color: "gray" }]}>
+                {error}
+              </Text>
+            )}
             <Pressable
               style={({ pressed }) => [pressed && styles.btnPressed]}
               onPress={() => router.push("/(auth)/register")}
@@ -78,13 +84,13 @@ export default function LoginScreen() {
               ]}
               onPress={handleLogin}
             >
-              <Text>Se connecter</Text>
+              <Text style={styles.text}>Se connecter</Text>
             </Pressable>
           </View>
         </View>
       ) : (
         <View style={styles.container}>
-          <Text>Chargement</Text>
+          <LoadingAnim />
         </View>
       )}
     </View>

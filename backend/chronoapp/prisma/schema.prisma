@@ -31,7 +31,7 @@ enum StateSeance {
 
 model Seance {
 id String @id @default(cuid())
-totalRunner String
+totalRunner Int
 colorRunner String
 startedAt DateTime?
 state StateSeance @default(NoStart)

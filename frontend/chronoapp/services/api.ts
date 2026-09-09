@@ -34,7 +34,7 @@ async function apiFetch<T>(
   return response.json();
 }
 
-// Seance
+// Seance ====================================
 
 export function postSeance(data: FormSchema) {
   return apiFetch<SeanceResponse>("/api/seance", {
@@ -68,7 +68,7 @@ export function deleteManySeance() {
   });
 }
 
-// TimerRunner
+// TimerRunner ===========================================
 
 export function postTimerRunner(data: TimerRunnerSchema) {
   return apiFetch<TimerRunner>("/api/timerrunner", {
@@ -77,7 +77,13 @@ export function postTimerRunner(data: TimerRunnerSchema) {
   });
 }
 
-// TimerPause
+export function deleteAllTimerRunner(id: string) {
+  return apiFetch<TimerRunner[]>(`/api/timerrunner/byseance/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// TimerPause ============================================
 
 export function postTimerPause(data: PausedChronoSchema) {
   return apiFetch<TimerPause>(`/api/timerpause`, {

@@ -9,7 +9,7 @@ import SvgComponent from "@/components/LogoApp";
 import { useAuth } from "@/context/AuthContext";
 
 export default function HomeScreen() {
-  const { token, logout } = useAuth();
+  const { logout } = useAuth();
 
   return (
     <View style={styles.container}>
@@ -33,7 +33,7 @@ export default function HomeScreen() {
             })
           }
         >
-          <Text style={{ fontFamily: "Orbitron-Medium" }}>New</Text>
+          <Text style={styles.text}>New</Text>
         </Pressable>
       </View>
     </View>

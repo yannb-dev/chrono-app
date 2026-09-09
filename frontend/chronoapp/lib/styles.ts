@@ -33,6 +33,55 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
   },
 
+  text: {
+    fontFamily: "Orbitron-Medium",
+  },
+
+  textError: {
+    fontFamily: "Orbitron-Medium",
+    color: rose,
+  },
+
+  errorForm: {
+    fontFamily: "Orbitron-Regular",
+    color: rose,
+    fontWeight: 400,
+  },
+
+  containerError: {
+    height: "50%",
+    width: "90%",
+    padding: 10,
+    backgroundColor: gray,
+    borderRadius: 6,
+    justifyContent: "space-evenly",
+    alignItems: "center",
+  },
+
+  // loadingAnim.tsx
+
+  containerSupLoading: {
+    height: "100%",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  containerLoading: {
+    height: 50,
+    width: 50,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-evenly",
+  },
+
+  pointLoading: {
+    height: 16,
+    width: 16,
+    borderRadius: 8,
+    backgroundColor: black,
+  },
+
   // login.tsx
 
   containerLogo: {
@@ -73,10 +122,17 @@ export const styles = StyleSheet.create({
     color: black,
     fontSize: 14,
     fontWeight: 600,
+    fontFamily: "Orbitron-Regular",
   },
 
   // register page
 
+  containerSupRegister: {
+    height: "100%",
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   // index.tsx
 
   containerLogout: {
@@ -107,70 +163,90 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  titlePage: {
-    fontFamily: "mono",
-    fontSize: 10,
-    color: "rgb(29, 28, 28)",
+  containerForm: {
+    height: "70%",
+    justifyContent: "center",
   },
 
-  inputRunner: {
-    marginTop: 20,
-    width: 120,
-    height: 60,
-    padding: 5,
-    textAlign: "center",
+  containerValidForm: {
+    height: "30%",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgb(134, 233, 150)",
-    borderRadius: 5,
-  },
-  containerChrono: {
-    width: "80%",
-    height: 60,
-    borderRadius: 10,
-    margin: 10,
-    alignItems: "center",
-    backgroundColor: "rgb(201, 196, 196)",
-  },
-  textChrono: {
-    fontSize: 30,
-    margin: 5,
-  },
-  containerBtnChrono: {
-    marginTop: 10,
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    width: "80%",
-  },
-  btnChrono: {
-    padding: 10,
-    borderRadius: 5,
-    backgroundColor: "rgb(201, 196, 196)",
   },
 
+  textTotalRunner: {
+    fontFamily: "Orbitron-Medium",
+    fontSize: 30,
+    padding: 20,
+    borderRadius: 6,
+    color: black,
+    backgroundColor: gray,
+    borderWidth: 2,
+    borderColor: black,
+  },
+
+  btnChangeTotalRunner: {
+    fontFamily: "Orbitron-Medium",
+    fontSize: 20,
+    padding: 10,
+    borderRadius: 6,
+    color: black,
+    backgroundColor: gray,
+    borderWidth: 2,
+    borderColor: black,
+    margin: 30,
+  },
+
+  containerSelectColor: {
+    alignItems: "center",
+  },
+
+  selectColor: {
+    width: 50,
+    height: 50,
+    borderRadius: 6,
+    margin: 5,
+  },
+
+  // [id].tsx
+
+  containerChrono: {
+    height: "20%",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  boxChrono: {
+    height: "80%",
+    width: "70%",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 6,
+    backgroundColor: "gray",
+    borderRadius: 6,
+  },
+
+  time: {
+    width: "100%",
+    height: "55%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  containerBtnChrono: {
+    height: "40%",
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "70%",
+  },
   containerBtnRunner: {
-    marginTop: 20,
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
     gap: 10,
-  },
-
-  btnRunner: {
-    width: "15%",
-    margin: 6,
-    padding: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 15,
-    borderColor: "rgb(14, 13, 13)",
-    borderWidth: 3,
-  },
-
-  containerListChrono: {
-    height: 200,
-    marginTop: 40,
   },
 
   list: {
@@ -180,18 +256,145 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  containerListResult: {
-    height: 260,
-    width: "90%",
+  btnChrono: {
+    padding: 4,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 4,
+    backgroundColor: "rgb(201, 196, 196)",
+  },
+
+  textChrono: {
+    fontFamily: "Orbitron-Medium",
+    color: black,
+    margin: 5,
+  },
+
+  btnRunner: {
+    height: 60,
+    width: "15%",
+    margin: 6,
+    padding: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 6,
+    borderColor: gray,
+    borderWidth: 2,
+  },
+
+  textBtnRunner: {
+    fontFamily: "Orbitron-Regular",
+  },
+
+  containerListChrono: {
+    height: "20%",
     marginTop: 40,
   },
 
-  btnCourse: {
+  containerBtnSave: {
+    height: "5%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  containerErrorFetchBtnChrono: {
+    width: "100%",
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // list.tsx
+
+  containerLogoDelete: {
+    height: "20%",
+    width: "100%",
+    padding: 15,
+    flexDirection: "row",
+  },
+
+  containerLogoList: {
+    height: "100%",
+    width: "80%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  containerDeleteList: {
+    height: "100%",
+    width: "20%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  containerListResult: {
+    height: "80%",
+    width: "100%",
+  },
+
+  containerListRun: {
+    width: "70%",
+    height: 70,
+    backgroundColor: gray,
+    borderRadius: 6,
+    padding: 6,
+    marginBottom: 12,
+  },
+
+  containerListDate: {
+    width: "100%",
+    height: "40%",
+    padding: 4,
+  },
+
+  containerListState: {
+    width: "100%",
+    height: "60%",
     flexDirection: "row",
     justifyContent: "space-evenly",
-    padding: 10,
-    backgroundColor: "rgb(54, 235, 84)",
+    alignItems: "center",
+  },
+
+  stateResult: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 20,
+  },
+
+  colorRun: {
+    height: 20,
+    width: 20,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+
+  pointColorState: {
+    height: 10,
+    width: 10,
     borderRadius: 5,
-    marginTop: 20,
+    marginRight: 10,
+  },
+
+  // [id].tsx run
+
+  containerResult: {
+    height: "100%",
+    width: "100%",
+    padding: 20,
+    alignItems: "center",
+  },
+
+  containerFlatListResultPage: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: gray,
+    height: 80,
+    width: "100%",
+    borderRadius: 10,
+    marginBottom: 20,
+    padding: 20,
   },
 });
+
+// result

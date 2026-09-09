@@ -9,6 +9,10 @@ const MAPPING = {
   "list.bullet.circle.fill": "format-list-bulleted",
   "house.fill": "home",
   "door.french.open": "logout",
+  "repeat.circle.fill": "replay",
+  play: "play-arrow",
+  pause: "pause",
+  "delete.forward": "delete",
 } as Partial<
   Record<
     import("expo-symbols").SymbolViewProps["name"],

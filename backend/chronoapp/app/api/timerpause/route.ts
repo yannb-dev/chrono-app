@@ -15,9 +15,6 @@ export async function POST(req: Request) {
 
   const safeTimerPause = TimerPauseSchema.safeParse(valuePost);
 
-  // ici je dois contrôler que le numéro de seanceId fournit par la requête appartient bien à l'utilisateur
-  // const prisma.seance avec un findUnique where id et userId si response null ne pas envoyer le timerPause.create
-
   if (!safeTimerPause.success) {
     console.error("Erreur de contrôle Zod POST API/TIMERPAUSE");
     return NextResponse.json(

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const SeanceSchema = z.object({
-  totalRunner: z.string().min(1),
+  totalRunner: z.number().int(),
   colorRunner: z.string().min(1),
 });
 

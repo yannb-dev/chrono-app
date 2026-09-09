@@ -45,14 +45,14 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const deleteSession = await prisma.timerRunner.delete({
+    const deleteTimerRunner = await prisma.timerRunner.delete({
       where: {
         id: id,
         userId: userId,
       },
     });
 
-    return NextResponse.json(deleteSession, { status: 200 });
+    return NextResponse.json(deleteTimerRunner, { status: 200 });
   } catch (err) {
     console.error({ err }, { status: 500 });
     return NextResponse.json(

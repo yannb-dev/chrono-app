@@ -16,7 +16,7 @@ export type TimerPause = {
 };
 
 export type SeanceResponse = {
-  totalRunner: string;
+  totalRunner: number;
   colorRunner: string;
   id: string;
   createdAt: Date;

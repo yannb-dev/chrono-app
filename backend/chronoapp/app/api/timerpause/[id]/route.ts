@@ -70,6 +70,7 @@ export async function PATCH(
     const updateTimerPause = await prisma.timerPause.update({
       where: {
         id: id,
+        userId: userId,
       },
       data: {
         endedAt: safeValue.data?.endedAt,

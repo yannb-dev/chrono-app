@@ -7,7 +7,7 @@ Liste de contrôle à parcourir systématiquement au début de chaque revue péd
 ## 1. Sécurité — Ownership (backend)
 
 - [ ] Pour **chaque route** d'un fichier `route.ts` et **chaque verbe HTTP** (GET/POST/PATCH/DELETE), vérifier que le `where` Prisma filtre par `userId` (direct ou via la relation parente). Un pattern correct sur une route (ex: GET/DELETE) ne garantit rien sur les autres routes du même fichier (ex: PATCH) — à vérifier une par une, sans généraliser.
-- [ ] Pour toute route qui **crée une ressource liée à un id fourni par le client** (ex: `seanceId` dans un POST `timerrunner`/`timerpause`), vérifier qu'un contrôle d'ownership de la ressource parente est fait *avant* l'écriture — pas seulement sur les DELETE.
+- [ ] Pour toute route qui **crée une ressource liée à un id fourni par le client** (ex: `seanceId` dans un POST `timerrunner`/`timerpause`), vérifier qu'un contrôle d'ownership de la ressource parente est fait _avant_ l'écriture — pas seulement sur les DELETE.
 - [ ] Vérifier que la session/le token est contrôlé **avant** toute lecture du body (`request.json()`) ou requête Prisma.
 - [ ] Vérifier qu'un `findMany`/`findUnique` sans filtre `userId` n'expose pas les données d'un autre utilisateur.
 
@@ -76,4 +76,4 @@ Liste de contrôle à parcourir systématiquement au début de chaque revue péd
 
 ---
 
-_Constitué à partir des revues : Chrono App (`revue1.md`, 2026-09-01) et des sessions Learning-App (2026-05 → 2026-07, voir `SESSIONS.md`)._
+---
