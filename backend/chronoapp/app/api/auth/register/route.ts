@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   if (!safeData.success) {
     console.error(safeData.error, "Erreur du contrôle Zod sur register");
     return NextResponse.json(
-      { error: safeData.error.flatten() },
+      { message: "Erreur de la validation des données" },
       { status: 400 },
     );
   }
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   });
   if (existingUser) {
     return NextResponse.json(
-      { error: "Cet email est déjà utilisé" },
+      { message: "Cet email est déjà utilisé" },
       { status: 409 },
     );
   }
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
         { status: 201 },
       );
   } catch (error) {
-    console.error("Erreur du fetch API/REGISTER", error);
-    return NextResponse.json({ error: error }, { status: 400 });
+    console.error("Erreur POST API/REGISTER", error);
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

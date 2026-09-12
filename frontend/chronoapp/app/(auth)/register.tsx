@@ -1,10 +1,13 @@
 import { View, TextInput, Pressable, Text } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { API_BASE_URL } from "@/config/api";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import { Stack } from "expo-router";
+
+import { postRegister } from "@/services/api";
+
+import { HttpError, NetworkError, extractErrorMessage } from "@/lib/errors";
 
 import { RegisterSchema } from "@/lib/schema/formRegister";
 
@@ -17,6 +20,24 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [messageConfirm, setMessageConfirm] = useState(false);
   const [error, setError] = useState(false);
+  const [detailError, setDetailError] = useState("");
+
+  useEffect(() => {
+    if (!messageConfirm) return;
+    const timeoutId = setTimeout(() => {
+      router.push("/(auth)/login");
+    }, 3000);
+
+    return () => clearTimeout(timeoutId);
+  }, [messageConfirm]);
+
+  if (messageConfirm) {
+    return (
+      <View style={styles.containerSupRegister}>
+        <Text style={styles.text}>Inscription validée !</Text>
+      </View>
+    );
+  }
 
   const {
     control,
@@ -27,49 +48,35 @@ export default function Register() {
   });
 
   const onSubmit = async (valueForm: RegisterSchema) => {
-    console.log("cliqué");
     setLoading(true);
 
+    //----------------------
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: valueForm.email,
-          password: valueForm.password,
-          confirmPassword: valueForm.confirmPassword,
-        }),
-      });
+      const response = await postRegister(valueForm);
 
-      if (res.status === 201) {
-        setLoading(false);
-        setMessageConfirm(true);
-
-        return;
-      }
+      setMessageConfirm(true);
     } catch (err) {
-      console.error("Erreur du fetch API/REGISTER", err);
+      if (err instanceof HttpError) {
+        setDetailError(extractErrorMessage(err.body));
+      } else if (err instanceof NetworkError) {
+        setDetailError(err.message);
+      } else {
+        console.error("Erreur du fetch API/REGISTER", err);
+        setDetailError("Une erreur inattendue est survenue");
+      }
+
       setError(true);
+    } finally {
+      setLoading(false);
     }
   };
-
-  if (messageConfirm) {
-    const timeoutId = setTimeout(() => {
-      router.push("/(auth)/login");
-    }, 3000);
-
-    return (
-      <View style={styles.containerSupRegister}>
-        <Text style={styles.text}>Inscription validée !</Text>
-      </View>
-    );
-  }
 
   if (error)
     return (
       <View style={styles.container}>
         <View style={styles.containerError}>
           <Text style={styles.text}>Oups, une erreur !</Text>
+          <Text>{detailError}</Text>
           <Pressable onPress={() => setError(false)}>
             <Text style={styles.text}>Réessayer</Text>
           </Pressable>
@@ -98,7 +105,7 @@ export default function Register() {
                 />
               )}
             />
-            {errors.password && (
+            {errors.email && (
               <Text style={[styles.text, { marginBottom: 30, color: "gray" }]}>
                 {errors.email?.message}
               </Text>

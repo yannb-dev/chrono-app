@@ -1,3 +1,8 @@
+export type UserRegister = {
+  id: string;
+  email: string;
+};
+
 export type TimerRunner = {
   id: string;
   numberRunner: number;

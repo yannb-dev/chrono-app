@@ -36,6 +36,7 @@ export default function LoginScreen() {
       const { token } = await res.json();
       await login(token); // le Context s'occupe de SecureStore + state
     } catch (err) {
+      setLoading(false);
       console.error(err);
       setError("Erreur réseau");
     }

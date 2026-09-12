@@ -7,31 +7,51 @@ import { TimerRunnerSchema } from "@/lib/schema/timerRunnerSchema";
 import { PatchChronoSchema } from "@/lib/schema/patchChronoSchema";
 import { PausedChronoSchema } from "@/lib/schema/pausedSchema";
 import { EndedPausedSchema } from "@/lib/schema/endedSchema";
+import { RegisterSchema } from "@/lib/schema/formRegister";
 
 import { TimerRunner } from "@/types/api";
 import { TimerPause } from "@/types/api";
 import { SeanceResponse } from "@/types/api";
+import { HttpError, NetworkError } from "@/lib/errors";
+import { UserRegister } from "@/types/api";
 
 async function apiFetch<T>(
   endpoint: string,
   options?: RequestInit,
 ): Promise<T> {
   const token = await SecureStore.getItemAsync("accessToken");
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 1000);
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options?.headers,
-    },
-    ...options,
-  });
+  let response: Response;
 
-  if (!response.ok) {
-    throw new Error(`Erreur API: ${response.status} ${response.statusText}`);
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options?.headers,
+      },
+      ...options,
+    });
+  } catch (err) {
+    throw new NetworkError("Pas de connexion réseau");
+  } finally {
+    clearTimeout(timeoutId);
   }
 
+  if (!response.ok) throw new HttpError(response.status, await response.json());
+
   return response.json();
+}
+// Register ==================================
+
+export function postRegister(data: RegisterSchema) {
+  return apiFetch<UserRegister>("/api/seance", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
 // Seance ====================================
