@@ -3,6 +3,10 @@ export type UserRegister = {
   email: string;
 };
 
+export type UserLogin = {
+  token: string;
+};
+
 export type TimerRunner = {
   id: string;
   numberRunner: number;

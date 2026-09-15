@@ -2,45 +2,72 @@ import { useState } from "react";
 import { View, TextInput, Text, Pressable } from "react-native";
 import { styles } from "@/lib/styles";
 import { useAuth } from "@/context/AuthContext";
-import { API_BASE_URL } from "@/config/api";
 import { Stack } from "expo-router";
 
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import { router } from "expo-router";
+
+import { postLogin } from "@/services/api";
+
+import { LoginSchema } from "@/lib/schema/formLogin";
+
+import { HttpError, NetworkError, extractErrorMessage } from "@/lib/errors";
 
 import SvgComponent from "@/components/LogoApp";
 import LoadingAnim from "@/components/LoadingAnim";
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+  const [detailError, setDetailError] = useState("");
   const { login } = useAuth();
 
-  const handleLogin = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(LoginSchema),
+  });
 
-      if (!res.ok) {
-        setLoading(false);
-        setError("Identifiants invalides");
-        return;
+  const onSubmit = async (valueForm: LoginSchema) => {
+    setLoading(true);
+
+    try {
+      const response = await postLogin(valueForm);
+
+      await login(response.token); // le Context s'occupe de SecureStore + state
+      router.push("/(tabs)");
+    } catch (err) {
+      if (err instanceof HttpError) {
+        setDetailError(extractErrorMessage(err.body));
+      } else if (err instanceof NetworkError) {
+        setDetailError(err.message);
+      } else {
+        console.error("Erreur du fetch API/REGISTER", err);
+        setDetailError("Une erreur inattendue est survenue");
       }
 
-      const { token } = await res.json();
-      await login(token); // le Context s'occupe de SecureStore + state
-    } catch (err) {
+      setError(true);
+    } finally {
       setLoading(false);
-      console.error(err);
-      setError("Erreur réseau");
     }
   };
+
+  if (error)
+    return (
+      <View style={styles.container}>
+        <View style={styles.containerError}>
+          <Text style={styles.text}>Oups, une erreur !</Text>
+          <Text>{detailError}</Text>
+          <Pressable onPress={() => setError(false)}>
+            <Text style={styles.text}>Réessayer</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
 
   return (
     <View>
@@ -52,24 +79,41 @@ export default function LoginScreen() {
             <SvgComponent />
           </View>
           <View style={styles.containerInput}>
-            <TextInput
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              style={styles.inputEmailLogin}
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur } }) => (
+                <TextInput
+                  placeholder="Email"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  style={styles.inputEmailLogin}
+                />
+              )}
             />
-            <TextInput
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              style={styles.inputPasswordLogin}
-            />
-            {error && (
+            {errors.email && (
               <Text style={[styles.text, { marginBottom: 30, color: "gray" }]}>
-                {error}
+                {errors.email.message}
               </Text>
             )}
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur } }) => (
+                <TextInput
+                  placeholder="Mot de passe"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  style={styles.inputEmailLogin}
+                />
+              )}
+            />
+            {errors.password && (
+              <Text style={[styles.text, { marginBottom: 30, color: "gray" }]}>
+                {errors.password.message}
+              </Text>
+            )}
+
             <Pressable
               style={({ pressed }) => [pressed && styles.btnPressed]}
               onPress={() => router.push("/(auth)/register")}
@@ -83,7 +127,7 @@ export default function LoginScreen() {
                 styles.btnSelect,
                 pressed && styles.btnPressed,
               ]}
-              onPress={handleLogin}
+              onPress={handleSubmit(onSubmit)}
             >
               <Text style={styles.text}>Se connecter</Text>
             </Pressable>

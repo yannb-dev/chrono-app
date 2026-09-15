@@ -20,6 +20,7 @@ export async function POST(req: Request) {
   const existingUser = await prisma.user.findUnique({
     where: { email: safeData.data.email },
   });
+
   if (existingUser) {
     return NextResponse.json(
       { message: "Cet email est déjà utilisé" },

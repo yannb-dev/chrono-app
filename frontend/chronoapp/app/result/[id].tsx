@@ -10,10 +10,12 @@ import { SeanceResponse } from "@/types/api";
 import { styles } from "@/lib/styles";
 import ViewChrono from "@/components/viewChrono";
 import LoadingAnim from "@/components/LoadingAnim";
+import { extractErrorMessage, HttpError, NetworkError } from "@/lib/errors";
 
 export default function Result() {
   const [seance, setSeance] = useState<SeanceResponse>();
   const [error, setError] = useState(false);
+  const [detailError, setDetailError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,12 +26,21 @@ export default function Result() {
     async function fetchSeance() {
       try {
         const data = await getSeanceId(id);
+
         if (!cancelled) {
           setSeance(data);
           setLoading(false);
         }
-      } catch (e) {
-        console.log("Erreur du fetch API/SEANCE/[id]", e);
+      } catch (err) {
+        if (err instanceof HttpError) {
+          setDetailError(extractErrorMessage(err.body));
+        } else if (err instanceof NetworkError) {
+          setDetailError(err.message);
+        } else {
+          console.error("Erreur du fetch API/SEANCE/[id]", err);
+          setDetailError("Une erreur inattendue est survenue");
+        }
+
         if (!cancelled) setError(true);
       } finally {
         if (!cancelled) setLoading(false);
@@ -58,6 +69,7 @@ export default function Result() {
       <View>
         <View>
           <Text style={styles.text}>Oups une erreur !</Text>
+          <Text>{detailError}</Text>
           <Pressable onPress={handleCloseError}>
             <Text style={styles.btnSelect}>Réessayer</Text>
           </Pressable>

@@ -21,12 +21,13 @@ import { TimerPause } from "@/types/api";
 import ViewChrono from "@/components/viewChrono";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import BtnAndList from "@/components/BtnAndList";
+import { extractErrorMessage, HttpError, NetworkError } from "@/lib/errors";
 
 export default function RunPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const [errorFetch, setErrorFetch] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [detailError, setDetailError] = useState("");
 
   const [seanceGet, setSeanceGet] = useState<SeanceResponse>();
 
@@ -51,7 +52,7 @@ export default function RunPage() {
         const data = await getSeanceId(id);
 
         if (!data) {
-          setErrorFetch(true);
+          setError(true);
           return;
         }
 
@@ -75,11 +76,15 @@ export default function RunPage() {
 
           setSeanceGet(data);
         }
-      } catch (e) {
-        console.log("Erreur du fetch API/SEANCE", e);
-        if (!cancelled) setErrorFetch(true);
-      } finally {
-        if (!cancelled) setLoading(false);
+      } catch (err) {
+        if (err instanceof HttpError) {
+          setDetailError(extractErrorMessage(err.body));
+        } else if (err instanceof NetworkError) {
+          setDetailError(err.message);
+        } else {
+          setDetailError("Une erreur inattendue est survenue");
+        }
+        if (!cancelled) setError(true);
       }
     }
 
@@ -136,8 +141,14 @@ export default function RunPage() {
             handleStartChrono(response.startedAt);
           }
         } catch (err) {
-          console.error("Erreur du fetch api/seance", err);
-          setErrorFetch(true);
+          if (err instanceof HttpError) {
+            setDetailError(extractErrorMessage(err.body));
+          } else if (err instanceof NetworkError) {
+            setDetailError(err.message);
+          } else {
+            setDetailError("Une erreur inattendue est survenue");
+          }
+          setError(true);
         }
       }
     } else {
@@ -163,8 +174,15 @@ export default function RunPage() {
             handleStartChrono(seanceGet.startedAt);
           }
         } catch (err) {
-          console.error("Erreur du fetch api/seance", err);
-          setErrorFetch(true);
+          if (err instanceof HttpError) {
+            setDetailError(extractErrorMessage(err.body));
+          } else if (err instanceof NetworkError) {
+            setDetailError(err.message);
+          } else {
+            setDetailError("Une erreur inattendue est survenue");
+          }
+          console.error("Erreur du fetch api/timerpause", err);
+          setError(true);
         }
       }
     }
@@ -200,8 +218,15 @@ export default function RunPage() {
           setReset(true);
         }
       } catch (err) {
-        console.error("Erreur du fetch API/TIMERPAUSE", err);
-        setErrorFetch(true);
+        if (err instanceof HttpError) {
+          setDetailError(extractErrorMessage(err.body));
+        } else if (err instanceof NetworkError) {
+          setDetailError(err.message);
+        } else {
+          setDetailError("Une erreur inattendue est survenue");
+        }
+        console.error("Erreur du fetch api/timerPause", err);
+        setError(true);
       }
     } else {
       console.error("Erreur de validation des données api/seance");
@@ -228,8 +253,15 @@ export default function RunPage() {
         const response = await postTimerPause(safeData.data);
         setTimerPauseInProgress(response);
       } catch (err) {
-        console.error("Erreur du fetch API/SEANCE", err);
-        setErrorFetch(true);
+        if (err instanceof HttpError) {
+          setDetailError(extractErrorMessage(err.body));
+        } else if (err instanceof NetworkError) {
+          setDetailError(err.message);
+        } else {
+          setDetailError("Une erreur inattendue est survenue");
+        }
+        console.error("Erreur du fetch api/timerpause", err);
+        setError(true);
       }
     }
   };
@@ -242,12 +274,13 @@ export default function RunPage() {
     };
   }, []);
 
-  if (errorFetch)
+  if (error)
     return (
       <View style={styles.container}>
         <View style={styles.containerError}>
           <Text style={styles.text}>Oups, une erreur !</Text>
-          <Pressable onPress={() => setErrorFetch(false)}>
+          <Text style={styles.text}>{detailError}</Text>
+          <Pressable onPress={() => setError(false)}>
             <Text style={styles.text}>Réessayer</Text>
           </Pressable>
         </View>

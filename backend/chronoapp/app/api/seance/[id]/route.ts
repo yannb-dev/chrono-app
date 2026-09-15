@@ -1,6 +1,7 @@
 import getUserIdFromRequest from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 import { SeanceUpdateSchema } from "@/lib/schema/seanceSchema";
 
@@ -11,7 +12,7 @@ export async function GET(
   const userId = getUserIdFromRequest(req);
 
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -24,7 +25,7 @@ export async function GET(
     return NextResponse.json(seance, { status: 200 });
   } catch (err) {
     console.error("Erreur du GET API/SEANCE", err);
-    return NextResponse.json({ err }, { status: 500 });
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -35,7 +36,7 @@ export async function DELETE(
   const userId = getUserIdFromRequest(req);
 
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -50,11 +51,17 @@ export async function DELETE(
 
     return NextResponse.json(deleteSeance, { status: 200 });
   } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P2025") {
+        return Response.json(
+          { message: "Séance introuvable" },
+          { status: 404 },
+        );
+      }
+    }
+
     console.error({ err }, { status: 500 });
-    return NextResponse.json(
-      { error: "Erreur DELETE seance" },
-      { status: 500 },
-    );
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -65,7 +72,7 @@ export async function PATCH(
   const userId = getUserIdFromRequest(req);
 
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -81,8 +88,8 @@ export async function PATCH(
 
   if (!safeValuePatch.success) {
     return NextResponse.json(
-      { error: "Erreur du contrôle Zod API/PATCH/SEANCE" },
-      { status: 401 },
+      { message: "Erreur de soumission" },
+      { status: 400 },
     );
   }
 
@@ -94,10 +101,16 @@ export async function PATCH(
 
     return NextResponse.json(udpateSeance, { status: 200 });
   } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P2025") {
+        return Response.json(
+          { message: "Séance introuvable" },
+          { status: 404 },
+        );
+      }
+    }
+
     console.error("Erreur API/PATCH/SEANCE", err);
-    return NextResponse.json(
-      { error: "Erreur PATCH API/SEANCE" },
-      { status: 500 },
-    );
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

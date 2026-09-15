@@ -5,6 +5,7 @@ import { styles } from "@/lib/styles";
 
 import { postTimerRunner } from "@/services/api";
 import { patchSeance } from "@/services/api";
+
 import { PatchChronoSchema } from "@/lib/schema/patchChronoSchema";
 import { TimerRunnerSchema } from "@/lib/schema/timerRunnerSchema";
 
@@ -14,6 +15,7 @@ import { TimerRunner } from "@/types/api";
 import { router } from "expo-router";
 
 import ViewChrono from "./viewChrono";
+import { extractErrorMessage, HttpError, NetworkError } from "@/lib/errors";
 
 type List = {
   number: number;
@@ -27,9 +29,8 @@ type Seance = {
 };
 
 export default function BtnAndList({ seance, reset }: Seance) {
-  const [errorFetch, setErrorFetch] = useState(false);
-
-  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [detailError, setDetailError] = useState("");
   const [arrayResult, setArrayResult] = useState<TimerRunner[]>([]);
   const [arrayNumber, setArrayNumber] = useState<List[]>([]);
 
@@ -98,16 +99,22 @@ export default function BtnAndList({ seance, reset }: Seance) {
           ),
         );
       } catch (err) {
+        if (err instanceof HttpError) {
+          setDetailError(extractErrorMessage(err.body));
+        } else if (err instanceof NetworkError) {
+          setDetailError(err.message);
+        } else {
+          setDetailError("Une erreur inattendue est survenue");
+        }
+
         console.error("Erreur du fetch api/timerrunner", err);
-        setErrorFetch(true);
+        setError(true);
         const timeoutId = setTimeout(() => {
-          setErrorFetch(false);
+          setError(false);
         }, 3000);
       }
     }
   };
-
-  // Changement du status de séance en "finish"
 
   const handleEnded = async (id: string) => {
     const data = {
@@ -120,26 +127,53 @@ export default function BtnAndList({ seance, reset }: Seance) {
       try {
         const response = await patchSeance(safePatch.data, id);
 
-        if (response) router.push("/");
+        router.push("/");
       } catch (err) {
+        if (err instanceof HttpError) {
+          setDetailError(extractErrorMessage(err.body));
+        } else if (err instanceof NetworkError) {
+          setDetailError(err.message);
+        } else {
+          setDetailError(
+            "Une erreur inattendue est survenue ! Le chronomètre est il actif ?",
+          );
+        }
+
         console.error("Erreur du fetch api/seance", err);
-        setErrorFetch(true);
+        setError(true);
       }
     } else {
+      setDetailError("Erreur des valeurs d'entrée");
+      setError(true);
       console.error("Erreur de validation des données fetch api/seance");
     }
   };
+
+  if (error)
+    return (
+      <View style={styles.container}>
+        <View style={styles.containerError}>
+          <Text style={styles.text}>Oups, une erreur !</Text>
+          <Text style={styles.text}>{detailError}</Text>
+          <Pressable onPress={() => setError(false)}>
+            <Text style={styles.text}>Réessayer</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+
   return (
     <View style={styles.container}>
       <View style={styles.containerBtnRunner}>
         {seance && (
-          // component avec btnRunner & ListResult
           <FlatList
             data={arrayNumber}
             numColumns={5}
             keyExtractor={(item) => item.number.toString()}
             renderItem={({ item }) => (
               <Pressable
+                testID={`btn-endRunner-${item.number}`}
+                accessibilityRole="button"
                 disabled={item.state}
                 style={({ pressed }) => [
                   styles.btnRunner,
@@ -157,11 +191,6 @@ export default function BtnAndList({ seance, reset }: Seance) {
           />
         )}
       </View>
-      {errorFetch && (
-        <View style={styles.containerErrorFetchBtnChrono}>
-          <Text style={styles.textError}>Aucun chrono lancé</Text>
-        </View>
-      )}
       <View style={styles.containerListChrono}>
         {arrayResult.length > 0 && (
           <FlatList
@@ -178,6 +207,7 @@ export default function BtnAndList({ seance, reset }: Seance) {
       </View>
       <View style={styles.containerBtnSave}>
         <Pressable
+          testID="btn-ended"
           style={styles.btnSelect}
           onPress={() => handleEnded(seance.id)}
         >

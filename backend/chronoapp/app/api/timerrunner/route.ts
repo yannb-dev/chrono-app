@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const userId = getUserIdFromRequest(req);
 
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
   const valuePost = await req.json();
@@ -17,8 +17,8 @@ export async function POST(req: Request) {
 
   if (!safeTimerRunner.success) {
     return NextResponse.json(
-      { error: "Erreur du contrôle ZOD API/TIMERSESSION" },
-      { status: 401 },
+      { message: "Erreur de soumission" },
+      { status: 400 },
     );
   }
 
@@ -32,8 +32,8 @@ export async function POST(req: Request) {
 
   if (!searchSeance?.startedAt) {
     return NextResponse.json(
-      { error: "Aucune valeurs de départ du chronomètre" },
-      { status: 401 },
+      { message: "Aucune valeurs de départ du chronomètre" },
+      { status: 404 },
     );
   }
 
@@ -63,9 +63,6 @@ export async function POST(req: Request) {
     return NextResponse.json(timerRunner, { status: 201 });
   } catch (err) {
     console.error("Erreur du POST API/TIMERSESSION", err);
-    return NextResponse.json(
-      { error: "Erreur du POST API/TIMERRUNNER" },
-      { status: 500 },
-    );
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

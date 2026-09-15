@@ -3,23 +3,42 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
+import { LoginSchema } from "@/lib/schema/loginSchema";
+
 export async function POST(req: Request) {
-  const { email, password } = await req.json();
+  const value = await req.json();
 
-  const userSearch = await prisma.user.findUnique({
-    where: { email: email },
-  });
+  const safeValue = LoginSchema.safeParse(value);
 
-  if (!userSearch || !(await bcrypt.compare(password, userSearch.password))) {
+  if (!safeValue.success) {
     return NextResponse.json(
-      { error: "Identifications invalides" },
-      { status: 401 },
+      { message: "Format de l'email ou du mot de passe non conformes" },
+      { status: 400 },
     );
   }
 
-  const token = jwt.sign({ userId: userSearch.id }, process.env.JWT_SECRET!, {
-    expiresIn: "7d",
-  });
+  try {
+    const userSearch = await prisma.user.findUnique({
+      where: { email: safeValue.data?.email },
+    });
 
-  return NextResponse.json({ token });
+    if (
+      !userSearch ||
+      !(await bcrypt.compare(safeValue.data.password, userSearch.password))
+    ) {
+      return NextResponse.json(
+        { message: "Identifications invalides" },
+        { status: 401 },
+      );
+    }
+
+    const token = jwt.sign({ userId: userSearch.id }, process.env.JWT_SECRET!, {
+      expiresIn: "7d",
+    });
+
+    return NextResponse.json({ token });
+  } catch (err) {
+    console.error("Erreur du POST API/LOGIN", err);
+    return NextResponse.json({ message: "Erreur Serveur" }, { status: 500 });
+  }
 }

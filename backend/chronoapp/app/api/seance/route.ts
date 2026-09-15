@@ -1,6 +1,7 @@
 import getUserIdFromRequest from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 import { SeanceSchema } from "@/lib/schema/seanceSchema";
 
@@ -8,7 +9,7 @@ export async function GET(req: Request) {
   const userId = getUserIdFromRequest(req);
 
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
+    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
   try {
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
     return NextResponse.json(response, { status: 200 });
   } catch (err) {
     console.error({ err }, { status: 500 });
-    return NextResponse.json({ error: "Erreur POST seance" }, { status: 500 });
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
   const userId = getUserIdFromRequest(req);
 
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
   const seance = await req.json();
@@ -42,8 +43,7 @@ export async function POST(req: Request) {
     );
     return NextResponse.json(
       {
-        error: "Erreur contrôle ZOD API/POST/SEANCE",
-        detail: safeSeance.error.format(),
+        message: "Erreur de soumission",
       },
       { status: 400 },
     );
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     return NextResponse.json(newSeance, { status: 201 });
   } catch (err) {
     console.error({ err }, { status: 500 });
-    return NextResponse.json({ error: "Erreur POST seance" }, { status: 500 });
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -69,22 +69,27 @@ export async function DELETE(req: Request) {
   const userId = getUserIdFromRequest(req);
 
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
   try {
-    const deleteSeance = await prisma.seance.deleteMany({
+    await prisma.seance.deleteMany({
       where: {
         userId: userId,
       },
     });
 
-    return NextResponse.json(deleteSeance, { status: 200 });
+    return NextResponse.json({ status: 204 });
   } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P2025") {
+        return Response.json(
+          { message: "Séance introuvable" },
+          { status: 404 },
+        );
+      }
+    }
     console.error({ err }, { status: 500 });
-    return NextResponse.json(
-      { error: "Erreur DELETE seance" },
-      { status: 500 },
-    );
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

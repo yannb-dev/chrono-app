@@ -6,6 +6,9 @@
       "type": "shell",
       "command": "npm run dev",
       "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}/backend/chronoapp"
+      },
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
@@ -21,6 +24,9 @@
       "type": "shell",
       "command": "npx expo start",
       "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}/frontend/chronoapp"
+      },
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
@@ -50,6 +56,24 @@
       "label": "Testing",
       "type": "shell",
       "command": "npm test",
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}/frontend/chronoapp"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Git",
+      "type": "shell",
+      "command": "git status",
       "isBackground": true,
       "presentation": {
         "reveal": "always",

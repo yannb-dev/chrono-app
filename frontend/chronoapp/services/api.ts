@@ -2,18 +2,22 @@
 import * as SecureStore from "expo-secure-store";
 import { API_BASE_URL } from "@/config/api";
 
+import { router } from "expo-router";
+
 import { FormSchema } from "@/lib/schema/formSchema";
 import { TimerRunnerSchema } from "@/lib/schema/timerRunnerSchema";
 import { PatchChronoSchema } from "@/lib/schema/patchChronoSchema";
 import { PausedChronoSchema } from "@/lib/schema/pausedSchema";
 import { EndedPausedSchema } from "@/lib/schema/endedSchema";
 import { RegisterSchema } from "@/lib/schema/formRegister";
+import { LoginSchema } from "@/lib/schema/formLogin";
 
 import { TimerRunner } from "@/types/api";
 import { TimerPause } from "@/types/api";
 import { SeanceResponse } from "@/types/api";
 import { HttpError, NetworkError } from "@/lib/errors";
 import { UserRegister } from "@/types/api";
+import { UserLogin } from "@/types/api";
 
 async function apiFetch<T>(
   endpoint: string,
@@ -21,7 +25,7 @@ async function apiFetch<T>(
 ): Promise<T> {
   const token = await SecureStore.getItemAsync("accessToken");
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 1000);
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   let response: Response;
 
@@ -41,6 +45,12 @@ async function apiFetch<T>(
     clearTimeout(timeoutId);
   }
 
+  if (response.status === 401) {
+    await SecureStore.deleteItemAsync("token");
+    router.replace("/(auth)/login");
+    throw new HttpError(401, { message: "Session expirée" });
+  }
+
   if (!response.ok) throw new HttpError(response.status, await response.json());
 
   return response.json();
@@ -48,7 +58,16 @@ async function apiFetch<T>(
 // Register ==================================
 
 export function postRegister(data: RegisterSchema) {
-  return apiFetch<UserRegister>("/api/seance", {
+  return apiFetch<UserRegister>("/api/auth/register", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+// Login ======================================
+
+export function postLogin(data: LoginSchema) {
+  return apiFetch<UserLogin>("/api/auth/login", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -83,7 +102,7 @@ export function getSeance() {
 }
 
 export function deleteManySeance() {
-  return apiFetch<SeanceResponse[]>("/api/seance", {
+  return apiFetch("/api/seance", {
     method: "DELETE",
   });
 }

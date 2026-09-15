@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const userId = getUserIdFromRequest(req);
 
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
   const valuePost = await req.json();
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   if (!safeTimerPause.success) {
     console.error("Erreur de contrôle Zod POST API/TIMERPAUSE");
     return NextResponse.json(
-      { error: "Erreur de contrôle Zod POST API/POST/TIMERPAUSE" },
+      { message: "Erreur de soumission" },
       { status: 400 },
     );
   }
@@ -40,15 +40,12 @@ export async function POST(req: Request) {
       return NextResponse.json(newTimerPause, { status: 201 });
     } else {
       return NextResponse.json(
-        { error: "La séance liée n'appartient pas à l'utilisateur" },
-        { status: 500 },
+        { message: "La séance liée n'appartient pas à l'utilisateur" },
+        { status: 403 },
       );
     }
   } catch (err) {
     console.error("Erreur POST timerPause", err);
-    return NextResponse.json(
-      { error: "Erreur POST timerPause" },
-      { status: 500 },
-    );
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -5,6 +5,8 @@ import { styles } from "@/lib/styles";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 
+import { HttpError, NetworkError, extractErrorMessage } from "@/lib/errors";
+
 import { postSeance } from "@/services/api";
 
 import { FormSchema } from "@/lib/schema/formSchema";
@@ -14,7 +16,7 @@ import LoadingAnim from "./LoadingAnim";
 export default function Form() {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [messageError, setMessageError] = useState("");
+  const [detailError, setDetailError] = useState("");
 
   const arrayColor = [
     "rgb(39, 91, 245)",
@@ -45,32 +47,36 @@ export default function Form() {
         router.push(`/run/${response.id}`);
       }
     } catch (err) {
-      console.error("Erreur du fetch depuis form", err);
-      setLoading(false);
-      setMessageError(
-        "Oups une erreur c'est produite lors de l'enregistrement",
-      );
+      if (err instanceof HttpError) {
+        setDetailError(extractErrorMessage(err.body));
+      } else if (err instanceof NetworkError) {
+        setDetailError(err.message);
+      } else {
+        setDetailError("Une erreur inattendue est survenue");
+      }
       setError(true);
+    } finally {
+      setLoading(false);
     }
   };
 
   const onInvalid = (errors: FieldErrors<FormSchema>) => {
-    console.log(errors);
-    setMessageError(
+    setDetailError(
       "Oups ! Une erreur c'est produite à la soumission du formulaire",
     );
     setError(true);
   };
 
   const handleRemoveMessageError = () => {
+    setDetailError("");
     setError(false);
-    setMessageError("");
   };
 
   if (error)
     return (
       <View style={styles.containerError}>
-        <Text style={styles.text}>{messageError}</Text>
+        <Text>Oups une erreur !</Text>
+        <Text style={styles.text}>{detailError}</Text>
         <Pressable style={styles.btnSelect} onPress={handleRemoveMessageError}>
           <Text style={styles.text}>Réessayer</Text>
         </Pressable>
@@ -135,6 +141,7 @@ export default function Form() {
                     keyExtractor={(item) => item}
                     renderItem={({ item }) => (
                       <Pressable
+                        testID={`btncolor-${item}`}
                         onPress={() => onChange(item)}
                         style={() => [
                           styles.selectColor,
@@ -163,6 +170,7 @@ export default function Form() {
           </View>
           <View style={styles.containerValidForm}>
             <Pressable
+              testID="validForm"
               style={({ pressed }) => [
                 styles.btnSelect,
                 pressed && styles.btnPressed,
@@ -171,7 +179,6 @@ export default function Form() {
             >
               <Text style={styles.text}>Créer</Text>
             </Pressable>
-            {error && <Text>Erreur de soumission</Text>}
           </View>
         </View>
       ) : (

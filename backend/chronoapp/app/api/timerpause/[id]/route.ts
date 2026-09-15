@@ -1,6 +1,7 @@
 import getUserIdFromRequest from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 import { TimerPauseSchemaUpdate } from "@/lib/schema/timerPauseSchema";
 
@@ -12,7 +13,7 @@ export async function GET(
   const userId = getUserIdFromRequest(req);
 
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -21,10 +22,10 @@ export async function GET(
       where: { seanceId: id, userId: userId },
     });
 
-    return NextResponse.json(timerPause, { status: 201 });
+    return NextResponse.json(timerPause, { status: 200 });
   } catch (err) {
     console.error("Erreur du POST API/TIMERPAUSE", err);
-    return NextResponse.json({ err }, { status: 500 });
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -35,7 +36,7 @@ export async function PATCH(
   const userId = getUserIdFromRequest(req);
 
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -46,7 +47,7 @@ export async function PATCH(
 
   if (!safeValue.success) {
     return NextResponse.json(
-      { error: "Erreur du contrôle Zod API/PATCH TIMERPAUSE" },
+      { message: "Erreur de soumissions" },
       { status: 401 },
     );
   }
@@ -58,8 +59,8 @@ export async function PATCH(
 
   if (!searchPausedAt) {
     return NextResponse.json(
-      { error: "Aucune valeur de départ de la pause" },
-      { status: 401 },
+      { message: "Aucune pause en cours" },
+      { status: 404 },
     );
   }
 
@@ -78,10 +79,19 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json(updateTimerPause, { status: 201 });
+    return NextResponse.json(updateTimerPause, { status: 200 });
   } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P2025") {
+        return Response.json(
+          { message: "TimerPause introuvable" },
+          { status: 404 },
+        );
+      }
+    }
+
     console.error("Erreur du PATCH API/TIMERPAUSE", err);
-    return NextResponse.json({ err }, { status: 500 });
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -92,7 +102,7 @@ export async function DELETE(
   const userId = getUserIdFromRequest(req);
 
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -101,9 +111,18 @@ export async function DELETE(
       where: { seanceId: id, userId: userId },
     });
 
-    return NextResponse.json(timerPause, { status: 201 });
+    return NextResponse.json({ status: 204 });
   } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P2025") {
+        return Response.json(
+          { message: "TimerPause introuvable" },
+          { status: 404 },
+        );
+      }
+    }
+
     console.error("Erreur du POST API/TIMERPAUSE", err);
-    return NextResponse.json({ err }, { status: 500 });
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -2,15 +2,15 @@
 
 Gestion des erreurs pour les api route => NextResponse.json() avec corrélation front fetch()
 
-- [ ] /login route.ts => login.tsx
-- [ ] /seance route.ts => list.tsx
-- [ ] /seance route.ts => /result [id].tsx
-- [ ] /seance route.ts => /run [id].tsx
-- [ ] /seance route.ts => BtnAndList.tsx
-- [ ] /seance route.ts => form.tsx
-- [ ] /timerRunner route.ts => BtnAndList.tsx
-- [ ] /timerRunner route.ts => /run [id].tsx
-- [ ] /timerPause route.ts => /run [id].tsx
+- [x] /login route.ts => login.tsx + mise en place du React Hook Form afin de valider les valeurs + testing
+- [x] /seance route.ts => list.tsx + testing
+- [x] /seance route.ts => /result [id].tsx + testing
+- [x] /seance route.ts => /run [id].tsx + testing
+- [x] /seance route.ts => BtnAndList.tsx + testing
+- [x] /seance route.ts => form.tsx
+- [x] /timerRunner route.ts => BtnAndList.tsx
+- [x] /timerRunner route.ts => /run [id].tsx
+- [x] /timerPause route.ts => /run [id].tsx
 
 #
 

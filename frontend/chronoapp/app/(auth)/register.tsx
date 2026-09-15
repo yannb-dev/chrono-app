@@ -52,7 +52,7 @@ export default function Register() {
 
     //----------------------
     try {
-      const response = await postRegister(valueForm);
+      await postRegister(valueForm);
 
       setMessageConfirm(true);
     } catch (err) {

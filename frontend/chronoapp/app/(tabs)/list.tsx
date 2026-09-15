@@ -6,10 +6,13 @@ import { router } from "expo-router";
 import { getSeance } from "@/services/api";
 import { deleteManySeance } from "@/services/api";
 
+import { HttpError, NetworkError, extractErrorMessage } from "@/lib/errors";
+
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 
 import { SeanceResponse } from "@/types/api";
+
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import SvgComponent from "@/components/LogoApp";
 import LoadingAnim from "@/components/LoadingAnim";
@@ -20,6 +23,7 @@ import { fr } from "date-fns/locale";
 export default function DetailScreen() {
   const [list, setList] = useState<SeanceResponse[]>([]);
   const [error, setError] = useState(false);
+  const [detailError, setDetailError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const initListPage = () => {
@@ -28,9 +32,17 @@ export default function DetailScreen() {
     async function fetchSeance() {
       try {
         const data = await getSeance();
+
         if (!cancelled) setList(data);
-      } catch (e) {
-        console.log("Erreur du fetch API/SEANCE", e);
+      } catch (err) {
+        if (err instanceof HttpError) {
+          setDetailError(extractErrorMessage(err.body));
+        } else if (err instanceof NetworkError) {
+          setDetailError(err.message);
+        } else {
+          console.error("Erreur du fetch API/REGISTER", err);
+          setDetailError("Une erreur inattendue est survenue");
+        }
         if (!cancelled) setError(true);
       } finally {
         if (!cancelled) setLoading(false);
@@ -61,6 +73,7 @@ export default function DetailScreen() {
       <View>
         <View>
           <Text style={styles.text}>Oups une erreur !</Text>
+          <Text style={styles.text}>{detailError}</Text>
           <Pressable onPress={handleCloseError}>
             <Text style={styles.btnSelect}>Réessayer</Text>
           </Pressable>
@@ -90,8 +103,17 @@ export default function DetailScreen() {
         setList([]);
       }
     } catch (err) {
-      console.error("Erreur du fetch DELETE api/seance", err);
+      if (err instanceof HttpError) {
+        setDetailError(extractErrorMessage(err.body));
+      } else if (err instanceof NetworkError) {
+        setDetailError(err.message);
+      } else {
+        console.error("Erreur du fetch API/REGISTER", err);
+        setDetailError("Une erreur inattendue est survenue");
+      }
       setError(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -106,7 +128,7 @@ export default function DetailScreen() {
               <SvgComponent />
             </View>
             <View style={styles.containerDeleteList}>
-              <Pressable onPress={handleDelete}>
+              <Pressable testID="delete-seance" onPress={handleDelete}>
                 <IconSymbol name={"delete.forward"} />
               </Pressable>
             </View>
