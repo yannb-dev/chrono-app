@@ -22,6 +22,13 @@ export async function GET(
       include: { timerRunners: true, timerpauses: true },
     });
 
+    if (!seance) {
+      return NextResponse.json(
+        { message: "Aucune séance trouvée" },
+        { status: 404 },
+      );
+    }
+
     return NextResponse.json(seance, { status: 200 });
   } catch (err) {
     console.error("Erreur du GET API/SEANCE", err);

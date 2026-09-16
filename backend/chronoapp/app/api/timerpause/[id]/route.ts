@@ -48,7 +48,7 @@ export async function PATCH(
   if (!safeValue.success) {
     return NextResponse.json(
       { message: "Erreur de soumissions" },
-      { status: 401 },
+      { status: 400 },
     );
   }
 

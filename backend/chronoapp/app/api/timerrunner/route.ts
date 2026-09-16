@@ -32,7 +32,7 @@ export async function POST(req: Request) {
 
   if (!searchSeance?.startedAt) {
     return NextResponse.json(
-      { message: "Aucune valeurs de départ du chronomètre" },
+      { message: "Le chronomètre n'est pas actif" },
       { status: 404 },
     );
   }
