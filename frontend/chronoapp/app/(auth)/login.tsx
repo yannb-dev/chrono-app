@@ -22,6 +22,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [detailError, setDetailError] = useState("");
+  const [bruteForce, setBruteForce] = useState(false);
   const { login } = useAuth();
 
   const {
@@ -38,11 +39,17 @@ export default function LoginScreen() {
     try {
       const response = await postLogin(valueForm);
 
-      await login(response.token); // le Context s'occupe de SecureStore + state
+      await login(response.token);
       router.push("/(tabs)");
     } catch (err) {
       if (err instanceof HttpError) {
-        setDetailError(extractErrorMessage(err.body));
+        if (err.status === 429) {
+          setDetailError(
+            "Tentative de connexion trop nombreuses, veuillez patienter",
+          );
+        } else {
+          setDetailError(extractErrorMessage(err.body));
+        }
       } else if (err instanceof NetworkError) {
         setDetailError(err.message);
       } else {
@@ -58,13 +65,22 @@ export default function LoginScreen() {
 
   if (error)
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { justifyContent: "center" }]}>
         <View style={styles.containerError}>
           <Text style={styles.text}>Oups, une erreur !</Text>
-          <Text>{detailError}</Text>
-          <Pressable onPress={() => setError(false)}>
+          <Text style={styles.text}>{detailError}</Text>
+          <Pressable style={styles.btnSelect} onPress={() => setError(false)}>
             <Text style={styles.text}>Réessayer</Text>
           </Pressable>
+        </View>
+      </View>
+    );
+
+  if (bruteForce)
+    return (
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <View style={styles.containerError}>
+          <Text style={styles.text}>{detailError}</Text>
         </View>
       </View>
     );

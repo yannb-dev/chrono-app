@@ -4,7 +4,7 @@ import {
   fireEvent,
   cleanup,
 } from "@testing-library/react-native";
-import Register from "./register";
+import Register from "@/app/(auth)/register";
 import { postRegister } from "@/services/api";
 import { HttpError, NetworkError } from "@/lib/errors";
 

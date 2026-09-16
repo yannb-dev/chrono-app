@@ -6,7 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react-native";
 
-import Form from "./form";
+import Form from "@/components/form";
 
 import { postSeance } from "@/services/api";
 

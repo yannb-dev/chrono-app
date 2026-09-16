@@ -134,9 +134,7 @@ export default function BtnAndList({ seance, reset }: Seance) {
         } else if (err instanceof NetworkError) {
           setDetailError(err.message);
         } else {
-          setDetailError(
-            "Une erreur inattendue est survenue ! Le chronomètre est il actif ?",
-          );
+          setDetailError("Une erreur inattendue est survenue !");
         }
 
         console.error("Erreur du fetch api/seance", err);
@@ -154,10 +152,10 @@ export default function BtnAndList({ seance, reset }: Seance) {
       <View style={styles.container}>
         <View style={styles.containerError}>
           <Text style={styles.text}>Oups, une erreur !</Text>
-          <Text style={styles.text}>{detailError}</Text>
-          <Pressable onPress={() => setError(false)}>
-            <Text style={styles.text}>Réessayer</Text>
-          </Pressable>
+          <Text style={[styles.text, { textAlign: "center" }]}>
+            {detailError}
+          </Text>
+          <Pressable onPress={() => setError(false)}></Pressable>
         </View>
       </View>
     );

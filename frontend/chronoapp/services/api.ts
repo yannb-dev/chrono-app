@@ -40,6 +40,7 @@ async function apiFetch<T>(
       ...options,
     });
   } catch (err) {
+    console.error(err);
     throw new NetworkError("Pas de connexion réseau");
   } finally {
     clearTimeout(timeoutId);

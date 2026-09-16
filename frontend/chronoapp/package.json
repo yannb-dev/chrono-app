@@ -24,6 +24,7 @@
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
+    "@upstash/redis": "^1.38.4",
     "date-fns": "^4.4.0",
     "expo": "^57.0.0",
     "expo-auth-session": "~57.0.11",

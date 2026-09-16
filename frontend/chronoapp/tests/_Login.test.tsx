@@ -4,7 +4,7 @@ import {
   fireEvent,
   cleanup,
 } from "@testing-library/react-native";
-import LoginScreen from "./login";
+import LoginScreen from "@/app/(auth)/login";
 import { postLogin } from "@/services/api";
 import { HttpError, NetworkError } from "@/lib/errors";
 

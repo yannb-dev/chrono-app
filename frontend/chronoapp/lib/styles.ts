@@ -49,7 +49,7 @@ export const styles = StyleSheet.create({
   },
 
   containerError: {
-    height: "50%",
+    height: "30%",
     width: "90%",
     padding: 10,
     backgroundColor: gray,
@@ -123,6 +123,7 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 600,
     fontFamily: "Orbitron-Regular",
+    marginTop: 30,
   },
 
   // register page
@@ -287,8 +288,8 @@ export const styles = StyleSheet.create({
   },
 
   containerListChrono: {
-    height: "20%",
-    marginTop: 40,
+    height: "15%",
+    marginTop: 8,
   },
 
   containerBtnSave: {

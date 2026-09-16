@@ -1,6 +1,5 @@
 import { render, cleanup, waitFor } from "@testing-library/react-native";
-
-import BtnAndList from "./BtnAndList";
+import BtnAndList from "@/components/BtnAndList";
 
 jest.mock("expo-router", () => ({
   router: { push: jest.fn() },
