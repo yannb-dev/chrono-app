@@ -71,12 +71,20 @@ export default function Register() {
     }
   };
 
+  if (messageConfirm) {
+    return (
+      <View style={styles.containerSupRegister}>
+        <Text style={styles.text}>Inscription validée !</Text>
+      </View>
+    );
+  }
+
   if (error)
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
         <View style={styles.containerError}>
           <Text style={styles.text}>Oups, une erreur !</Text>
-          <Text>{detailError}</Text>
+          <Text style={styles.text}>{detailError}</Text>
           <Pressable onPress={() => setError(false)}>
             <Text style={styles.text}>Réessayer</Text>
           </Pressable>

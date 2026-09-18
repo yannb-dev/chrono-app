@@ -40,6 +40,7 @@ export default function LoginScreen() {
       const response = await postLogin(valueForm);
 
       await login(response.token);
+
       router.push("/(tabs)");
     } catch (err) {
       if (err instanceof HttpError) {
@@ -128,7 +129,7 @@ export default function LoginScreen() {
               style={({ pressed }) => [pressed && styles.btnPressed]}
               onPress={() => router.push("/(auth)/register")}
             >
-              <Text style={styles.btnRegister}>S'inscrire</Text>
+              <Text style={styles.text}>S'inscrire</Text>
             </Pressable>
           </View>
           <View style={styles.containerBtnLogin}>
