@@ -11,6 +11,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.yanndev181steam.chronoapp",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -41,11 +42,19 @@
       "expo-secure-store",
       "expo-font",
       "expo-image",
-      "expo-status-bar"
+      "expo-status-bar",
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f9f25c68-b0f6-41fc-b5f2-6c124d089af0"
+      }
+    },
+    "owner": "yanndev181s-team"
   }
 }
