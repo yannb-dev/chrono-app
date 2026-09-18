@@ -2,10 +2,10 @@ import { StyleSheet } from "react-native";
 
 const rose = "rgb(240,76,139)";
 const green = "rgb(139,241,77)";
-const blue = "rgb(76,139,240)";
 const black = "rgb(38,8,21)";
-const gray = "rgb(212,212,212)";
+const gray = "#d4d4d4";
 const white = "rgb(240,240,240)";
+const grayDark = "#575656";
 
 export const styles = StyleSheet.create({
   // all page
@@ -107,13 +107,13 @@ export const styles = StyleSheet.create({
 
   inputEmailLogin: {
     width: "100%",
-    borderBottomColor: gray,
+    borderBottomColor: grayDark,
     borderBottomWidth: 1,
   },
 
   inputPasswordLogin: {
     width: "100%",
-    borderBottomColor: gray,
+    borderBottomColor: grayDark,
     borderBottomWidth: 1,
     marginBottom: 30,
   },
@@ -374,6 +374,10 @@ export const styles = StyleSheet.create({
     width: 10,
     borderRadius: 5,
     marginRight: 10,
+  },
+
+  btntrashPressed: {
+    transform: [{ scale: 1.1 }],
   },
 
   // [id].tsx run

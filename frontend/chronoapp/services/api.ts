@@ -31,13 +31,13 @@ async function apiFetch<T>(
 
   try {
     response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
       signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options?.headers,
       },
-      ...options,
     });
   } catch (err) {
     console.error(err);
@@ -47,7 +47,7 @@ async function apiFetch<T>(
   }
 
   if (response.status === 401) {
-    await SecureStore.deleteItemAsync("token");
+    await SecureStore.deleteItemAsync("accessToken");
     router.replace("/(auth)/login");
     throw new HttpError(401, { message: "Session expirée" });
   }

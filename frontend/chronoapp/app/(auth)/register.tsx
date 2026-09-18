@@ -73,7 +73,7 @@ export default function Register() {
 
   if (error)
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { justifyContent: "center" }]}>
         <View style={styles.containerError}>
           <Text style={styles.text}>Oups, une erreur !</Text>
           <Text>{detailError}</Text>
@@ -99,6 +99,7 @@ export default function Register() {
               render={({ field: { onChange, onBlur } }) => (
                 <TextInput
                   placeholder="Email"
+                  placeholderTextColor="#575656"
                   onBlur={onBlur}
                   onChangeText={onChange}
                   style={styles.inputEmailLogin}
@@ -116,6 +117,7 @@ export default function Register() {
               render={({ field: { onChange, onBlur } }) => (
                 <TextInput
                   placeholder="Mot de passe"
+                  placeholderTextColor="#575656"
                   onBlur={onBlur}
                   onChangeText={onChange}
                   secureTextEntry
@@ -134,6 +136,7 @@ export default function Register() {
               render={({ field: { onChange, onBlur } }) => (
                 <TextInput
                   placeholder="Confirmer le mot de passe"
+                  placeholderTextColor="#575656"
                   onBlur={onBlur}
                   onChangeText={onChange}
                   secureTextEntry

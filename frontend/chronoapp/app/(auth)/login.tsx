@@ -22,7 +22,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [detailError, setDetailError] = useState("");
-  const [bruteForce, setBruteForce] = useState(false);
+
   const { login } = useAuth();
 
   const {
@@ -76,15 +76,6 @@ export default function LoginScreen() {
       </View>
     );
 
-  if (bruteForce)
-    return (
-      <View style={[styles.container, { justifyContent: "center" }]}>
-        <View style={styles.containerError}>
-          <Text style={styles.text}>{detailError}</Text>
-        </View>
-      </View>
-    );
-
   return (
     <View>
       <Stack.Screen options={{ headerShown: false }} />
@@ -101,6 +92,7 @@ export default function LoginScreen() {
               render={({ field: { onChange, onBlur } }) => (
                 <TextInput
                   placeholder="Email"
+                  placeholderTextColor="#575656"
                   onBlur={onBlur}
                   onChangeText={onChange}
                   style={styles.inputEmailLogin}
@@ -118,6 +110,8 @@ export default function LoginScreen() {
               render={({ field: { onChange, onBlur } }) => (
                 <TextInput
                   placeholder="Mot de passe"
+                  placeholderTextColor="#575656"
+                  secureTextEntry
                   onBlur={onBlur}
                   onChangeText={onChange}
                   style={styles.inputEmailLogin}

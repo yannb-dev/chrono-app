@@ -128,7 +128,11 @@ export default function DetailScreen() {
               <SvgComponent />
             </View>
             <View style={styles.containerDeleteList}>
-              <Pressable testID="delete-seance" onPress={handleDelete}>
+              <Pressable
+                style={({ pressed }) => [pressed && styles.btntrashPressed]}
+                testID="delete-seance"
+                onPress={handleDelete}
+              >
                 <IconSymbol name={"delete.forward"} />
               </Pressable>
             </View>
