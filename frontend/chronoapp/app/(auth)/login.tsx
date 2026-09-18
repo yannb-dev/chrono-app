@@ -129,7 +129,7 @@ export default function LoginScreen() {
               style={({ pressed }) => [pressed && styles.btnPressed]}
               onPress={() => router.push("/(auth)/register")}
             >
-              <Text style={styles.text}>S'inscrire</Text>
+              <Text style={[styles.text, { marginTop: 30 }]}>S'inscrire</Text>
             </Pressable>
           </View>
           <View style={styles.containerBtnLogin}>

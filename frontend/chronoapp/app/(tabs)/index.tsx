@@ -1,7 +1,6 @@
 import { View, Text, Pressable } from "react-native";
 import { styles } from "@/lib/styles";
 import { router } from "expo-router";
-import * as Sentry from "@sentry/react-native";
 
 import { IconSymbol } from "@/components/ui/IconSymbol";
 
@@ -35,13 +34,6 @@ export default function HomeScreen() {
           }
         >
           <Text style={styles.text}>New</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => {
-            Sentry.captureException(new Error("First error"));
-          }}
-        >
-          <Text>Test Senty</Text>
         </Pressable>
       </View>
     </View>

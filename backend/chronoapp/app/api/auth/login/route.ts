@@ -15,6 +15,7 @@ export async function POST(req: Request) {
   const identifier = `${ip}:${value.email}`;
 
   const { success, remaining, reset } = await loginRateLimit.limit(identifier);
+  console.log("RATE LIMIT DEBUG:", { identifier, success, remaining, reset });
 
   if (!success) {
     return Response.json(
