@@ -26,6 +26,7 @@ async function apiFetch<T>(
   const token = await SecureStore.getItemAsync("accessToken");
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const isAuthEndpoint = endpoint.startsWith("/api/auth/");
 
   let response: Response;
 
@@ -46,7 +47,7 @@ async function apiFetch<T>(
     clearTimeout(timeoutId);
   }
 
-  if (response.status === 401) {
+  if (response.status === 401 && !isAuthEndpoint) {
     await SecureStore.deleteItemAsync("accessToken");
     router.replace("/(auth)/login");
     throw new HttpError(401, { message: "Session expirée" });

@@ -54,7 +54,7 @@ export default function LoginScreen() {
       } else if (err instanceof NetworkError) {
         setDetailError(err.message);
       } else {
-        console.error("Erreur du fetch API/REGISTER", err);
+        console.error("Erreur du fetch API/LOGIN", err);
         setDetailError("Une erreur inattendue est survenue");
       }
 
