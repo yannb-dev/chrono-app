@@ -109,6 +109,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     borderBottomColor: grayDark,
     borderBottomWidth: 1,
+    color: grayDark,
   },
 
   inputPasswordLogin: {
@@ -116,6 +117,7 @@ export const styles = StyleSheet.create({
     borderBottomColor: grayDark,
     borderBottomWidth: 1,
     marginBottom: 30,
+    color: grayDark,
   },
 
   btnRegister: {

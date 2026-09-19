@@ -126,7 +126,9 @@ export default function LoginScreen() {
             )}
 
             <Pressable
-              style={({ pressed }) => [pressed && styles.btnPressed]}
+              style={({ pressed }) => [
+                pressed && { transform: [{ scale: 1.2 }] },
+              ]}
               onPress={() => router.push("/(auth)/register")}
             >
               <Text style={[styles.text, { marginTop: 30 }]}>S'inscrire</Text>

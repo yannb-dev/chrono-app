@@ -22,6 +22,14 @@ export default function Register() {
   const [error, setError] = useState(false);
   const [detailError, setDetailError] = useState("");
 
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(RegisterSchema),
+  });
+
   useEffect(() => {
     if (!messageConfirm) return;
     const timeoutId = setTimeout(() => {
@@ -30,22 +38,6 @@ export default function Register() {
 
     return () => clearTimeout(timeoutId);
   }, [messageConfirm]);
-
-  if (messageConfirm) {
-    return (
-      <View style={styles.containerSupRegister}>
-        <Text style={styles.text}>Inscription validée !</Text>
-      </View>
-    );
-  }
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(RegisterSchema),
-  });
 
   const onSubmit = async (valueForm: RegisterSchema) => {
     setLoading(true);
@@ -85,7 +77,7 @@ export default function Register() {
         <View style={styles.containerError}>
           <Text style={styles.text}>Oups, une erreur !</Text>
           <Text style={styles.text}>{detailError}</Text>
-          <Pressable onPress={() => setError(false)}>
+          <Pressable style={styles.btnSelect} onPress={() => setError(false)}>
             <Text style={styles.text}>Réessayer</Text>
           </Pressable>
         </View>
