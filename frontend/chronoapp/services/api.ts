@@ -79,7 +79,7 @@ export function postLogin(data: LoginSchema) {
 // ResetPassword===============================
 
 export function postResetPassword(data: ResetPasswordSchema) {
-  return apiFetch("/api/auth/resetpassword", {
+  return apiFetch("/api/auth/passwordresettoken", {
     method: "POST",
     body: JSON.stringify(data),
   });

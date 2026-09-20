@@ -52,7 +52,7 @@ export default function PasswordReset() {
       } else if (err instanceof NetworkError) {
         setDetailError(err.message);
       } else {
-        console.error("Erreur du fetch API/REGISTER", err);
+        console.error("Erreur du fetch API/PASSWORDRESETTOKEN", err);
         setDetailError("Une erreur inattendue est survenue");
       }
 
@@ -85,7 +85,9 @@ export default function PasswordReset() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen
+        options={{ headerShown: true, headerTitle: "Réinitialisation" }}
+      />
       {loading ? (
         <LoadingAnim />
       ) : (

@@ -86,7 +86,13 @@ export default function Register() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerBackVisible: true,
+          headerTitle: "S'inscrire",
+        }}
+      />
       {loading ? (
         <LoadingAnim />
       ) : (

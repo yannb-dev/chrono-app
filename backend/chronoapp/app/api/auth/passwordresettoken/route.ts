@@ -42,13 +42,17 @@ export async function POST(req: Request) {
 
       sendVerificationEmail(existingUser?.email, hashedToken);
     }
+
+    return Response.json({
+      message: "Si un compte existe, un email de réinitialisation a été envoyé",
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2025") {
-        return Response.json(
-          { message: "Aucun compte n'exite pour cette adresse mail" },
-          { status: 404 },
-        );
+        return Response.json({
+          message:
+            "Si un compte existe, un email de réinitialisation a été envoyé",
+        });
       }
     }
     console.error("Erreur POST API/REGISTER", error);
