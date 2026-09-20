@@ -11,6 +11,7 @@ import { PausedChronoSchema } from "@/lib/schema/pausedSchema";
 import { EndedPausedSchema } from "@/lib/schema/endedSchema";
 import { RegisterSchema } from "@/lib/schema/formRegister";
 import { LoginSchema } from "@/lib/schema/formLogin";
+import { ResetPasswordSchema } from "@/lib/schema/registerPasswordReset";
 
 import { TimerRunner } from "@/types/api";
 import { TimerPause } from "@/types/api";
@@ -70,6 +71,15 @@ export function postRegister(data: RegisterSchema) {
 
 export function postLogin(data: LoginSchema) {
   return apiFetch<UserLogin>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+// ResetPassword===============================
+
+export function postResetPassword(data: ResetPasswordSchema) {
+  return apiFetch("/api/auth/resetpassword", {
     method: "POST",
     body: JSON.stringify(data),
   });

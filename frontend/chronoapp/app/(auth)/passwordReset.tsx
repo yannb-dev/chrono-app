@@ -1,0 +1,129 @@
+import { View, TextInput, Pressable, Text } from "react-native";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
+import { router } from "expo-router";
+import { Stack } from "expo-router";
+
+import { ResetPasswordSchema } from "@/lib/schema/registerPasswordReset";
+import { postResetPassword } from "@/services/api";
+
+import { HttpError, NetworkError, extractErrorMessage } from "@/lib/errors";
+
+import { styles } from "@/lib/styles";
+
+import SvgComponent from "@/components/LogoApp";
+import LoadingAnim from "@/components/LoadingAnim";
+
+export default function PasswordReset() {
+  const [loading, setLoading] = useState(false);
+  const [messageConfirm, setMessageConfirm] = useState(false);
+  const [error, setError] = useState(false);
+  const [detailError, setDetailError] = useState("");
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(ResetPasswordSchema),
+  });
+
+  useEffect(() => {
+    if (!messageConfirm) return;
+    const timeoutId = setTimeout(() => {
+      router.push("/(auth)/login");
+    }, 3000);
+
+    return () => clearTimeout(timeoutId);
+  }, [messageConfirm]);
+
+  const onSubmit = async (valueForm: ResetPasswordSchema) => {
+    setLoading(true);
+
+    //----------------------
+    try {
+      await postResetPassword(valueForm);
+
+      setMessageConfirm(true);
+    } catch (err) {
+      if (err instanceof HttpError) {
+        setDetailError(extractErrorMessage(err.body));
+      } else if (err instanceof NetworkError) {
+        setDetailError(err.message);
+      } else {
+        console.error("Erreur du fetch API/REGISTER", err);
+        setDetailError("Une erreur inattendue est survenue");
+      }
+
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (messageConfirm) {
+    return (
+      <View style={styles.containerSupRegister}>
+        <Text style={styles.text}>Email envoyé à l'adresse saisie !</Text>
+      </View>
+    );
+  }
+
+  if (error)
+    return (
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <View style={styles.containerError}>
+          <Text style={styles.text}>Oups, une erreur !</Text>
+          <Text style={styles.text}>{detailError}</Text>
+          <Pressable style={styles.btnSelect} onPress={() => setError(false)}>
+            <Text style={styles.text}>Réessayer</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+
+  return (
+    <View style={styles.container}>
+      <Stack.Screen options={{ headerShown: false }} />
+      {loading ? (
+        <LoadingAnim />
+      ) : (
+        <View style={styles.containerSupRegister}>
+          <SvgComponent />
+          <View style={styles.containerInput}>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur } }) => (
+                <TextInput
+                  placeholder="Email"
+                  placeholderTextColor="#575656"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  style={styles.inputEmailLogin}
+                />
+              )}
+            />
+            {errors.email && (
+              <Text style={[styles.text, { marginBottom: 30, color: "gray" }]}>
+                {errors.email?.message}
+              </Text>
+            )}
+          </View>
+          <View style={styles.containerBtnLogin}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.btnSelect,
+                pressed && styles.btnPressed,
+              ]}
+              onPress={handleSubmit(onSubmit)}
+            >
+              <Text style={styles.text}>Réinitialiser</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}

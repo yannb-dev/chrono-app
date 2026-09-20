@@ -133,6 +133,16 @@ export default function LoginScreen() {
             >
               <Text style={[styles.text, { marginTop: 30 }]}>S'inscrire</Text>
             </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                pressed && { transform: [{ scale: 1.2 }] },
+              ]}
+              onPress={() => router.push("/(auth)/passwordReset")}
+            >
+              <Text style={[styles.text, { marginTop: 20, fontSize: 10 }]}>
+                Mot de passe oublié
+              </Text>
+            </Pressable>
           </View>
           <View style={styles.containerBtnLogin}>
             <Pressable

@@ -20,6 +20,17 @@ model User {
   name      String?
   image     String?
   seances   Seance[]
+  passwordResetTokens PasswordResetToken[]
+  createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  usedAt    DateTime?
   createdAt DateTime @default(now())
 }
 
