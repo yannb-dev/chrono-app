@@ -1,7 +1,7 @@
 // lib/mail.ts
 import { Resend } from "resend";
 
-const resend = new Resend("re_GnpVyWxy_MrMf3gKmgWYcbS2xTw7uQZJh");
+const resend = new Resend(process.env.RESEND_TOKEN);
 
 export async function sendVerificationEmail(toEmail: string, token: string) {
   const verifyUrl = `${process.env.APP_URL}/passwordreset?token=${token}`;
