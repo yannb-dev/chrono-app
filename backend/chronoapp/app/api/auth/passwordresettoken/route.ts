@@ -12,6 +12,12 @@ export async function POST(req: Request) {
 
   const safeData = ResetPasswordSchema.safeParse(data);
 
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
+
   if (!safeData.success) {
     console.error(safeData.error, "Erreur du contrôle Zod sur resetpassword");
     return NextResponse.json(
@@ -21,40 +27,29 @@ export async function POST(req: Request) {
   }
 
   try {
-    const rawToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(rawToken)
-      .digest("hex");
-
     const existingUser = await prisma.user.findUnique({
       where: { email: safeData.data.email },
     });
 
     if (existingUser) {
-      await prisma.passwordResetToken.create({
-        data: {
-          tokenHash: hashedToken,
-          userId: existingUser.id,
-          expiresAt: new Date(Date.now() + 30 * 60 * 1000),
-        },
-      });
-
-      sendVerificationEmail(existingUser?.email, hashedToken);
+      try {
+        await prisma.passwordResetToken.create({
+          data: {
+            tokenHash: hashedToken,
+            userId: existingUser.id,
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+          },
+        });
+        await sendVerificationEmail(existingUser?.email, hashedToken);
+      } catch (error) {
+        console.error("Echec de l'envoi de mail ou du create", error);
+      }
     }
 
     return Response.json({
       message: "Si un compte existe, un email de réinitialisation a été envoyé",
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
-        return Response.json({
-          message:
-            "Si un compte existe, un email de réinitialisation a été envoyé",
-        });
-      }
-    }
     console.error("Erreur POST API/REGISTER", error);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
