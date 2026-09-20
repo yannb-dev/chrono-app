@@ -17,6 +17,7 @@ export async function sendVerificationEmail(toEmail: string, token: string) {
       <p>Ce lien expire dans 1h.</p>
     `,
   });
+  console.log(data, error, "mail.ts");
 
   if (error) {
     throw new Error("Échec de l'envoi de l'email : " + error.message);
