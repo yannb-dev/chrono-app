@@ -1,11 +1,13 @@
 // app/api/auth/register/route.ts
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
 import { ResetPasswordSchema } from "@/lib/schema/resetPasswordSchema";
 import { sendVerificationEmail } from "@/lib/mail";
+import { NewPasswordEmailSchema } from "@/lib/schema/newPasswordSchema";
 
 export async function POST(req: Request) {
   const data = await req.json();
@@ -40,7 +42,7 @@ export async function POST(req: Request) {
             expiresAt: new Date(Date.now() + 30 * 60 * 1000),
           },
         });
-        await sendVerificationEmail(existingUser?.email, hashedToken);
+        await sendVerificationEmail(existingUser?.email, rawToken);
       } catch (error) {
         console.error("Echec de l'envoi de mail ou du create", error);
       }
@@ -51,6 +53,72 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("Erreur POST API/REGISTER", error);
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: Request) {
+  const valuePatch = await req.json();
+
+  const safeValue = NewPasswordEmailSchema.safeParse(valuePatch);
+
+  if (!safeValue.success) {
+    return NextResponse.json(
+      { message: "Erreur de soumissions" },
+      { status: 400 },
+    );
+  }
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(safeValue.data.token)
+    .digest("hex");
+
+  try {
+    const searchPasswordResetToken = await prisma.passwordResetToken.findUnique(
+      {
+        where: { tokenHash: hashedToken },
+      },
+    );
+
+    if (searchPasswordResetToken) {
+      if (searchPasswordResetToken.usedAt)
+        return NextResponse.json({ message: "Lien invalide ou expiré" });
+
+      const now = new Date();
+      const expiresAt = new Date(searchPasswordResetToken?.expiresAt);
+
+      if (now > expiresAt) {
+        return NextResponse.json({ message: "Lien invalide ou expiré" });
+      } else {
+        const hashedPassword = await bcrypt.hash(
+          safeValue.data.newpassword,
+          10,
+        );
+
+        await prisma.user.update({
+          where: { id: searchPasswordResetToken?.userId },
+          data: { password: hashedPassword },
+        });
+
+        await prisma.passwordResetToken.update({
+          where: { tokenHash: hashedToken },
+          data: { usedAt: new Date() },
+        });
+
+        return NextResponse.json(
+          { message: "Mot de passe changé" },
+          { status: 200 },
+        );
+      }
+    }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025") {
+        return Response.json({ message: "Lien invalide ou expiré" });
+      }
+    }
+    console.error("Erreur du PATCH API/PASSWORRESETTOKEN", error);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

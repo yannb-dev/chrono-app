@@ -11,10 +11,14 @@ export async function sendVerificationEmail(toEmail: string, token: string) {
     to: "yannblondeaudev@gmail.com",
     subject: "Confirme ton adresse email",
     html: `
-      <p>Bonjour,</p>
-      <p>Clique sur le lien ci-dessous pour confirmer ton compte :</p>
-      <a href="${verifyUrl}">Confirmer mon email</a>
-      <p>Ce lien expire dans 1h.</p>
+    <div style="max-width: 480px; margin: 0 auto; padding: 24px; text-align: center; font-family: Arial, sans-serif;">
+      <p>Bonjour, vous souhaitez réinitialiser votre mot de passe ChronoAPP</p>
+      <p>Cliquez sur le lien ci-dessous pour lancer la procédure :</p>
+      <a href="${verifyUrl}" style="display: inline-block; padding: 10px 20px; border-radius: 3px; background-color: gray; color: black; text-decoration: none;">
+    Réinitialiser
+      </a>
+    <p>Ce lien expire dans 1h.</p>
+    </div>
     `,
   });
   console.log(data, error, "mail.ts");
