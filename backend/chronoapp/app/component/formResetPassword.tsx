@@ -63,18 +63,20 @@ export default function FormResetPassword({ token }: { token: string }) {
 
   if (loading) {
     return (
-      <div className="h-100 w-100 relative flex items-center justify-center">
-        <div className="h-50 w-50 absolute top-0 left-0 flex items-start justify-center animate-spin">
-          <div className="h-4 w-4 rounded-[50%] bg-gray-300"></div>
-        </div>
+      <div className="h-100 w-100 flex flex-col items-center justify-evenly animate-spin">
+        <div className="h-4 w-4 rounded-[50%] bg-gray-900"></div>
+        <div className="h-4 w-4 rounded-[50%] bg-gray-900"></div>
       </div>
     );
   }
 
   if (messageConfirmValid) {
     return (
-      <div className="h-[40%] w-200 flex justify-center items-center p-10 rounded-4 bg-gray-400">
+      <div className="h-[40%] w-40 flex justify-center items-center p-10 rounded-sm bg-gray-400">
         <p>Mot de passe changé !</p>
+        <p className="mt-4">
+          Vous pouvez fermer cet onglet et vous connecter sur votre application
+        </p>
       </div>
     );
   }

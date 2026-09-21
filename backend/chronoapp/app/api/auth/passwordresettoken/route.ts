@@ -82,43 +82,55 @@ export async function PATCH(req: Request) {
       },
     );
 
-    if (searchPasswordResetToken) {
-      if (searchPasswordResetToken.usedAt) {
-        return NextResponse.json({ message: "Lien invalide ou expiré" });
-      }
-
-      const now = new Date();
-      const expiresAt = new Date(searchPasswordResetToken?.expiresAt);
-
-      if (now > expiresAt) {
-        console.error("Lien expiré");
-        return NextResponse.json({ message: "Lien invalide ou expiré" });
-      } else {
-        const hashedPassword = await bcrypt.hash(
-          safeValue.data.newPassword,
-          10,
-        );
-
-        const updateUser = await prisma.user.update({
-          where: { id: searchPasswordResetToken?.userId },
-          data: { password: hashedPassword },
-        });
-
-        const updateToken = await prisma.passwordResetToken.update({
-          where: { tokenHash: hashedToken },
-          data: { usedAt: new Date() },
-        });
-
-        return NextResponse.json(
-          { message: "Mot de passe changé" },
-          { status: 200 },
-        );
-      }
+    if (!searchPasswordResetToken) {
+      return NextResponse.json(
+        { message: "Lien invalide ou expiré" },
+        { status: 400 },
+      );
     }
+
+    if (searchPasswordResetToken.usedAt) {
+      return NextResponse.json(
+        { message: "Lien invalide ou expiré" },
+        { status: 400 },
+      );
+    }
+
+    const now = new Date();
+    const expiresAt = new Date(searchPasswordResetToken?.expiresAt);
+
+    if (now > expiresAt) {
+      return NextResponse.json(
+        { message: "Lien invalide ou expiré" },
+        { status: 400 },
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(safeValue.data.newPassword, 10);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: searchPasswordResetToken.userId },
+        data: { password: hashedPassword },
+      });
+
+      await tx.passwordResetToken.update({
+        where: { tokenHash: hashedToken },
+        data: { usedAt: new Date() },
+      });
+    });
+
+    return NextResponse.json(
+      { message: "Mot de passe changé" },
+      { status: 200 },
+    );
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2025") {
-        return Response.json({ message: "Lien invalide ou expiré" });
+        return NextResponse.json(
+          { message: "Lien invalide ou expiré" },
+          { status: 400 },
+        );
       }
     }
     console.error("Erreur du PATCH API/PASSWORRESETTOKEN", error);
