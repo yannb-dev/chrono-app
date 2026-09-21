@@ -24,7 +24,7 @@ export default function FormResetPassword({ token }: { token: string }) {
     setLoading(true);
 
     try {
-      await fetch("/api/auth/passwordresettoken", {
+      const response = await fetch("/api/auth/passwordresettoken", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -33,6 +33,10 @@ export default function FormResetPassword({ token }: { token: string }) {
         }),
       });
 
+      if (!response.ok) {
+        const body = await response.json();
+        throw new HttpError(response.status, body);
+      }
       setLoading(false);
       setMessageConfirmValid(true);
     } catch (error) {
@@ -72,7 +76,7 @@ export default function FormResetPassword({ token }: { token: string }) {
 
   if (messageConfirmValid) {
     return (
-      <div className="h-[40%] w-40 flex justify-center items-center p-10 rounded-sm bg-gray-400">
+      <div className="h-[40%] w-200 flex justify-center items-center p-10 rounded-sm bg-gray-400">
         <p>Mot de passe changé !</p>
         <p className="mt-4">
           Vous pouvez fermer cet onglet et vous connecter sur votre application
