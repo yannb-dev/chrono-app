@@ -59,6 +59,7 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   const valuePatch = await req.json();
+  console.log(valuePatch);
 
   const safeValue = NewPasswordEmailSchema.safeParse(valuePatch);
 
