@@ -59,7 +59,6 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   const valuePatch = await req.json();
-  console.log(valuePatch);
 
   const safeValue = NewPasswordPatchSchema.safeParse(valuePatch);
 
@@ -82,6 +81,8 @@ export async function PATCH(req: Request) {
         where: { tokenHash: hashedToken },
       },
     );
+    //
+    console.log(searchPasswordResetToken);
 
     if (searchPasswordResetToken) {
       if (searchPasswordResetToken.usedAt)
@@ -91,6 +92,8 @@ export async function PATCH(req: Request) {
       const expiresAt = new Date(searchPasswordResetToken?.expiresAt);
 
       if (now > expiresAt) {
+        //
+        console.error("Lien expiré");
         return NextResponse.json({ message: "Lien invalide ou expiré" });
       } else {
         const hashedPassword = await bcrypt.hash(
@@ -98,15 +101,17 @@ export async function PATCH(req: Request) {
           10,
         );
 
-        await prisma.user.update({
+        const updateUser = await prisma.user.update({
           where: { id: searchPasswordResetToken?.userId },
           data: { password: hashedPassword },
         });
 
-        await prisma.passwordResetToken.update({
+        const updateToken = await prisma.passwordResetToken.update({
           where: { tokenHash: hashedToken },
           data: { usedAt: new Date() },
         });
+
+        console.log(updateToken, "token", updateUser, "user");
 
         return NextResponse.json(
           { message: "Mot de passe changé" },
