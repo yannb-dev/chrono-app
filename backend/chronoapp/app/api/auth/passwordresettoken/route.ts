@@ -81,18 +81,16 @@ export async function PATCH(req: Request) {
         where: { tokenHash: hashedToken },
       },
     );
-    //
-    console.log(searchPasswordResetToken);
 
     if (searchPasswordResetToken) {
-      if (searchPasswordResetToken.usedAt)
+      if (searchPasswordResetToken.usedAt) {
         return NextResponse.json({ message: "Lien invalide ou expiré" });
+      }
 
       const now = new Date();
       const expiresAt = new Date(searchPasswordResetToken?.expiresAt);
 
       if (now > expiresAt) {
-        //
         console.error("Lien expiré");
         return NextResponse.json({ message: "Lien invalide ou expiré" });
       } else {
@@ -110,8 +108,6 @@ export async function PATCH(req: Request) {
           where: { tokenHash: hashedToken },
           data: { usedAt: new Date() },
         });
-
-        console.log(updateToken, "token", updateUser, "user");
 
         return NextResponse.json(
           { message: "Mot de passe changé" },

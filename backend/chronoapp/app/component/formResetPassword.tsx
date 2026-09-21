@@ -3,11 +3,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { NewPasswordSchema } from "@/lib/schema/newPasswordSchema";
 import { useState } from "react";
-import Image from "next/image";
+
+import { NetworkError, HttpError, extractErrorMessage } from "@/lib/errors";
 
 export default function FormResetPassword({ token }: { token: string }) {
   const [messageConfirmValid, setMessageConfirmValid] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
+  const [error, setError] = useState(false);
 
   const {
     register,
@@ -21,7 +24,7 @@ export default function FormResetPassword({ token }: { token: string }) {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/passwordresettoken", {
+      await fetch("/api/auth/passwordresettoken", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -30,35 +33,37 @@ export default function FormResetPassword({ token }: { token: string }) {
         }),
       });
 
-      const data = await response.json();
-
-      if (data.status === 200) {
-        setLoading(false);
-        setMessageConfirmValid(true);
-      }
-    } catch (error) {
       setLoading(false);
-
+      setMessageConfirmValid(true);
+    } catch (error) {
       console.error("Erreur du fetch passwordReset", error);
-      return (
-        <div className="h-screen w-full flex flex-col justify-center items-center font-mono">
-          <div className="h-30 w-120 flex justify-center items-center p-10 rounded-4 bg-gray-400">
-            <p>Oups une erreur est survenue</p>
-          </div>
-        </div>
-      );
+      if (error instanceof HttpError) {
+        setDetailError(extractErrorMessage(error.body));
+      } else if (error instanceof NetworkError) {
+        setDetailError(error.message);
+      } else {
+        setDetailError("Une erreur inattendue est survenue");
+      }
+      setError(true);
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (error) {
+    return (
+      <div className="h-screen w-full flex flex-col justify-center items-center font-mono">
+        <div className="h-30 w-120 flex justify-center items-center p-10 rounded-4 bg-gray-400">
+          <p>Oups une erreur est survenue</p>
+          <p>{detailError}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
       <div className="h-100 w-100 relative flex items-center justify-center">
-        <Image
-          src="/images/android-icon-foreground.png"
-          alt="Logo de l'application"
-          width={70}
-          height={70}
-        />
         <div className="h-50 w-50 absolute top-0 left-0 flex items-start justify-center animate-spin">
           <div className="h-4 w-4 rounded-[50%] bg-gray-300"></div>
         </div>
@@ -98,7 +103,7 @@ export default function FormResetPassword({ token }: { token: string }) {
         />
         {errors.confirmPassword && <p>{errors.confirmPassword.message}</p>}
         <button
-          className="w-60 p-2 rounded-sm bg-green-500 mt-10"
+          className="w-60 p-2 rounded-sm bg-green-500 mt-10 hover:"
           type="submit"
         >
           Valider
