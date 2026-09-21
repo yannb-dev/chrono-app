@@ -57,7 +57,7 @@ export default function FormResetPassword({ token }: { token: string }) {
   if (error) {
     return (
       <div className="h-screen w-full flex flex-col justify-center items-center font-mono">
-        <div className="h-30 w-120 flex justify-center items-center p-10 rounded-4 bg-gray-400">
+        <div className="h-30 w-200 flex flex-col justify-center items-center p-10 rounded-xl bg-gray-400">
           <p>Oups une erreur est survenue</p>
           <p>{detailError}</p>
         </div>
@@ -76,7 +76,7 @@ export default function FormResetPassword({ token }: { token: string }) {
 
   if (messageConfirmValid) {
     return (
-      <div className="h-[40%] w-200 flex justify-center items-center p-10 rounded-sm bg-gray-400">
+      <div className="h-100 w-200 flex flex-col justify-center items-center p-10 rounded-xl bg-gray-400">
         <p>Mot de passe changé !</p>
         <p className="mt-4">
           Vous pouvez fermer cet onglet et vous connecter sur votre application

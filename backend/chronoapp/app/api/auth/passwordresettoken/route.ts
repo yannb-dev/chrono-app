@@ -9,8 +9,29 @@ import { ResetPasswordSchema } from "@/lib/schema/resetPasswordSchema";
 import { sendVerificationEmail } from "@/lib/mail";
 import { NewPasswordPatchSchema } from "@/lib/schema/newPasswordSchema";
 
+import { resetPasswordRateLimit } from "@/lib/rateLimit";
+
 export async function POST(req: Request) {
   const data = await req.json();
+
+  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
+  const identifier = `${ip}:${data.email}`;
+
+  const { success, remaining, reset } =
+    await resetPasswordRateLimit.limit(identifier);
+  console.log("RATE LIMIT DEBUG:", { identifier, success, remaining, reset });
+
+  if (!success) {
+    return Response.json(
+      { error: "Trop de tentatives. Réessaie plus tard." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)),
+        },
+      },
+    );
+  }
 
   const safeData = ResetPasswordSchema.safeParse(data);
 

@@ -18,8 +18,8 @@ export async function POST(req: Request) {
   console.log("RATE LIMIT DEBUG:", { identifier, success, remaining, reset });
 
   if (!success) {
-    return Response.json(
-      { error: "Trop de tentatives. Réessaie plus tard." },
+    return NextResponse.json(
+      { message: "Trop de tentatives. Réessaie plus tard." },
       {
         status: 429,
         headers: {
