@@ -63,6 +63,7 @@ export async function PATCH(req: Request) {
   const safeValue = NewPasswordEmailSchema.safeParse(valuePatch);
 
   if (!safeValue.success) {
+    console.error(safeValue.error, "Erreur de validation zod");
     return NextResponse.json(
       { message: "Erreur de soumissions" },
       { status: 400 },
