@@ -7,7 +7,7 @@ import { Prisma } from "@prisma/client";
 
 import { ResetPasswordSchema } from "@/lib/schema/resetPasswordSchema";
 import { sendVerificationEmail } from "@/lib/mail";
-import { NewPasswordEmailSchema } from "@/lib/schema/newPasswordSchema";
+import { NewPasswordPatchSchema } from "@/lib/schema/newPasswordSchema";
 
 export async function POST(req: Request) {
   const data = await req.json();
@@ -61,7 +61,7 @@ export async function PATCH(req: Request) {
   const valuePatch = await req.json();
   console.log(valuePatch);
 
-  const safeValue = NewPasswordEmailSchema.safeParse(valuePatch);
+  const safeValue = NewPasswordPatchSchema.safeParse(valuePatch);
 
   if (!safeValue.success) {
     console.error(safeValue.error, "Erreur de validation zod");
@@ -94,7 +94,7 @@ export async function PATCH(req: Request) {
         return NextResponse.json({ message: "Lien invalide ou expiré" });
       } else {
         const hashedPassword = await bcrypt.hash(
-          safeValue.data.newpassword,
+          safeValue.data.newPassword,
           10,
         );
 

@@ -19,8 +19,8 @@ export const NewPasswordSchema = z
 
 export type NewPasswordSchema = z.infer<typeof NewPasswordSchema>;
 
-export const NewPasswordEmailSchema = z.object({
-  newpassword: z
+export const NewPasswordPatchSchema = z.object({
+  newPassword: z
     .string()
     .min(8, "8 caractères minimum")
     .max(72, "72 caractères maximum")
@@ -31,4 +31,4 @@ export const NewPasswordEmailSchema = z.object({
   token: z.string(),
 });
 
-export type NewPasswordEmailSchema = z.infer<typeof NewPasswordEmailSchema>;
+export type NewPasswordPatchSchema = z.infer<typeof NewPasswordPatchSchema>;
