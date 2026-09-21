@@ -12,7 +12,7 @@ export default async function passwordReset({
 
   if (!token)
     return (
-      <div className="h-screen w-full flex justify-center items-center font-mono">
+      <div className="h-screen w-full flex flex-col justify-center items-center font-mono">
         <Image
           src="/images/android-icon-foreground.png"
           alt="Logo de l'application"
