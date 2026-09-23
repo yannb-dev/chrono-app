@@ -7,7 +7,7 @@ export async function sendVerificationEmail(toEmail: string, token: string) {
   const verifyUrl = `${process.env.APP_URL}/?token=${token}`;
 
   const { data, error } = await resend.emails.send({
-    from: "onboarding@resend.dev", // ajouter un nom de domaine pour la prod
+    from: "ChronoAppSport <noreply@chronoappsport.fr>",
     to: toEmail,
     subject: "Réinitialisation de mot de passe",
     html: `
