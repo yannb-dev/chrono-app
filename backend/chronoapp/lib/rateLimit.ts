@@ -4,14 +4,20 @@ import { Redis } from "@upstash/redis";
 
 const redis = Redis.fromEnv();
 
-export const loginRateLimit = new Ratelimit({
+export const loginRateLimitIP = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(5, "60 s"),
-  prefix: "ratelimit:login",
+  prefix: "ratelimit:loginIP",
 });
 
-export const resetPasswordRateLimit = new Ratelimit({
+export const loginRateLimitEmail = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "60 s"),
+  prefix: "ratelimit:loginEMAIL",
+});
+
+export const resetPasswordRateLimitIpEmail = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(3, "60 s"),
-  prefix: "ratelimit:login",
+  prefix: "ratelimit:loginPassword",
 });

@@ -3,37 +3,39 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
-import { loginRateLimit } from "@/lib/rateLimit";
+import { loginRateLimitIP } from "@/lib/rateLimit";
+import { loginRateLimitEmail } from "@/lib/rateLimit";
 
 import { LoginSchema } from "@/lib/schema/loginSchema";
 
 export async function POST(req: Request) {
   const value = await req.json();
 
-  // Clé = combinaison IP + email pour limiter les deux axes d'attaque
-  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
-  const identifier = `${ip}:${value.email}`;
-
-  const { success, remaining, reset } = await loginRateLimit.limit(identifier);
-  console.log("RATE LIMIT DEBUG:", { identifier, success, remaining, reset });
-
-  if (!success) {
-    return NextResponse.json(
-      { message: "Trop de tentatives. Réessaie plus tard." },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)),
-        },
-      },
-    );
-  }
   const safeValue = LoginSchema.safeParse(value);
 
   if (!safeValue.success) {
     return NextResponse.json(
       { message: "Format de l'email ou du mot de passe non conformes" },
       { status: 400 },
+    );
+  }
+
+  const ip =
+    req.headers.get("x-forwarded-for") ||
+    req.headers.get("x-rel-ip") ||
+    "unknown";
+
+  const IpCheck = await loginRateLimitIP.limit(ip);
+  const EmailCheck = await loginRateLimitEmail.limit(
+    safeValue.data.email.trim().toLowerCase(),
+  );
+
+  if (!IpCheck.success || !EmailCheck.success) {
+    return NextResponse.json(
+      { message: "Trop de tentatives Ip. Réessaie plus tard." },
+      {
+        status: 429,
+      },
     );
   }
 
