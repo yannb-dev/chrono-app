@@ -45,9 +45,7 @@ export default function LoginScreen() {
     } catch (err) {
       if (err instanceof HttpError) {
         if (err.status === 429) {
-          setDetailError(
-            "Tentative de connexion trop nombreuses, veuillez patienter",
-          );
+          setDetailError(extractErrorMessage(err.body));
         } else {
           setDetailError(extractErrorMessage(err.body));
         }
