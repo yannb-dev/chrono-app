@@ -21,3 +21,15 @@ export const resetPasswordRateLimitIpEmail = new Ratelimit({
   limiter: Ratelimit.slidingWindow(3, "60 s"),
   prefix: "ratelimit:loginPassword",
 });
+
+export const registerRateLimitEmail = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(1, "600 s"),
+  prefix: "ratelimit:loginEMAIL",
+});
+
+export const registerRateLimitIp = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(1, "600 s"),
+  prefix: "ratelimit:loginEMAIL",
+});
