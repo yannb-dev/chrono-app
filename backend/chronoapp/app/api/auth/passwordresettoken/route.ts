@@ -56,12 +56,18 @@ export async function POST(req: Request) {
 
     if (existingUser) {
       try {
-        await prisma.passwordResetToken.create({
-          data: {
-            tokenHash: hashedToken,
-            userId: existingUser.id,
-            expiresAt: new Date(Date.now() + 30 * 60 * 1000),
-          },
+        await prisma.$transaction(async (tx) => {
+          await tx.passwordResetToken.deleteMany({
+            where: { userId: existingUser.id, usedAt: null },
+          });
+
+          await tx.passwordResetToken.create({
+            data: {
+              tokenHash: hashedToken,
+              userId: existingUser.id,
+              expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+            },
+          });
         });
         sendVerificationEmail(existingUser.email, rawToken);
       } catch (error) {
