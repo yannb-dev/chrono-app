@@ -63,7 +63,7 @@ export async function POST(req: Request) {
             expiresAt: new Date(Date.now() + 30 * 60 * 1000),
           },
         });
-        await sendVerificationEmail(existingUser?.email, rawToken);
+        sendVerificationEmail(existingUser.email, rawToken);
       } catch (error) {
         console.error("Echec de l'envoi de mail ou du create", error);
       }

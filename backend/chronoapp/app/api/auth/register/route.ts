@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 import { RegisterSchema } from "@/lib/schema/registerSchema";
+import { registerRateLimitEmail } from "@/lib/rateLimit";
+import { registerRateLimitIp } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   const data = await req.json();
@@ -17,13 +19,33 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
+
+  const ip =
+    req.headers.get("x-forwarded-for") ||
+    req.headers.get("x-rel-ip") ||
+    "unknown";
+
+  const IpCheck = await registerRateLimitIp.limit(ip);
+  const EmailCheck = await registerRateLimitEmail.limit(
+    safeData.data.email.trim().toLowerCase(),
+  );
+
+  if (!IpCheck.success || !EmailCheck.success) {
+    return NextResponse.json(
+      { message: "Trop de tentatives. Réessaie plus tard." },
+      {
+        status: 429,
+      },
+    );
+  }
+
   const existingUser = await prisma.user.findUnique({
     where: { email: safeData.data.email },
   });
 
   if (existingUser) {
     return NextResponse.json(
-      { message: "Cet email est déjà utilisé" },
+      { message: "Si un compte existe vérifiez vos emails" },
       { status: 409 },
     );
   }

@@ -32,7 +32,7 @@ export async function POST(req: Request) {
 
   if (!IpCheck.success || !EmailCheck.success) {
     return NextResponse.json(
-      { message: "Trop de tentatives Ip. Réessaie plus tard." },
+      { message: "Trop de tentatives. Réessaie plus tard." },
       {
         status: 429,
       },
@@ -44,10 +44,19 @@ export async function POST(req: Request) {
       where: { email: safeValue.data?.email },
     });
 
-    if (
-      !userSearch ||
-      !(await bcrypt.compare(safeValue.data.password, userSearch.password))
-    ) {
+    if (!userSearch) {
+      return NextResponse.json(
+        { message: "Identifications invalides" },
+        { status: 401 },
+      );
+    }
+
+    const verif = await bcrypt.compare(
+      safeValue.data.password,
+      userSearch.password,
+    );
+
+    if (!verif) {
       return NextResponse.json(
         { message: "Identifications invalides" },
         { status: 401 },
