@@ -1,9 +1,19 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import FormResetPassword from "./component/formResetPassword";
 import Image from "next/image";
 
+type token = string | null;
+
 export default async function passwordReset() {
-  const hash = window.location.hash;
-  const token = new URLSearchParams(hash.slice(1)).get("token");
+  const [token, setToken] = useState<token>();
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    setToken(new URLSearchParams(hash.slice(1)).get("token"));
+    // ...
+  }, []);
 
   if (token) {
     history.replaceState(null, "", window.location.pathname);
