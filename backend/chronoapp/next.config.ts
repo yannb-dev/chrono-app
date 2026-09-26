@@ -6,7 +6,17 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/",
-        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors 'none';",
+          },
+        ],
       },
     ];
   },
