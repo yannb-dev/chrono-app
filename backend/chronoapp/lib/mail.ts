@@ -21,7 +21,6 @@ export async function sendVerificationEmail(toEmail: string, token: string) {
     </div>
     `,
   });
-  console.log(data, error, "mail.ts");
 
   if (error) {
     throw new Error("Échec de l'envoi de l'email : " + error.message);
