@@ -1,14 +1,20 @@
+import { useEffect, useState } from "react";
 import FormResetPassword from "./component/formResetPassword";
 import Image from "next/image";
 
-type SearchParams = Promise<{ [key: string]: string | undefined }>;
+type token = string | null;
 
-export default async function passwordReset({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const { token } = await searchParams;
+export default async function passwordReset() {
+  const [token, setToken] = useState<token>();
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    setToken(new URLSearchParams(hash.slice(1)).get("token"));
+
+    if (token) {
+      history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
 
   if (!token)
     return (
