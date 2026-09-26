@@ -1,8 +1,5 @@
-import { useEffect, useState } from "react";
 import FormResetPassword from "./component/formResetPassword";
 import Image from "next/image";
-
-type token = string | null;
 
 export default async function passwordReset() {
   const hash = window.location.hash;
