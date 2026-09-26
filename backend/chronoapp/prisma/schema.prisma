@@ -19,6 +19,7 @@ model User {
   password  String   @unique 
   name      String?
   image     String?
+  tokenVersion Int @default(0)
   seances   Seance[]
   passwordResetTokens PasswordResetToken[]
   createdAt DateTime @default(now())
