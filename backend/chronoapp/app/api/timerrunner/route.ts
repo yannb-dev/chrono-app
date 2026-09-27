@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { TimerRunnerSchema } from "@/lib/schema/timerrunnerSchema";
 
 export async function POST(req: Request) {
-  const userId = getUserIdFromRequest(req);
+  const userId = await getUserIdFromRequest(req);
 
   if (!userId) {
     return NextResponse.json({ message: "Non autorisé" }, { status: 401 });

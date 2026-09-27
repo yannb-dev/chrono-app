@@ -138,7 +138,7 @@ export async function PATCH(req: Request) {
     await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: searchPasswordResetToken.userId },
-        data: { password: hashedPassword },
+        data: { password: hashedPassword, tokenVersion: { increment: 1 } },
       });
 
       await tx.passwordResetToken.update({
