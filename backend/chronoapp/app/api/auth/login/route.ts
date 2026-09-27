@@ -9,7 +9,7 @@ import { loginRateLimitEmail } from "@/lib/rateLimit";
 import { LoginSchema } from "@/lib/schema/loginSchema";
 
 export async function POST(req: Request) {
-  const value = await req.json();
+  const value = await req.json().catch(() => null);
 
   const safeValue = LoginSchema.safeParse(value);
 

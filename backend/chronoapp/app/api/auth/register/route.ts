@@ -8,7 +8,7 @@ import { registerRateLimitEmail } from "@/lib/rateLimit";
 import { registerRateLimitIp } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
-  const data = await req.json();
+  const data = await req.json().catch(() => null);
 
   const safeData = RegisterSchema.safeParse(data);
 

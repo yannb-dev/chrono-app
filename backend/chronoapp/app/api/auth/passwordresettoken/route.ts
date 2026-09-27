@@ -12,7 +12,7 @@ import { NewPasswordPatchSchema } from "@/lib/schema/newPasswordSchema";
 import { resetPasswordRateLimitIpEmail } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
-  const data = await req.json();
+  const data = await req.json().catch(() => null);
 
   const safeData = ResetPasswordSchema.safeParse(data);
 
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const valuePatch = await req.json();
+  const valuePatch = await req.json().catch(() => null);
 
   const safeValue = NewPasswordPatchSchema.safeParse(valuePatch);
 

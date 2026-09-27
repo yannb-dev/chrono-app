@@ -41,7 +41,7 @@ export async function PATCH(
 
   const { id } = await params;
 
-  const valuePatch = await req.json();
+  const valuePatch = await req.json().catch(() => null);
 
   const safeValue = TimerPauseSchemaUpdate.safeParse(valuePatch);
 

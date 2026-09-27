@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
-  const valuePost = await req.json();
+  const valuePost = await req.json().catch(() => null);
 
   const safeTimerRunner = TimerRunnerSchema.safeParse(valuePost);
 

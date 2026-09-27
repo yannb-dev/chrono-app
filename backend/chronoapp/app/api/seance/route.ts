@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
-  const seance = await req.json();
+  const seance = await req.json().catch(() => null);
 
   const safeSeance = SeanceSchema.safeParse(seance);
 
