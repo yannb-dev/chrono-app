@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { View, Text, Pressable } from "react-native";
 import { useLocalSearchParams, Stack } from "expo-router";
+import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 
 import { styles } from "@/lib/styles";
 
@@ -78,6 +80,10 @@ export default function RunPage() {
         }
       } catch (err) {
         if (err instanceof HttpError) {
+          if (err.status === 401) {
+            await SecureStore.deleteItemAsync("accessToken");
+            router.replace("/login");
+          }
           setDetailError(extractErrorMessage(err.body));
         } else if (err instanceof NetworkError) {
           setDetailError(err.message);
