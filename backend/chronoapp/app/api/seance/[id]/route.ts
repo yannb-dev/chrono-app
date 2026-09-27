@@ -9,13 +9,14 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = getUserIdFromRequest(req);
+  const userId = await getUserIdFromRequest(req);
 
   if (!userId) {
     return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
   const { id } = await params;
+
   try {
     const seance = await prisma.seance.findUnique({
       where: { id: id, userId: userId },
@@ -40,7 +41,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = getUserIdFromRequest(req);
+  const userId = await getUserIdFromRequest(req);
 
   if (!userId) {
     return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
@@ -76,7 +77,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = getUserIdFromRequest(req);
+  const userId = await getUserIdFromRequest(req);
 
   if (!userId) {
     return NextResponse.json({ message: "Non autorisé" }, { status: 401 });

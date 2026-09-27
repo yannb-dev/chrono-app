@@ -6,7 +6,7 @@ import { Prisma } from "@prisma/client";
 import { SeanceSchema } from "@/lib/schema/seanceSchema";
 
 export async function GET(req: Request) {
-  const userId = getUserIdFromRequest(req);
+  const userId = await getUserIdFromRequest(req);
 
   if (!userId) {
     return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const userId = getUserIdFromRequest(req);
+  const userId = await getUserIdFromRequest(req);
 
   if (!userId) {
     return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const userId = getUserIdFromRequest(req);
+  const userId = await getUserIdFromRequest(req);
 
   if (!userId) {
     return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
