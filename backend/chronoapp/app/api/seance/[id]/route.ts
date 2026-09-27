@@ -85,7 +85,7 @@ export async function PATCH(
 
   const { id } = await params;
 
-  const valuePatch = await req.json();
+  const valuePatch = await req.json().catch(() => null);
 
   const patchSchema = SeanceUpdateSchema.partial().refine(
     (data) => Object.keys(data).length > 0,
