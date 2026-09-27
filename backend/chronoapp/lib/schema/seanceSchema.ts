@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const SeanceSchema = z.object({
-  totalRunner: z.number().int(),
-  colorRunner: z.string().min(1),
+  totalRunner: z.number().int().min(1).max(40),
+  colorRunner: z.string().min(1).max(20),
 });
 
 export type SeanceSchema = z.infer<typeof SeanceSchema>;
