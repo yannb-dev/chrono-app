@@ -13,6 +13,7 @@ import { SeanceResponse } from "@/types/api";
 import { TimerRunner } from "@/types/api";
 
 import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 
 import ViewChrono from "./viewChrono";
 import { extractErrorMessage, HttpError, NetworkError } from "@/lib/errors";
@@ -100,6 +101,10 @@ export default function BtnAndList({ seance, reset }: Seance) {
         );
       } catch (err) {
         if (err instanceof HttpError) {
+          if (err.status === 401) {
+            await SecureStore.deleteItemAsync("accessToken");
+            router.replace("/login");
+          }
           setDetailError(extractErrorMessage(err.body));
         } else if (err instanceof NetworkError) {
           setDetailError(err.message);

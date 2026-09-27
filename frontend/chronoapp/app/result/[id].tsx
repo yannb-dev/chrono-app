@@ -2,6 +2,8 @@ import { View, Text, FlatList, Pressable } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useState, useEffect } from "react";
 import { Stack } from "expo-router";
+import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 
 import { getSeanceId } from "@/services/api";
 
@@ -33,6 +35,10 @@ export default function Result() {
         }
       } catch (err) {
         if (err instanceof HttpError) {
+          if (err.status === 401) {
+            await SecureStore.deleteItemAsync("accessToken");
+            router.replace("/login");
+          }
           setDetailError(extractErrorMessage(err.body));
         } else if (err instanceof NetworkError) {
           setDetailError(err.message);

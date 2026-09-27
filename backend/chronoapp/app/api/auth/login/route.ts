@@ -63,9 +63,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const token = jwt.sign({ userId: userSearch.id }, process.env.JWT_SECRET!, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { userId: userSearch.id, tokenVersion: userSearch.tokenVersion },
+      process.env.JWT_SECRET!,
+      {
+        expiresIn: "7d",
+      },
+    );
 
     return NextResponse.json({ token });
   } catch (err) {

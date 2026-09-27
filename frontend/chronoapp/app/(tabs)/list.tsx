@@ -2,6 +2,7 @@ import { View, Text, Pressable, FlatList } from "react-native";
 import { styles } from "@/lib/styles";
 
 import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 
 import { getSeance } from "@/services/api";
 import { deleteManySeance } from "@/services/api";
@@ -36,6 +37,10 @@ export default function DetailScreen() {
         if (!cancelled) setList(data);
       } catch (err) {
         if (err instanceof HttpError) {
+          if (err.status === 401) {
+            await SecureStore.deleteItemAsync("accessToken");
+            router.replace("/login");
+          }
           setDetailError(extractErrorMessage(err.body));
         } else if (err instanceof NetworkError) {
           setDetailError(err.message);
