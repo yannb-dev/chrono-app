@@ -37,7 +37,7 @@ export default function Result() {
         if (err instanceof HttpError) {
           if (err.status === 401) {
             await SecureStore.deleteItemAsync("accessToken");
-            router.replace("/login");
+            router.replace("/(auth)/login");
           }
           setDetailError(extractErrorMessage(err.body));
         } else if (err instanceof NetworkError) {
