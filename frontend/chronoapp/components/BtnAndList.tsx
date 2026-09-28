@@ -103,7 +103,7 @@ export default function BtnAndList({ seance, reset }: Seance) {
         if (err instanceof HttpError) {
           if (err.status === 401) {
             await SecureStore.deleteItemAsync("accessToken");
-            router.replace("/login");
+            router.replace("/(auth)/login");
           }
           setDetailError(extractErrorMessage(err.body));
         } else if (err instanceof NetworkError) {
@@ -135,6 +135,10 @@ export default function BtnAndList({ seance, reset }: Seance) {
         router.push("/");
       } catch (err) {
         if (err instanceof HttpError) {
+          if (err.status === 401) {
+            await SecureStore.deleteItemAsync("accessToken");
+            router.replace("/(auth)/login");
+          }
           setDetailError(extractErrorMessage(err.body));
         } else if (err instanceof NetworkError) {
           setDetailError(err.message);

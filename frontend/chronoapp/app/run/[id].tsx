@@ -82,7 +82,7 @@ export default function RunPage() {
         if (err instanceof HttpError) {
           if (err.status === 401) {
             await SecureStore.deleteItemAsync("accessToken");
-            router.replace("/login");
+            router.replace("/(auth)/login");
           }
           setDetailError(extractErrorMessage(err.body));
         } else if (err instanceof NetworkError) {
@@ -148,6 +148,10 @@ export default function RunPage() {
           }
         } catch (err) {
           if (err instanceof HttpError) {
+            if (err.status === 401) {
+              await SecureStore.deleteItemAsync("accessToken");
+              router.replace("/(auth)/login");
+            }
             setDetailError(extractErrorMessage(err.body));
           } else if (err instanceof NetworkError) {
             setDetailError(err.message);
@@ -181,6 +185,10 @@ export default function RunPage() {
           }
         } catch (err) {
           if (err instanceof HttpError) {
+            if (err.status === 401) {
+              await SecureStore.deleteItemAsync("accessToken");
+              router.replace("/(auth)/login");
+            }
             setDetailError(extractErrorMessage(err.body));
           } else if (err instanceof NetworkError) {
             setDetailError(err.message);
@@ -225,6 +233,10 @@ export default function RunPage() {
         }
       } catch (err) {
         if (err instanceof HttpError) {
+          if (err.status === 401) {
+            await SecureStore.deleteItemAsync("accessToken");
+            router.replace("/(auth)/login");
+          }
           setDetailError(extractErrorMessage(err.body));
         } else if (err instanceof NetworkError) {
           setDetailError(err.message);
@@ -260,6 +272,10 @@ export default function RunPage() {
         setTimerPauseInProgress(response);
       } catch (err) {
         if (err instanceof HttpError) {
+          if (err.status === 401) {
+            await SecureStore.deleteItemAsync("accessToken");
+            router.replace("/(auth)/login");
+          }
           setDetailError(extractErrorMessage(err.body));
         } else if (err instanceof NetworkError) {
           setDetailError(err.message);
