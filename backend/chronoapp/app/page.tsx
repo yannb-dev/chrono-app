@@ -6,18 +6,23 @@ import Image from "next/image";
 
 type token = string | null;
 
-export default async function passwordReset() {
+export default function PasswordReset() {
   const [token, setToken] = useState<token>();
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const hash = window.location.hash;
-    setToken(new URLSearchParams(hash.slice(1)).get("token"));
-    // ...
+    const found = new URLSearchParams(hash.slice(1)).get("token");
+
+    setToken(found);
+    setReady(true);
+
+    if (found) {
+      history.replaceState(null, "", window.location.pathname);
+    }
   }, []);
 
-  if (token) {
-    history.replaceState(null, "", window.location.pathname);
-  }
+  if (!ready) return null;
 
   if (!token)
     return (
