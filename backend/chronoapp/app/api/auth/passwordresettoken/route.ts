@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
+import { after } from "next/server";
+
 import { ResetPasswordSchema } from "@/lib/schema/resetPasswordSchema";
 import { sendVerificationEmail } from "@/lib/mail";
 import { NewPasswordPatchSchema } from "@/lib/schema/newPasswordSchema";
@@ -69,7 +71,12 @@ export async function POST(req: Request) {
             },
           });
         });
-        sendVerificationEmail(existingUser.email, rawToken);
+
+        after(() =>
+          sendVerificationEmail(existingUser.email, rawToken).catch((err) =>
+            console.error("Echece de l'envoi du mail", err),
+          ),
+        );
       } catch (error) {
         console.error("Echec de l'envoi de mail ou du create", error);
       }
