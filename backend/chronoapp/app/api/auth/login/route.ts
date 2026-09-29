@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
+import getClientIp from "@/lib/getClientIp";
+
 import { loginRateLimitIP } from "@/lib/rateLimit";
 import { loginRateLimitEmail } from "@/lib/rateLimit";
 
@@ -20,10 +22,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const ip =
-    req.headers.get("x-forwarded-for") ||
-    req.headers.get("x-rel-ip") ||
-    "unknown";
+  const ip = getClientIp(req);
 
   const IpCheck = await loginRateLimitIP.limit(ip);
   const EmailCheck = await loginRateLimitEmail.limit(
