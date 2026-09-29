@@ -44,24 +44,18 @@ export async function POST(req: Request) {
       where: { email: safeValue.data?.email },
     });
 
-    if (!userSearch) {
-      return NextResponse.json(
-        { message: "Identifications invalides" },
-        { status: 401 },
-      );
-    }
+    const hash = "$2b$10$VUj4JXqrv6THyQGneEsax.HzWPKLVwA3JxHMM9hzEJVCktvJxVYKi";
 
-    const verif = await bcrypt.compare(
+    const control = await bcrypt.compare(
       safeValue.data.password,
-      userSearch.password,
+      userSearch?.password ?? hash,
     );
 
-    if (!verif) {
+    if (!userSearch || !control)
       return NextResponse.json(
         { message: "Identifications invalides" },
         { status: 401 },
       );
-    }
 
     const token = jwt.sign(
       { userId: userSearch.id, tokenVersion: userSearch.tokenVersion },
