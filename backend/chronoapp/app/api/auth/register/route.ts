@@ -46,7 +46,7 @@ export async function POST(req: Request) {
   if (existingUser) {
     return NextResponse.json(
       { message: "Si un compte existe vérifiez vos emails" },
-      { status: 409 },
+      { status: 201 },
     );
   }
 
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
 
     if (user)
       return NextResponse.json(
-        { id: user.id, email: user.email },
+        { message: "Si un compte existe vérifiez vos emails" },
         { status: 201 },
       );
   } catch (error) {

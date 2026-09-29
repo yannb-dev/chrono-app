@@ -2,6 +2,8 @@
 
 _Date : 2026-09-23 — Périmètre : `backend/chronoapp` (Next.js API + page de reset) et `frontend/chronoapp` (Expo), historique git inclus._
 
+> **Mise à jour 2026-09-28 :** contre-audit après les corrections (#2 → #35). Voir la section [Contre-audit](#contre-audit--2026-09-28) en fin de fichier pour les points restants.
+
 Classement du plus grave au plus mineur. Chaque point indique **où**, **le scénario d'attaque** et **la correction**.
 
 **Bilan rapide :** l'ownership (filtre `userId`) est correct sur **toutes** les routes métier (`seance`, `timerpause`, `timerrunner`), Zod supprime les champs inconnus (pas de mass assignment), le token de reset est aléatoire (256 bits), stocké hashé, expirant et à usage unique, le JWT est stocké en `SecureStore`, et aucun secret backend n'a été commité. Les failles ci-dessous portent surtout sur **l'authentification et le cycle de vie des sessions**.
@@ -144,3 +146,118 @@ Classement du plus grave au plus mineur. Chaque point indique **où**, **le scé
 5. Anti-énumération : rate limit register, bcrypt factice, envoi du mail non bloquant (#3)
 6. Bornes Zod, normalisation des emails, `req.json().catch()` (#9, #10, #13)
 7. En-têtes HTTP et token hors query string (#7, #8)
+
+---
+
+## Contre-audit — 2026-09-28
+
+_Vérification du code sur `main` (`d3755b7`) après les PR de correction._
+
+### État des points de l'audit initial
+
+| #   | Faille                          | État                                                                                              |
+| --- | ------------------------------- | ------------------------------------------------------------------------------------------------- |
+| 1   | Révocation JWT                  | ✅ `tokenVersion` vérifié dans `lib/auth.ts`, incrémenté au reset                                  |
+| 2   | Rate limit contournable         | 🟠 Partiel — limiteurs IP / email séparés, mais extraction de l'IP incorrecte (voir **C**)         |
+| 3   | Énumération des comptes         | 🔴 Non corrigé — voir **B**                                                                        |
+| 4   | Tokens multiples                | ✅ `deleteMany` + `create` dans une transaction                                                    |
+| 5   | Race condition token            | 🔴 Non corrigé — voir **D**                                                                        |
+| 6   | Logs de données personnelles    | ✅ Logs de debug supprimés                                                                         |
+| 7   | Token en query string           | ✅ Fragment `#token` + `history.replaceState` + `Referrer-Policy`                                  |
+| 8   | En-têtes HTTP                   | ✅ Sur `/` (seule page web) — `X-Content-Type-Options: nosniff` reste à ajouter                    |
+| 9   | Bornes Zod                      | 🟠 Partiel — voir **F**                                                                            |
+| 10  | `req.json()` non protégé        | ✅                                                                                                 |
+| 11  | Préfixe Redis partagé           | 🔴 Réintroduit — voir **E**                                                                        |
+| 12  | Dépendances                     | ⚪ Non vérifié (pas de `.github/dependabot.yml` dans le repo)                                      |
+| 13  | Emails non normalisés           | ✅ `trim().toLowerCase()` dans tous les schémas                                                    |
+| —   | `password @unique` / `Cascade`  | ✅                                                                                                 |
+
+### Points restants à corriger
+
+#### 🔴 A. Envoi du mail de reset non garanti (régression introduite par la correction #3)
+
+- **Où :** `app/api/auth/passwordresettoken/route.ts:72`
+- **Problème :** `sendVerificationEmail(...)` est appelé sans `await` pour répondre en temps constant. Sur Vercel (serverless), la fonction peut être gelée dès que la réponse est renvoyée → **le mail peut ne jamais partir**. De plus, le `try/catch` englobant ne capture pas une promesse non attendue : un échec Resend devient une _unhandled rejection_.
+- **Correction :**
+  ```ts
+  import { after } from "next/server";
+
+  after(() =>
+    sendVerificationEmail(existingUser.email, rawToken).catch((e) =>
+      console.error("Échec envoi mail reset", e),
+    ),
+  );
+  ```
+
+#### 🔴 B. Énumération des comptes toujours possible
+
+- **Où :** `app/api/auth/register/route.ts:46-51`, `app/api/auth/login/route.ts:47-52`
+- **Problème :**
+  - Au register, le message est devenu générique mais le **code HTTP** trahit l'existence du compte : `409` si l'email existe, `201` sinon.
+  - Au login, pas de `bcrypt.compare` quand l'utilisateur n'existe pas → réponse mesurablement plus rapide.
+- **Correction :**
+  - Register : même statut et même corps de réponse dans les deux cas (ex : `202 { message: "Si l'adresse est valide, vérifiez vos emails" }`). Ne plus renvoyer `{ id, email }`.
+  - Login :
+    ```ts
+    const DUMMY_HASH = "$2a$10$..."; // hash bcrypt quelconque généré une fois
+    const verif = await bcrypt.compare(
+      safeValue.data.password,
+      userSearch?.password ?? DUMMY_HASH,
+    );
+    if (!userSearch || !verif) return 401;
+    ```
+
+#### 🟠 C. Extraction de l'IP incorrecte
+
+- **Où :** `login/route.ts:23-26`, `register/route.ts:23-26`, `passwordresettoken/route.ts:33-36`
+- **Problème :**
+  - Faute de frappe : `"x-rel-ip"` au lieu de `"x-real-ip"` → le fallback ne fonctionne jamais.
+  - `x-forwarded-for` peut contenir une liste (`client, proxy1`) → la clé varie selon le chemin réseau.
+  - Code dupliqué dans 3 routes.
+- **Correction :** une fonction unique `lib/getClientIp.ts` :
+  ```ts
+  export function getClientIp(req: Request) {
+    return (
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      req.headers.get("x-real-ip") ||
+      "unknown"
+    );
+  }
+  ```
+
+#### 🟠 D. Race condition sur l'utilisation du token (point #5 initial)
+
+- **Où :** `app/api/auth/passwordresettoken/route.ts:106-148`
+- **Problème :** inchangé — `usedAt` et `expiresAt` sont vérifiés hors transaction, l'`update` ne les revérifie pas.
+- **Correction :** voir le code du point #5 ci-dessus (`updateMany` conditionnel + `count === 0` dans la transaction, avant l'update du user).
+
+#### 🟠 E. Préfixe Redis réutilisé trois fois (régression du point #11)
+
+- **Où :** `lib/rateLimit.ts:16, 28, 34`
+- **Problème :** `loginRateLimitEmail`, `registerRateLimitEmail` et `registerRateLimitIp` partagent `prefix: "ratelimit:loginEMAIL"`. Les clés ne se mélangent pas aujourd'hui uniquement parce que les fenêtres diffèrent (60 s / 10 min) — un changement de durée suffit à faire partager les compteurs. Même remarque pour `resetPasswordRateLimitIpEmail`, utilisé pour l'IP **et** l'email sous un préfixe `loginPassword` trompeur.
+- **Correction :** un préfixe unique et explicite par limiteur : `ratelimit:login:ip`, `ratelimit:login:email`, `ratelimit:register:ip`, `ratelimit:register:email`, `ratelimit:reset:ip`, `ratelimit:reset:email`.
+- **Remarque :** `registerRateLimitIp` à 1 requête / 10 min bloque tout un réseau partagé (école, entreprise, 4G CGNAT). 5 / heure par IP est plus réaliste.
+
+#### 🟡 F. Bornes Zod incomplètes
+
+- **Où :**
+  - `lib/schema/timerrunnerSchema.ts:4` : `numberRunner: z.number().int()` sans bornes → `.min(1).max(40)` (cohérent avec `totalRunner`).
+  - `lib/schema/newPasswordSchema.ts:26` : `.max(72)` compte des **caractères** → reprendre le `refine` en octets de `registerSchema.ts` (sinon un mot de passe accentué accepté au reset peut être tronqué par bcrypt).
+  - `newPasswordSchema.ts:31` : `token: z.string()` → `.length(64)` (token hex de 32 octets).
+  - Dates `pausedAt` / `endedAt` toujours sans bornes.
+
+#### ⚪ G. Hygiène
+
+- `passwordresettoken/route.ts:1` : commentaire d'en-tête `// app/api/auth/register/route.ts` erroné ; message d'erreur `"Erreur POST API/REGISTER"` ligne 82 → trompeur dans les logs.
+- `passwordresettoken/route.ts:44, 78` : `Response.json` et clé `error` au lieu de `NextResponse.json` et `message` → incohérent avec les autres routes et avec `extractErrorMessage` côté front.
+- `passwordresettoken/route.ts:19-23` : token généré avant la validation Zod → à déplacer dans le `if (existingUser)`.
+- `register/route.ts:42` : `findUnique` hors du `try` → une erreur Prisma donne un 500 non maîtrisé.
+- Ajouter `.github/dependabot.yml` (point #12).
+
+### Ordre de correction suggéré
+
+1. **A** — `after()` pour l'envoi du mail (bug fonctionnel en prod)
+2. **E + C** — préfixes Redis + `getClientIp()` (rapide, 1 fichier + 3 imports)
+3. **D** — consommation atomique du token
+4. **B** — anti-énumération register + login
+5. **F + G** — bornes Zod et hygiène
