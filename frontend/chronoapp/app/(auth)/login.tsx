@@ -41,7 +41,7 @@ export default function LoginScreen() {
 
       await login(response.token);
 
-      router.push("/(tabs)");
+      router.replace("/(tabs)");
     } catch (err) {
       if (err instanceof HttpError) {
         if (err.status === 429) {
