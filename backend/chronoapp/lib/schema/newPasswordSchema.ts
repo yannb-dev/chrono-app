@@ -6,7 +6,7 @@ export const NewPasswordSchema = z
       .string()
       .min(8, "8 caractères minimum")
       .refine((val) => Buffer.byteLength(val, "utf-8") <= 72, {
-        message: "Le mot de passe trop long",
+        message: "Le mot de passe est trop long",
       })
       .regex(/[a-z]/, "Au moins une minuscule")
       .regex(/[A-Z]/, "Au moins une majuscule")
