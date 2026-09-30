@@ -226,7 +226,7 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 6,
-    backgroundColor: "gray",
+    backgroundColor: gray,
     borderRadius: 6,
   },
 
@@ -250,6 +250,7 @@ export const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "center",
     gap: 10,
+    marginBottom: 20,
   },
 
   list: {
@@ -290,7 +291,7 @@ export const styles = StyleSheet.create({
   },
 
   containerListChrono: {
-    height: "15%",
+    height: "30%",
     marginTop: 8,
   },
 
@@ -307,6 +308,11 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  containerBtnConfirm: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+  },
   // list.tsx
 
   containerLogoDelete: {

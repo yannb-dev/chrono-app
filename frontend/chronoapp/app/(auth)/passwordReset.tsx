@@ -86,7 +86,11 @@ export default function PasswordReset() {
   return (
     <View style={styles.container}>
       <Stack.Screen
-        options={{ headerShown: true, headerTitle: "Réinitialisation" }}
+        options={{
+          headerShown: true,
+          headerTitle: "Mot de passe perdu",
+          headerTitleStyle: { fontFamily: "Orbitron-Medium" },
+        }}
       />
       {loading ? (
         <LoadingAnim />

@@ -34,6 +34,7 @@ export default function BtnAndList({ seance, reset }: Seance) {
   const [detailError, setDetailError] = useState("");
   const [arrayResult, setArrayResult] = useState<TimerRunner[]>([]);
   const [arrayNumber, setArrayNumber] = useState<List[]>([]);
+  const [messageConfirmEnded, setMessageConfirmEnded] = useState(false);
 
   // Déclenchement de l'arrivée du coureur ===============================================
   useEffect(() => {
@@ -156,6 +157,36 @@ export default function BtnAndList({ seance, reset }: Seance) {
     }
   };
 
+  if (messageConfirmEnded) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.containerError}>
+          <Text style={styles.text}>Enregister et quitter ?</Text>
+          <View style={styles.containerBtnConfirm}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.btnSelect,
+                pressed && styles.btnPressed,
+              ]}
+              onPress={() => handleEnded(seance.id)}
+            >
+              <Text style={styles.text}>Oui</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.btnSelect,
+                pressed && styles.btnPressed,
+              ]}
+              onPress={() => setMessageConfirmEnded(false)}
+            >
+              <Text style={styles.text}>Non</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   if (error)
     return (
       <View style={styles.container}>
@@ -198,6 +229,18 @@ export default function BtnAndList({ seance, reset }: Seance) {
           />
         )}
       </View>
+      <View style={styles.containerBtnSave}>
+        <Pressable
+          testID="btn-ended"
+          style={({ pressed }) => [
+            styles.btnSelect,
+            pressed && styles.btnPressed,
+          ]}
+          onPress={() => setMessageConfirmEnded(true)}
+        >
+          <Text style={styles.text}>Enregister</Text>
+        </Pressable>
+      </View>
       <View style={styles.containerListChrono}>
         {arrayResult.length > 0 && (
           <FlatList
@@ -211,15 +254,6 @@ export default function BtnAndList({ seance, reset }: Seance) {
             )}
           />
         )}
-      </View>
-      <View style={styles.containerBtnSave}>
-        <Pressable
-          testID="btn-ended"
-          style={styles.btnSelect}
-          onPress={() => handleEnded(seance.id)}
-        >
-          <Text>Save</Text>
-        </Pressable>
       </View>
     </View>
   );

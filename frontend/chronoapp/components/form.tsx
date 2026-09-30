@@ -107,7 +107,7 @@ export default function Form() {
                   >
                     <Pressable
                       onPress={() =>
-                        onChange(Math.max(1, Math.min(40, value - 1)))
+                        onChange(Math.max(1, Math.min(20, value - 1)))
                       }
                     >
                       <Text style={styles.btnChangeTotalRunner}>−</Text>
@@ -115,7 +115,7 @@ export default function Form() {
                     <Text style={styles.textTotalRunner}>{value}</Text>
                     <Pressable
                       onPress={() =>
-                        onChange(Math.max(1, Math.min(40, value + 1)))
+                        onChange(Math.max(1, Math.min(20, value + 1)))
                       }
                     >
                       <Text style={styles.btnChangeTotalRunner}>+</Text>

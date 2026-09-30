@@ -9,7 +9,7 @@ export default function FormSeance() {
     <View style={styles.container}>
       <Stack.Screen
         options={{
-          title: "Creating",
+          title: "Nouveau",
           headerTitleStyle: { fontFamily: "Orbitron-Medium" },
         }}
       />
