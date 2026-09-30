@@ -143,14 +143,19 @@ export async function PATCH(req: Request) {
     const hashedPassword = await bcrypt.hash(safeValue.data.newPassword, 10);
 
     await prisma.$transaction(async (tx) => {
+      const { count } = await tx.passwordResetToken.updateMany({
+        where: {
+          tokenHash: hashedToken,
+          usedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+        data: { usedAt: new Date() },
+      });
+      if (count === 0) throw new Error("Lien invalide ou expiré");
+
       await tx.user.update({
         where: { id: searchPasswordResetToken.userId },
         data: { password: hashedPassword, tokenVersion: { increment: 1 } },
-      });
-
-      await tx.passwordResetToken.update({
-        where: { tokenHash: hashedToken },
-        data: { usedAt: new Date() },
       });
     });
 
