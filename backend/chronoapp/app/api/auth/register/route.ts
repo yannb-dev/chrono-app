@@ -37,19 +37,18 @@ export async function POST(req: Request) {
     );
   }
 
-  const existingUser = await prisma.user.findUnique({
-    where: { email: safeData.data.email },
-  });
-
-  if (existingUser) {
-    return NextResponse.json(
-      { message: "Si un compte existe vérifiez vos emails" },
-      { status: 201 },
-    );
-  }
-
   try {
     const hashedPassword = await bcrypt.hash(safeData.data.password, 10);
+    const existingUser = await prisma.user.findUnique({
+      where: { email: safeData.data.email },
+    });
+
+    if (!existingUser) {
+      return NextResponse.json(
+        { message: "Si un compte existe vérifiez vos emails" },
+        { status: 201 },
+      );
+    }
 
     const user = await prisma.user.create({
       data: { email: safeData.data.email, password: hashedPassword },
