@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   if (!safeData.success) {
     console.error(safeData.error, "Erreur du contrôle Zod sur resetpassword");
     return NextResponse.json(
-      { message: "Erreur de la validation des données" },
+      { message: safeData.error.message },
       { status: 400 },
     );
   }
