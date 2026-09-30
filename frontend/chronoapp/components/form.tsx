@@ -45,7 +45,7 @@ export default function Form() {
       });
 
       if (response) {
-        router.push(`/run/${response.id}`);
+        router.replace(`/run/${response.id}`);
       }
     } catch (err) {
       if (err instanceof HttpError) {

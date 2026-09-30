@@ -133,7 +133,7 @@ export default function BtnAndList({ seance, reset }: Seance) {
       try {
         const response = await patchSeance(safePatch.data, id);
 
-        router.push("/");
+        router.replace("/");
       } catch (err) {
         if (err instanceof HttpError) {
           if (err.status === 401) {
