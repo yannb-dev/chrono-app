@@ -1,4 +1,3 @@
-// app/api/auth/register/route.ts
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -17,12 +16,6 @@ export async function POST(req: Request) {
   const data = await req.json().catch(() => null);
 
   const safeData = ResetPasswordSchema.safeParse(data);
-
-  const rawToken = crypto.randomBytes(32).toString("hex");
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(rawToken)
-    .digest("hex");
 
   if (!safeData.success) {
     console.error(safeData.error, "Erreur du contrôle Zod sur resetpassword");
@@ -43,8 +36,8 @@ export async function POST(req: Request) {
   );
 
   if (!ipCheck.success || !EmailCheck.success) {
-    return Response.json(
-      { error: "Trop de tentatives. Réessaie plus tard." },
+    return NextResponse.json(
+      { message: "Trop de tentatives. Réessaie plus tard." },
       {
         status: 429,
       },
@@ -57,6 +50,11 @@ export async function POST(req: Request) {
     });
 
     if (existingUser) {
+      const rawToken = crypto.randomBytes(32).toString("hex");
+      const hashedToken = crypto
+        .createHash("sha256")
+        .update(rawToken)
+        .digest("hex");
       try {
         await prisma.$transaction(async (tx) => {
           await tx.passwordResetToken.deleteMany({
@@ -86,7 +84,7 @@ export async function POST(req: Request) {
       message: "Si un compte existe, un email de réinitialisation a été envoyé",
     });
   } catch (error) {
-    console.error("Erreur POST API/REGISTER", error);
+    console.error("Erreur POST API/PASSWORDRESETTOKEN", error);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
