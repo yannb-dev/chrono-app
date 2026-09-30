@@ -90,7 +90,8 @@ export default function Register() {
         options={{
           headerShown: true,
           headerBackVisible: true,
-          headerTitle: "S'inscrire",
+          headerTitle: "Inscription",
+          headerTitleStyle: { fontFamily: "Orbitron-Medium" },
         }}
       />
       {loading ? (

@@ -226,7 +226,7 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 6,
-    backgroundColor: "gray",
+    backgroundColor: gray,
     borderRadius: 6,
   },
 

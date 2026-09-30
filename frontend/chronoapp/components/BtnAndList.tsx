@@ -161,7 +161,7 @@ export default function BtnAndList({ seance, reset }: Seance) {
     return (
       <View style={styles.container}>
         <View style={styles.containerError}>
-          <Text style={styles.text}>Run terminé ?</Text>
+          <Text style={styles.text}>Enregister et quitter ?</Text>
           <View style={styles.containerBtnConfirm}>
             <Pressable
               style={({ pressed }) => [
@@ -170,7 +170,7 @@ export default function BtnAndList({ seance, reset }: Seance) {
               ]}
               onPress={() => handleEnded(seance.id)}
             >
-              <Text>Oui</Text>
+              <Text style={styles.text}>Oui</Text>
             </Pressable>
             <Pressable
               style={({ pressed }) => [
@@ -179,7 +179,7 @@ export default function BtnAndList({ seance, reset }: Seance) {
               ]}
               onPress={() => setMessageConfirmEnded(false)}
             >
-              <Text>Non</Text>
+              <Text style={styles.text}>Non</Text>
             </Pressable>
           </View>
         </View>
@@ -238,7 +238,7 @@ export default function BtnAndList({ seance, reset }: Seance) {
           ]}
           onPress={() => setMessageConfirmEnded(true)}
         >
-          <Text>Save</Text>
+          <Text style={styles.text}>Enregister</Text>
         </Pressable>
       </View>
       <View style={styles.containerListChrono}>

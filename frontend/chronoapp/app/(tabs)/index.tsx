@@ -33,7 +33,7 @@ export default function HomeScreen() {
             })
           }
         >
-          <Text style={styles.text}>New</Text>
+          <Text style={styles.text}>Démarrer</Text>
         </Pressable>
       </View>
     </View>

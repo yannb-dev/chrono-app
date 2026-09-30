@@ -87,7 +87,7 @@ export default function Result() {
     <View style={styles.container}>
       <Stack.Screen
         options={{
-          title: "Result",
+          title: "Resultats",
           headerTitleStyle: { fontFamily: "Orbitron-Medium" },
         }}
       />

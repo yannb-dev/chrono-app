@@ -313,7 +313,7 @@ export default function RunPage() {
     <View style={styles.container}>
       <Stack.Screen
         options={{
-          title: "Chronomètre",
+          title: "Chrono",
           headerTitleStyle: { fontFamily: "Orbitron-Medium" },
         }}
       />
