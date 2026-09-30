@@ -5,7 +5,9 @@ export const NewPasswordSchema = z
     password: z
       .string()
       .min(8, "8 caractères minimum")
-      .max(72, "72 caractères maximum")
+      .refine((val) => Buffer.byteLength(val, "utf-8") <= 72, {
+        message: "Le mot de passe trop long",
+      })
       .regex(/[a-z]/, "Au moins une minuscule")
       .regex(/[A-Z]/, "Au moins une majuscule")
       .regex(/[0-9]/, "Au moins un chiffre")
@@ -23,7 +25,9 @@ export const NewPasswordPatchSchema = z.object({
   newPassword: z
     .string()
     .min(8, "8 caractères minimum")
-    .max(72, "72 caractères maximum")
+    .refine((val) => Buffer.byteLength(val, "utf-8") <= 72, {
+      message: "Le mot de passe trop long",
+    })
     .regex(/[a-z]/, "Au moins une minuscule")
     .regex(/[A-Z]/, "Au moins une majuscule")
     .regex(/[0-9]/, "Au moins un chiffre")
