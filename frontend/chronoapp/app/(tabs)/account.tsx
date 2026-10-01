@@ -1,12 +1,48 @@
 import { styles } from "@/lib/styles";
 import { useState } from "react";
 import { View, Text, Pressable, TextInput } from "react-native";
+import { router } from "expo-router";
+import { HttpError, NetworkError, extractErrorMessage } from "@/lib/errors";
+import * as SecureStore from "expo-secure-store";
+
+import { deleteUser } from "@/services/api";
+import LoadingAnim from "@/components/LoadingAnim";
 
 export default function Account() {
   const [confirmeDelete, setConfirmDelete] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
+  const [error, setError] = useState(false);
 
-  const handleDelete = () => {};
+  const handleDelete = async () => {
+    setLoading(true);
+
+    try {
+      const response = await deleteUser();
+
+      if (response) {
+        router.replace("/");
+        await SecureStore.deleteItemAsync("accessToken");
+      }
+    } catch (err) {
+      if (err instanceof HttpError) {
+        if (err.status === 401) {
+          await SecureStore.deleteItemAsync("accessToken");
+          router.replace("/(auth)/login");
+        }
+        setDetailError(extractErrorMessage(err.body));
+      } else if (err instanceof NetworkError) {
+        setDetailError(err.message);
+      } else {
+        console.error("Erreur du fetch API/USER", err);
+        setDetailError("Une erreur inattendue est survenue");
+      }
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (confirmeDelete) {
     return (
@@ -29,13 +65,36 @@ export default function Account() {
               confirmText !== "chronoapp" && styles.btnPressed,
             ]}
             disabled={confirmText !== "chronoapp"}
-            onPress={() => console.log("supprimer")}
+            onPress={handleDelete}
           >
-            <Text>Valider</Text>
+            <Text style={styles.text}>Valider</Text>
+          </Pressable>
+          <Pressable
+            style={styles.btnPressed}
+            onPress={() => setConfirmDelete(false)}
+          >
+            <Text style={styles.text}>Retour</Text>
           </Pressable>
         </View>
       </View>
     );
+  }
+
+  if (error)
+    return (
+      <View>
+        <View>
+          <Text style={styles.text}>Oups une erreur !</Text>
+          <Text style={styles.text}>{detailError}</Text>
+          <Pressable onPress={() => setError(false)}>
+            <Text style={styles.btnSelect}>Réessayer</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+
+  if (loading) {
+    return <LoadingAnim />;
   }
 
   return (
@@ -44,7 +103,9 @@ export default function Account() {
       <View
         style={{ height: 3, width: 30, backgroundColor: "black", margin: 20 }}
       ></View>
-      <Text style={[styles.text, { fontSize: 12, marginBottom: 40 }]}>
+      <Text
+        style={[styles.text, { fontSize: 12, marginBottom: 40, padding: 10 }]}
+      >
         Vous souhaitez supprimer votre compte ? Cette action entrainera la
         suppresion de l'ensemble de vos données sans récupéraiton possible.
       </Text>
