@@ -30,6 +30,15 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: "Compte",
+          tabBarIcon: () => (
+            <IconSymbol size={28} name={"person.crop.circle"} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

@@ -58,6 +58,15 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
 
+  // account.tsx
+
+  inputConfirmText: {
+    width: "60%",
+    borderBottomColor: grayDark,
+    borderBottomWidth: 1,
+    color: grayDark,
+  },
+
   // loadingAnim.tsx
 
   containerSupLoading: {

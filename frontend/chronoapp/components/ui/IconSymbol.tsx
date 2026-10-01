@@ -1,9 +1,10 @@
-// This file is a fallback for using MaterialIcons on Android and web.
-
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { SymbolWeight } from "expo-symbols";
+import { SymbolWeight, SymbolViewProps } from "expo-symbols";
 import React from "react";
 import { OpaqueColorValue, StyleProp, TextStyle } from "react-native";
+
+type SFSymbolName = Extract<SymbolViewProps["name"], string>;
+type MaterialIconName = React.ComponentProps<typeof MaterialIcons>["name"];
 
 const MAPPING = {
   "list.bullet.circle.fill": "format-list-bulleted",
@@ -13,12 +14,8 @@ const MAPPING = {
   play: "play-arrow",
   pause: "pause",
   "delete.forward": "delete",
-} as Partial<
-  Record<
-    import("expo-symbols").SymbolViewProps["name"],
-    React.ComponentProps<typeof MaterialIcons>["name"]
-  >
->;
+  "person.crop.circle": "account-circle",
+} satisfies Partial<Record<SFSymbolName, MaterialIconName>>;
 
 export type IconSymbolName = keyof typeof MAPPING;
 

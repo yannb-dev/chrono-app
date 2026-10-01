@@ -58,6 +58,14 @@ async function apiFetch<T>(
 
   return response.json();
 }
+// User ======================================
+
+export function deleteUser() {
+  return apiFetch("/api/user", {
+    method: "DELETE",
+  });
+}
+
 // Register ==================================
 
 export function postRegister(data: RegisterSchema) {
