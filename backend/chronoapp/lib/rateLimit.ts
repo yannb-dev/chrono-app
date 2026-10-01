@@ -24,7 +24,7 @@ export const resetPasswordRateLimitIpEmail = new Ratelimit({
 
 export const registerRateLimitEmail = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(1, "10 m"),
+  limiter: Ratelimit.slidingWindow(5, "1 h"),
   prefix: "ratelimit:registerMAIL",
 });
 

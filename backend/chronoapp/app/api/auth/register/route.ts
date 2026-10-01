@@ -43,10 +43,10 @@ export async function POST(req: Request) {
       where: { email: safeData.data.email },
     });
 
-    if (!existingUser) {
+    if (existingUser) {
       return NextResponse.json(
-        { message: "Si un compte existe vérifiez vos emails" },
-        { status: 201 },
+        { message: "Un compte existe pour cette adresse mail" },
+        { status: 409 },
       );
     }
 
@@ -54,11 +54,7 @@ export async function POST(req: Request) {
       data: { email: safeData.data.email, password: hashedPassword },
     });
 
-    if (user)
-      return NextResponse.json(
-        { message: "Si un compte existe vérifiez vos emails" },
-        { status: 201 },
-      );
+    if (user) return NextResponse.json({ status: 201 });
   } catch (error) {
     console.error("Erreur POST API/REGISTER", error);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });

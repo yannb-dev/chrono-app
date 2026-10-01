@@ -13,7 +13,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     const inAuthGroup = segments[0] === "(auth)";
 
     if (!token && !inAuthGroup) {
-      router.replace("/login");
+      router.replace("/(auth)/login");
     } else if (token && inAuthGroup) {
       router.replace("/");
     }

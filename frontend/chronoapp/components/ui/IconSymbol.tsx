@@ -11,8 +11,8 @@ const MAPPING = {
   "house.fill": "home",
   "door.french.open": "logout",
   "repeat.circle.fill": "replay",
-  "play.fill": "play-arrow",
-  "pause.fill": "pause",
+  play: "play-arrow",
+  pause: "pause",
   "delete.forward": "delete",
   "person.crop.circle": "account-circle",
 } satisfies Partial<Record<SFSymbolName, MaterialIconName>>;
