@@ -125,3 +125,14 @@ it("action sur button MOT DE PASSE OUBLIE doit rediriger", async () => {
     expect(mockPush).toHaveBeenCalledWith("/(auth)/passwordReset");
   });
 });
+
+// ===== TEST 6 ====
+//
+it("action sur button S'INSCRIRE doit rediriger", async () => {
+  await render(<LoginScreen />);
+  await fireEvent.press(screen.getByText("S'inscrire"));
+
+  await waitFor(() => {
+    expect(mockPush).toHaveBeenCalledWith("/(auth)/register");
+  });
+});
