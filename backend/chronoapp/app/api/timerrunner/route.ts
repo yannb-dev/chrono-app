@@ -27,10 +27,13 @@ export async function POST(req: Request) {
       id: safeTimerRunner.data.seanceId,
       userId: userId,
     },
-    select: { startedAt: true },
+    select: { startedAt: true, timerpauses: true },
   });
 
-  if (!searchSeance?.startedAt) {
+  if (
+    !searchSeance?.startedAt ||
+    searchSeance?.timerpauses.find((pause) => pause.endedAt === null)
+  ) {
     return NextResponse.json(
       { message: "Le chronomètre n'est pas actif" },
       { status: 404 },
