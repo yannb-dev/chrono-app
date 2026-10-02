@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 
 import { deleteUser } from "@/services/api";
 import LoadingAnim from "@/components/LoadingAnim";
+import ErrorMessage from "@/components/ErrorMessage";
 
 export default function Account() {
   const { logout } = useAuth();
@@ -86,8 +87,7 @@ export default function Account() {
     return (
       <View>
         <View>
-          <Text style={styles.text}>Oups une erreur !</Text>
-          <Text style={styles.text}>{detailError}</Text>
+          <ErrorMessage detailSend={detailError} />
           <Pressable onPress={() => setError(false)}>
             <Text style={styles.btnSelect}>Réessayer</Text>
           </Pressable>

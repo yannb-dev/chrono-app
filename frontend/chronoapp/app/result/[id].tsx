@@ -12,6 +12,7 @@ import { SeanceResponse } from "@/types/api";
 import { styles } from "@/lib/styles";
 import ViewChrono from "@/components/viewChrono";
 import LoadingAnim from "@/components/LoadingAnim";
+import ErrorMessage from "@/components/ErrorMessage";
 import { extractErrorMessage, HttpError, NetworkError } from "@/lib/errors";
 
 export default function Result() {
@@ -74,8 +75,7 @@ export default function Result() {
     return (
       <View>
         <View>
-          <Text style={styles.text}>Oups une erreur !</Text>
-          <Text>{detailError}</Text>
+          <ErrorMessage detailSend={detailError} />
           <Pressable onPress={handleCloseError}>
             <Text style={styles.btnSelect}>Réessayer</Text>
           </Pressable>

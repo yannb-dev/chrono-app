@@ -15,6 +15,7 @@ import { styles } from "@/lib/styles";
 
 import SvgComponent from "@/components/LogoApp";
 import LoadingAnim from "@/components/LoadingAnim";
+import ErrorMessage from "@/components/ErrorMessage";
 
 export default function Register() {
   const [loading, setLoading] = useState(false);
@@ -75,8 +76,7 @@ export default function Register() {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
         <View style={styles.containerError}>
-          <Text style={styles.text}>Oups, une erreur !</Text>
-          <Text style={styles.text}>{detailError}</Text>
+          <ErrorMessage detailSend={detailError} />
           <Pressable style={styles.btnSelect} onPress={() => setError(false)}>
             <Text style={styles.text}>Réessayer</Text>
           </Pressable>

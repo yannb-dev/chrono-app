@@ -23,6 +23,8 @@ import { TimerPause } from "@/types/api";
 import ViewChrono from "@/components/viewChrono";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import BtnAndList from "@/components/BtnAndList";
+import ErrorMessage from "@/components/ErrorMessage";
+
 import { extractErrorMessage, HttpError, NetworkError } from "@/lib/errors";
 
 export default function RunPage() {
@@ -300,7 +302,7 @@ export default function RunPage() {
     return (
       <View style={styles.container}>
         <View style={styles.containerError}>
-          <Text style={styles.text}>Oups, une erreur !</Text>
+          <ErrorMessage detailSend={detailError} />
           <Text style={styles.text}>{detailError}</Text>
           <Pressable onPress={() => setError(false)}>
             <Text style={styles.text}>Réessayer</Text>

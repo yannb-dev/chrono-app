@@ -15,6 +15,7 @@ const MAPPING = {
   pause: "pause",
   "delete.forward": "delete",
   "person.crop.circle": "account-circle",
+  "warninglight.fill": "error-outline",
 } satisfies Partial<Record<SFSymbolName, MaterialIconName>>;
 
 export type IconSymbolName = keyof typeof MAPPING;

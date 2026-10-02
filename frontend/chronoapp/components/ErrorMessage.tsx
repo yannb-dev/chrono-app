@@ -1,0 +1,19 @@
+import { View, Text, Pressable } from "react-native";
+import { styles } from "@/lib/styles";
+import { IconSymbol } from "./ui/IconSymbol";
+
+type props = {
+  detailSend: string;
+};
+
+export default function ErrorMessage(detailSend: props) {
+  return (
+    <View style={{ width: "100%", height: "100%", alignItems: "center" }}>
+      <Text style={[styles.text, { marginBottom: 10 }]}>Oups...</Text>
+      <IconSymbol name={"warninglight.fill"} />
+      <Text style={[styles.text, { marginTop: 10, fontSize: 8 }]}>
+        {detailSend.detailSend}
+      </Text>
+    </View>
+  );
+}

@@ -16,6 +16,8 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 
 import ViewChrono from "./viewChrono";
+
+import ErrorMessage from "./ErrorMessage";
 import { extractErrorMessage, HttpError, NetworkError } from "@/lib/errors";
 
 type List = {
@@ -191,11 +193,10 @@ export default function BtnAndList({ seance, reset }: Seance) {
     return (
       <View style={styles.container}>
         <View style={styles.containerError}>
-          <Text style={styles.text}>Oups, une erreur !</Text>
-          <Text style={[styles.text, { textAlign: "center" }]}>
-            {detailError}
-          </Text>
-          <Pressable onPress={() => setError(false)}></Pressable>
+          <ErrorMessage detailSend={detailError} />
+          <Pressable style={styles.btnSelect} onPress={() => setError(false)}>
+            <Text style={styles.text}>Réessayer</Text>
+          </Pressable>
         </View>
       </View>
     );
