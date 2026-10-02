@@ -32,6 +32,7 @@ export default function LoginScreen() {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(LoginSchema),
+    defaultValues: { email: "", password: "" },
   });
 
   const onSubmit = async (valueForm: LoginSchema) => {
@@ -88,9 +89,10 @@ export default function LoginScreen() {
             <Controller
               control={control}
               name="email"
-              render={({ field: { onChange, onBlur } }) => (
+              render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
                   placeholder="Email"
+                  value={value}
                   placeholderTextColor="#575656"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -106,9 +108,10 @@ export default function LoginScreen() {
             <Controller
               control={control}
               name="password"
-              render={({ field: { onChange, onBlur } }) => (
+              render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
                   placeholder="Mot de passe"
+                  value={value}
                   placeholderTextColor="#575656"
                   secureTextEntry
                   onBlur={onBlur}

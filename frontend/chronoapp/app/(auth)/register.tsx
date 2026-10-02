@@ -29,6 +29,7 @@ export default function Register() {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(RegisterSchema),
+    defaultValues: { email: "", password: "", confirmPassword: "" },
   });
 
   useEffect(() => {
@@ -67,7 +68,13 @@ export default function Register() {
   if (messageConfirm) {
     return (
       <View style={styles.containerSupRegister}>
-        <Text style={styles.text}>Inscription validée !</Text>
+        <Text style={[styles.text, { marginBottom: 20 }]}>
+          Inscription validée !
+        </Text>
+        <Text style={[styles.text, { textAlign: "center", fontSize: 10 }]}>
+          Bienvenue sur Chrono app, vous allez être redirigé vers la page de
+          connexion.{" "}
+        </Text>
       </View>
     );
   }
@@ -103,9 +110,10 @@ export default function Register() {
             <Controller
               control={control}
               name="email"
-              render={({ field: { onChange, onBlur } }) => (
+              render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
                   placeholder="Email"
+                  value={value}
                   placeholderTextColor="#575656"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -121,9 +129,10 @@ export default function Register() {
             <Controller
               control={control}
               name="password"
-              render={({ field: { onChange, onBlur } }) => (
+              render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
                   placeholder="Mot de passe"
+                  value={value}
                   placeholderTextColor="#575656"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -140,9 +149,10 @@ export default function Register() {
             <Controller
               control={control}
               name="confirmPassword"
-              render={({ field: { onChange, onBlur } }) => (
+              render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
                   placeholder="Confirmer le mot de passe"
+                  value={value}
                   placeholderTextColor="#575656"
                   onBlur={onBlur}
                   onChangeText={onChange}

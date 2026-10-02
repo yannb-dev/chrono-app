@@ -51,7 +51,7 @@ export default function Account() {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
         <View style={styles.containerError}>
-          <Text style={styles.text}>
+          <Text style={[styles.text, { fontSize: 12 }]}>
             Veuillez écrire "chronoapp" pour confirmer la suppression de votre
             compte.
           </Text>
@@ -65,6 +65,7 @@ export default function Account() {
           <Pressable
             style={[
               styles.btnSelect,
+              ,
               confirmText !== "chronoapp" && styles.btnPressed,
             ]}
             disabled={confirmText !== "chronoapp"}
@@ -120,7 +121,10 @@ export default function Account() {
             suppresion de l'ensemble de vos données sans récupéraiton possible.
           </Text>
           <Pressable
-            style={styles.btnSelect}
+            style={({ pressed }) => [
+              styles.btnSelect,
+              pressed && styles.btnPressed,
+            ]}
             onPress={() => setConfirmDelete(true)}
           >
             <Text style={styles.text}>Supprimer</Text>

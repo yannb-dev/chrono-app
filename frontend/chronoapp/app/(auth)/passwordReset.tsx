@@ -28,6 +28,7 @@ export default function PasswordReset() {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(ResetPasswordSchema),
+    defaultValues: { email: "" },
   });
 
   useEffect(() => {
@@ -101,9 +102,10 @@ export default function PasswordReset() {
             <Controller
               control={control}
               name="email"
-              render={({ field: { onChange, onBlur } }) => (
+              render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
                   placeholder="Email"
+                  value={value}
                   placeholderTextColor="#575656"
                   onBlur={onBlur}
                   onChangeText={onChange}

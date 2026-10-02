@@ -158,7 +158,7 @@ export default function DetailScreen() {
                         onPress={() => handleRedirectSeance(item)}
                       >
                         <View style={styles.containerListDate}>
-                          <Text style={styles.text}>
+                          <Text style={[styles.text, { fontSize: 8 }]}>
                             {format(item.createdAt, "dd/MM/yyyy", {
                               locale: fr,
                             })}
