@@ -68,9 +68,7 @@ export default function Form() {
   };
 
   const onInvalid = (errors: FieldErrors<FormSchema>) => {
-    setDetailError(
-      "Oups ! Une erreur c'est produite à la soumission du formulaire",
-    );
+    setDetailError("Veuillez saisir une couleur");
     setError(true);
   };
 
@@ -81,11 +79,16 @@ export default function Form() {
 
   if (error)
     return (
-      <View style={styles.containerError}>
-        <ErrorMessage detailSend={detailError} />
-        <Pressable style={styles.btnSelect} onPress={handleRemoveMessageError}>
-          <Text style={styles.text}>Réessayer</Text>
-        </Pressable>
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <View style={styles.containerError}>
+          <ErrorMessage detailSend={detailError} />
+          <Pressable
+            style={styles.btnSelect}
+            onPress={handleRemoveMessageError}
+          >
+            <Text style={styles.text}>Réessayer</Text>
+          </Pressable>
+        </View>
       </View>
     );
 
