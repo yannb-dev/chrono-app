@@ -8,10 +8,10 @@ type props = {
 
 export default function ErrorMessage(detailSend: props) {
   return (
-    <View style={{ width: "100%", height: "100%", alignItems: "center" }}>
+    <View style={{ width: "100%", alignItems: "center" }}>
       <Text style={[styles.text, { marginBottom: 10 }]}>Oups...</Text>
       <IconSymbol name={"warninglight.fill"} />
-      <Text style={[styles.text, { marginTop: 10, fontSize: 8 }]}>
+      <Text style={[styles.text, { marginTop: 10, fontSize: 10 }]}>
         {detailSend.detailSend}
       </Text>
     </View>
