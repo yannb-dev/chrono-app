@@ -4,3 +4,5 @@ jest.mock("react-native-worklets", () =>
 
 const { setUpTests } = require("react-native-reanimated");
 setUpTests();
+
+require("react-native-reanimated").setUpTests();

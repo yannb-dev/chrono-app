@@ -30,6 +30,8 @@ jest.mock("@/context/AuthContext", () => ({
   }),
 }));
 
+// ==== GROUPE DE TEST ====
+
 describe("Login - affichage des erreurs", () => {
   afterEach(async () => {
     await cleanup();
@@ -113,26 +115,26 @@ describe("Login - affichage des erreurs", () => {
 
     expect(await screen.findByText("Pas de connexion réseau")).toBeTruthy();
   });
-});
 
-// ==== TEST 5 ====
-//
-it("action sur button MOT DE PASSE OUBLIE doit rediriger", async () => {
-  await render(<LoginScreen />);
-  await fireEvent.press(screen.getByText("Mot de passe oublié"));
+  // ==== TEST 5 ====
+  //
+  it("action sur button MOT DE PASSE OUBLIE doit rediriger", async () => {
+    await render(<LoginScreen />);
+    await fireEvent.press(screen.getByText("Mot de passe oublié"));
 
-  await waitFor(() => {
-    expect(mockPush).toHaveBeenCalledWith("/(auth)/passwordReset");
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/(auth)/passwordReset");
+    });
   });
-});
 
-// ===== TEST 6 ====
-//
-it("action sur button S'INSCRIRE doit rediriger", async () => {
-  await render(<LoginScreen />);
-  await fireEvent.press(screen.getByText("S'inscrire"));
+  // ===== TEST 6 ====
+  //
+  it("action sur button S'INSCRIRE doit rediriger", async () => {
+    await render(<LoginScreen />);
+    await fireEvent.press(screen.getByText("S'inscrire"));
 
-  await waitFor(() => {
-    expect(mockPush).toHaveBeenCalledWith("/(auth)/register");
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/(auth)/register");
+    });
   });
 });
