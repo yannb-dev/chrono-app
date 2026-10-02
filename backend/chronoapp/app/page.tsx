@@ -30,10 +30,10 @@ export default function PasswordReset() {
         <Image
           src="/images/android-icon-foreground.png"
           alt="Logo de l'application"
-          width={200}
-          height={200}
+          width={180}
+          height={1800}
         />
-        <div className="h-30 w-[50%] flex justify-center items-center bg-gray-400 rounded-sm mt-20">
+        <div className="h-30 w-[50%] flex justify-center items-center bg-gray-300 rounded-sm mt-20">
           <h1 className="text-gray-900 text-sm">
             Lien invalide, veuiller relancer une demande de réinitialisation de
             mot de passe
@@ -47,8 +47,8 @@ export default function PasswordReset() {
       <Image
         src="/images/android-icon-foreground.png"
         alt="Logo de l'application"
-        width={200}
-        height={200}
+        width={180}
+        height={180}
       />
 
       <FormResetPassword token={token} />

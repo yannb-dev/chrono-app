@@ -17,6 +17,7 @@ import { SeanceResponse } from "@/types/api";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import SvgComponent from "@/components/LogoApp";
 import LoadingAnim from "@/components/LoadingAnim";
+import ErrorMessage from "@/components/ErrorMessage";
 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -77,8 +78,7 @@ export default function DetailScreen() {
     return (
       <View>
         <View>
-          <Text style={styles.text}>Oups une erreur !</Text>
-          <Text style={styles.text}>{detailError}</Text>
+          <ErrorMessage detailSend={detailError} />
           <Pressable onPress={handleCloseError}>
             <Text style={styles.btnSelect}>Réessayer</Text>
           </Pressable>
@@ -158,7 +158,7 @@ export default function DetailScreen() {
                         onPress={() => handleRedirectSeance(item)}
                       >
                         <View style={styles.containerListDate}>
-                          <Text style={styles.text}>
+                          <Text style={[styles.text, { fontSize: 8 }]}>
                             {format(item.createdAt, "dd/MM/yyyy", {
                               locale: fr,
                             })}

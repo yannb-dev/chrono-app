@@ -17,6 +17,7 @@ import { HttpError, NetworkError, extractErrorMessage } from "@/lib/errors";
 
 import SvgComponent from "@/components/LogoApp";
 import LoadingAnim from "@/components/LoadingAnim";
+import ErrorMessage from "@/components/ErrorMessage";
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
@@ -31,6 +32,7 @@ export default function LoginScreen() {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(LoginSchema),
+    defaultValues: { email: "", password: "" },
   });
 
   const onSubmit = async (valueForm: LoginSchema) => {
@@ -66,8 +68,7 @@ export default function LoginScreen() {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
         <View style={styles.containerError}>
-          <Text style={styles.text}>Oups, une erreur !</Text>
-          <Text style={styles.text}>{detailError}</Text>
+          <ErrorMessage detailSend={detailError} />
           <Pressable style={styles.btnSelect} onPress={() => setError(false)}>
             <Text style={styles.text}>Réessayer</Text>
           </Pressable>
@@ -88,9 +89,10 @@ export default function LoginScreen() {
             <Controller
               control={control}
               name="email"
-              render={({ field: { onChange, onBlur } }) => (
+              render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
                   placeholder="Email"
+                  value={value}
                   placeholderTextColor="#575656"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -106,9 +108,10 @@ export default function LoginScreen() {
             <Controller
               control={control}
               name="password"
-              render={({ field: { onChange, onBlur } }) => (
+              render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
                   placeholder="Mot de passe"
+                  value={value}
                   placeholderTextColor="#575656"
                   secureTextEntry
                   onBlur={onBlur}

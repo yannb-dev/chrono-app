@@ -12,7 +12,9 @@ import { postSeance } from "@/services/api";
 
 import { FormSchema } from "@/lib/schema/formSchema";
 import { useState } from "react";
+
 import LoadingAnim from "./LoadingAnim";
+import ErrorMessage from "./ErrorMessage";
 
 export default function Form() {
   const [error, setError] = useState(false);
@@ -80,8 +82,7 @@ export default function Form() {
   if (error)
     return (
       <View style={styles.containerError}>
-        <Text>Oups une erreur !</Text>
-        <Text style={styles.text}>{detailError}</Text>
+        <ErrorMessage detailSend={detailError} />
         <Pressable style={styles.btnSelect} onPress={handleRemoveMessageError}>
           <Text style={styles.text}>Réessayer</Text>
         </Pressable>
