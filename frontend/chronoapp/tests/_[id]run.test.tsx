@@ -6,7 +6,6 @@ import {
   waitFor,
 } from "@testing-library/react-native";
 import RunPage from "@/app/run/[id]";
-import BtnAndList from "@/components/BtnAndList";
 import {
   getSeanceId,
   patchSeance,

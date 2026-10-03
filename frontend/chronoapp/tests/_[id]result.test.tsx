@@ -41,6 +41,26 @@ describe("[id] Result - affichage des erreurs", () => {
   // ==== VALEUR FACTICES ====
   //
 
+  const seanceFinish = {
+    totalRunner: 10,
+    colorRunner: "blue",
+    id: "test123",
+    createdAt: new Date("2026-10-03T13:37:58.190Z"),
+    startedAt: new Date("2026-10-03T13:37:59.190Z"),
+    state: "Finish",
+    userId: "test345",
+    timerRunners: [
+      {
+        id: "345TYU",
+        numberRunner: 5,
+        endedAt: "2026-10-03T13:37:59.190Z",
+        duration: 60000,
+        seanceId: "test123",
+      },
+    ],
+    timerpauses: [],
+  };
+
   // ==== TEST 1 ====
   it("Non autorisé => redirection /login ", async () => {
     (getSeanceId as jest.Mock).mockRejectedValueOnce(
@@ -79,5 +99,15 @@ describe("[id] Result - affichage des erreurs", () => {
 
     await fireEvent.press(screen.getByText("Réessayer"));
     expect(screen.queryByText("Aucune séance")).toBeNull();
+  });
+
+  // ==== TEST 4 ====
+  //
+  it("Chargement des résultats de la séance", async () => {
+    (getSeanceId as jest.Mock).mockResolvedValueOnce(seanceFinish);
+
+    await render(<Result />);
+
+    expect(await screen.findByTestId("runner-5")).toBeTruthy();
   });
 });

@@ -163,9 +163,10 @@ export default function BtnAndList({ seance, reset }: Seance) {
     return (
       <View style={styles.container}>
         <View style={styles.containerError}>
-          <Text style={styles.text}>Enregister et quitter ?</Text>
+          <Text style={styles.text}>Enregistrer et quitter ?</Text>
           <View style={styles.containerBtnConfirm}>
             <Pressable
+              testID="confirm"
               style={({ pressed }) => [
                 styles.btnSelect,
                 pressed && styles.btnPressed,
