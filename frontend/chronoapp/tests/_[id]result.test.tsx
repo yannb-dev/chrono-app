@@ -3,16 +3,19 @@ import {
   screen,
   fireEvent,
   cleanup,
+  waitFor,
 } from "@testing-library/react-native";
 import Result from "@/app/result/[id]";
-
 import { getSeanceId } from "@/services/api";
-
 import { HttpError, NetworkError } from "@/lib/errors";
 import { useLocalSearchParams } from "expo-router";
 
+// ==== MOCK ====
+//
+const mockReplace = jest.fn();
+
 jest.mock("expo-router", () => ({
-  router: { push: jest.fn() },
+  router: { replace: (...args: unknown[]) => mockReplace(...args) },
   Stack: {
     Screen: () => null,
   },
@@ -23,6 +26,9 @@ jest.mock("@/services/api", () => ({
   getSeanceId: jest.fn(),
 }));
 
+// ==== GROUPE TEST ====
+//
+
 describe("[id] Result - affichage des erreurs", () => {
   afterEach(async () => {
     await cleanup();
@@ -32,8 +38,11 @@ describe("[id] Result - affichage des erreurs", () => {
     jest.clearAllMocks();
   });
 
-  // test 1
-  it("affiche le message d'erreur HTTP renvoyé par l'API GET SEANCEID non autorisé", async () => {
+  // ==== VALEUR FACTICES ====
+  //
+
+  // ==== TEST 1 ====
+  it("Non autorisé => redirection /login ", async () => {
     (getSeanceId as jest.Mock).mockRejectedValueOnce(
       new HttpError(401, {
         message: "Non autorisé",
@@ -41,10 +50,13 @@ describe("[id] Result - affichage des erreurs", () => {
     );
 
     await render(<Result />);
-    expect(await screen.findByText("Non autorisé")).toBeTruthy();
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith("/(auth)/login");
+    });
   });
 
-  // test 2
+  // ==== TEST 2 ====
+  //
   it("affiche un message quand le réseau est indisponible", async () => {
     (getSeanceId as jest.Mock).mockRejectedValueOnce(
       new NetworkError("Pas de connexion internet"),
@@ -53,17 +65,19 @@ describe("[id] Result - affichage des erreurs", () => {
     await render(<Result />);
     expect(await screen.findByText("Pas de connexion internet")).toBeTruthy();
   });
-  // test 3
+
+  // ==== TEST 3 ====
+  //
 
   it("Effacement de la <View> à la fermeture de la fenêtre Error", async () => {
     (getSeanceId as jest.Mock).mockRejectedValueOnce(
-      new HttpError(401, { message: "Non autorisé" }),
+      new HttpError(404, { message: "Aucune séance" }),
     );
 
     await render(<Result />);
-    expect(await screen.findByText("Oups une erreur !"));
+    expect(await screen.findByText("Aucune séance"));
 
     await fireEvent.press(screen.getByText("Réessayer"));
-    expect(screen.queryByText("Oups une erreur !")).toBeNull();
+    expect(screen.queryByText("Aucune séance")).toBeNull();
   });
 });

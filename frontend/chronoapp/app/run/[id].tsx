@@ -127,8 +127,6 @@ export default function RunPage() {
   // ========== Gestion du button [play] soit pour le démarrage, soit pour mettre fin à la pause
 
   const handlePlay = async () => {
-    // répond à la question, il y a t'il une pause en cours ou non ?
-
     if (!timerPauseInProgress) {
       if (stateChrono) return;
 
@@ -303,7 +301,6 @@ export default function RunPage() {
       <View style={styles.container}>
         <View style={styles.containerError}>
           <ErrorMessage detailSend={detailError} />
-          <Text style={styles.text}>{detailError}</Text>
           <Pressable onPress={() => setError(false)}>
             <Text style={styles.text}>Réessayer</Text>
           </Pressable>
@@ -331,6 +328,7 @@ export default function RunPage() {
           {seanceGet && (
             <View style={styles.containerBtnChrono}>
               <Pressable
+                testID="play"
                 style={[
                   styles.btnChrono,
                   {
@@ -345,6 +343,7 @@ export default function RunPage() {
                 <IconSymbol name={"play"} />
               </Pressable>
               <Pressable
+                testID="pause"
                 style={[
                   styles.btnChrono,
                   {
@@ -359,6 +358,7 @@ export default function RunPage() {
                 <IconSymbol name={"pause"} />
               </Pressable>
               <Pressable
+                testID="reset"
                 style={[
                   styles.btnChrono,
                   {
