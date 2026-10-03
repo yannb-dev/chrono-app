@@ -151,6 +151,7 @@ export default function DetailScreen() {
                   renderItem={({ item }) => (
                     <View style={{ width: "100%", alignItems: "center" }}>
                       <Pressable
+                        testID={item.id}
                         style={({ pressed }) => [
                           styles.containerListRun,
                           pressed && styles.btnPressed,

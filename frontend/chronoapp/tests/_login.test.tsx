@@ -3,13 +3,18 @@ import {
   screen,
   fireEvent,
   cleanup,
+  waitFor,
 } from "@testing-library/react-native";
 import LoginScreen from "@/app/(auth)/login";
 import { postLogin } from "@/services/api";
 import { HttpError, NetworkError } from "@/lib/errors";
 
+// ==== MOCK ====
+
+const mockPush = jest.fn();
+
 jest.mock("expo-router", () => ({
-  router: { push: jest.fn() },
+  router: { push: (...args: unknown[]) => mockPush(...args) },
   Stack: {
     Screen: () => null,
   },
@@ -25,6 +30,8 @@ jest.mock("@/context/AuthContext", () => ({
   }),
 }));
 
+// ==== GROUPE DE TEST ====
+
 describe("Login - affichage des erreurs", () => {
   afterEach(async () => {
     await cleanup();
@@ -33,6 +40,8 @@ describe("Login - affichage des erreurs", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
+
+  // ==== Valeur fictive de test ====
 
   const remplirFormulaireValid = async () => {
     await fireEvent.changeText(
@@ -46,18 +55,25 @@ describe("Login - affichage des erreurs", () => {
   };
 
   const remplirFormulaireInValid = async () => {
-    await fireEvent.changeText(
-      screen.getByPlaceholderText("Email"),
-      "testtest.com",
-    );
-    await fireEvent.changeText(
-      screen.getByPlaceholderText("Mot de passe"),
-      "password1!",
-    );
+    await fireEvent.changeText(screen.getByPlaceholderText("Email"), "");
+    await fireEvent.changeText(screen.getByPlaceholderText("Mot de passe"), "");
   };
 
-  // test 1
-  it("affiche le message d'erreur HTTP renvoyé par l'API mauvais format", async () => {
+  // ==== TEST 1 ====
+  //
+  it("affiche les messages d'erreurs sous les input + ne lance pas la function", async () => {
+    await render(<LoginScreen />);
+    await remplirFormulaireInValid();
+    await fireEvent.press(screen.getByText("Se connecter"));
+
+    expect(await screen.findByText("Email requis")).toBeTruthy();
+    expect(await screen.findByText("Mot de passe requis")).toBeTruthy();
+    expect(postLogin).not.toHaveBeenCalled();
+  });
+
+  // ==== TEST 2 ====
+  //
+  it("affiche le message d'erreur HTTP renvoyé par l'API => mauvais format", async () => {
     (postLogin as jest.Mock).mockRejectedValueOnce(
       new HttpError(400, {
         message: "Format de l'email ou du mot de passe non conformes",
@@ -72,18 +88,8 @@ describe("Login - affichage des erreurs", () => {
     ).toBeTruthy();
   });
 
-  // test 2
-  it("affiche les messages d'erreurs de soumission sans appel API", async () => {
-    await render(<LoginScreen />);
-    await remplirFormulaireInValid();
-    await fireEvent.press(screen.getByText("Se connecter"));
-
-    expect(await screen.findByText("Mauvais format d'email")).toBeTruthy();
-    expect(await screen.findByText("Au moins une majuscule")).toBeTruthy();
-    expect(postLogin).not.toHaveBeenCalled();
-  });
-
-  // test 3
+  // ==== TEST 3 ====
+  //
   it("affiche le message d'erreur HTTP renvoyé par l'API identification", async () => {
     (postLogin as jest.Mock).mockRejectedValueOnce(
       new HttpError(401, { message: "Identifications invalides" }),
@@ -96,16 +102,39 @@ describe("Login - affichage des erreurs", () => {
     expect(await screen.findByText("Identifications invalides")).toBeTruthy();
   });
 
-  // test 4
+  // ==== TEST 4 ====
+  //
   it("affiche un message quand le réseau est indisponible", async () => {
     (postLogin as jest.Mock).mockRejectedValueOnce(
-      new NetworkError("Pas de connexion internet"),
+      new NetworkError("Pas de connexion réseau"),
     );
 
     await render(<LoginScreen />);
     await remplirFormulaireValid();
     await fireEvent.press(screen.getByText("Se connecter"));
 
-    expect(await screen.findByText("Pas de connexion internet")).toBeTruthy();
+    expect(await screen.findByText("Pas de connexion réseau")).toBeTruthy();
+  });
+
+  // ==== TEST 5 ====
+  //
+  it("action sur button MOT DE PASSE OUBLIE doit rediriger", async () => {
+    await render(<LoginScreen />);
+    await fireEvent.press(screen.getByText("Mot de passe oublié"));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/(auth)/passwordReset");
+    });
+  });
+
+  // ===== TEST 6 ====
+  //
+  it("action sur button S'INSCRIRE doit rediriger", async () => {
+    await render(<LoginScreen />);
+    await fireEvent.press(screen.getByText("S'inscrire"));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/(auth)/register");
+    });
   });
 });

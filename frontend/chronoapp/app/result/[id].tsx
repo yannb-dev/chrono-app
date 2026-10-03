@@ -101,7 +101,10 @@ export default function Result() {
             data={seance?.timerRunners}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <View style={styles.containerFlatListResultPage}>
+              <View
+                testID={`runner-${item.numberRunner.toString()}`}
+                style={styles.containerFlatListResultPage}
+              >
                 <Text style={[styles.text, { marginRight: 20 }]}>
                   N°{item.numberRunner}
                 </Text>

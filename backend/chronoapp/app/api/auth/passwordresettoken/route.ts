@@ -72,7 +72,7 @@ export async function POST(req: Request) {
 
         after(() =>
           sendVerificationEmail(existingUser.email, rawToken).catch((err) =>
-            console.error("Echece de l'envoi du mail", err),
+            console.error("Echec de l'envoi du mail", err),
           ),
         );
       } catch (error) {

@@ -14,7 +14,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.containerLogout}>
-        <Pressable onPress={logout}>
+        <Pressable testID="logout" onPress={logout}>
           <IconSymbol size={30} name={"door.french.open"} />
         </Pressable>
       </View>
