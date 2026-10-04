@@ -1,6 +1,6 @@
 # Sécurité+ — Comprendre et mettre en place les points hors audit
 
-_Complément de `security.md`. L'audit ChronoApp (`audit-securite.md`) explique déjà ses propres points. Ce document détaille ceux qui ont été **ajoutés** dans la checklist._
+\_Complément de `security.md`.
 
 Chaque fiche suit le même plan :
 
@@ -11,26 +11,26 @@ Chaque fiche suit le même plan :
 
 ## Sommaire
 
-| #   | Fiche                                          | Priorité |
-| --- | ---------------------------------------------- | -------- |
-| 1   | [Cookie HttpOnly vs localStorage](#1-cookie-httponly-vs-localstorage)       | 🔴 |
-| 2   | [Figer l'algorithme du JWT](#2-figer-lalgorithme-du-jwt)                   | 🔴 |
-| 3   | [HTTPS et HSTS](#3-https-et-hsts)                                          | 🔴 |
-| 4   | [Liste blanche pour le SQL dynamique](#4-liste-blanche-pour-le-sql-dynamique) | 🔴 |
-| 5   | [Vérification de l'adresse email](#5-vérification-de-ladresse-email)       | 🟠 |
-| 6   | [Politique de mot de passe NIST + mots de passe compromis](#6-politique-de-mot-de-passe-nist--mots-de-passe-compromis) | 🟠 |
-| 7   | [Ré-authentification pour les opérations sensibles](#7-ré-authentification-pour-les-opérations-sensibles) | 🟠 |
-| 8   | [Rate limiting plutôt que verrouillage de compte](#8-rate-limiting-plutôt-que-verrouillage-de-compte) | 🟠 |
-| 9   | [CSRF](#9-csrf)                                                             | 🟡 |
-| 10  | [CORS](#10-cors)                                                            | 🟡 |
-| 11  | [XSS](#11-xss)                                                              | 🟡 |
-| 12  | [Comparaison en temps constant](#12-comparaison-en-temps-constant)         | 🟡 |
-| 13  | [Base de données : droits minimaux, réseau, sauvegardes](#13-base-de-données--droits-minimaux-réseau-sauvegardes) | 🟡 |
-| 14  | [Purge des tokens expirés (cron)](#14-purge-des-tokens-expirés-cron)       | 🟡 |
-| 15  | [Limites sur les routes métier](#15-limites-sur-les-routes-métier)          | 🟡 |
-| 16  | [Upload de fichiers](#16-upload-de-fichiers)                               | 🟡 |
-| 17  | [Double authentification (TOTP)](#17-double-authentification-totp)         | ⚪ |
-| 18  | [RGPD : export et suppression du compte](#18-rgpd--export-et-suppression-du-compte) | ⚪ |
+| #   | Fiche                                                                                                                  | Priorité |
+| --- | ---------------------------------------------------------------------------------------------------------------------- | -------- |
+| 1   | [Cookie HttpOnly vs localStorage](#1-cookie-httponly-vs-localstorage)                                                  | 🔴       |
+| 2   | [Figer l'algorithme du JWT](#2-figer-lalgorithme-du-jwt)                                                               | 🔴       |
+| 3   | [HTTPS et HSTS](#3-https-et-hsts)                                                                                      | 🔴       |
+| 4   | [Liste blanche pour le SQL dynamique](#4-liste-blanche-pour-le-sql-dynamique)                                          | 🔴       |
+| 5   | [Vérification de l'adresse email](#5-vérification-de-ladresse-email)                                                   | 🟠       |
+| 6   | [Politique de mot de passe NIST + mots de passe compromis](#6-politique-de-mot-de-passe-nist--mots-de-passe-compromis) | 🟠       |
+| 7   | [Ré-authentification pour les opérations sensibles](#7-ré-authentification-pour-les-opérations-sensibles)              | 🟠       |
+| 8   | [Rate limiting plutôt que verrouillage de compte](#8-rate-limiting-plutôt-que-verrouillage-de-compte)                  | 🟠       |
+| 9   | [CSRF](#9-csrf)                                                                                                        | 🟡       |
+| 10  | [CORS](#10-cors)                                                                                                       | 🟡       |
+| 11  | [XSS](#11-xss)                                                                                                         | 🟡       |
+| 12  | [Comparaison en temps constant](#12-comparaison-en-temps-constant)                                                     | 🟡       |
+| 13  | [Base de données : droits minimaux, réseau, sauvegardes](#13-base-de-données--droits-minimaux-réseau-sauvegardes)      | 🟡       |
+| 14  | [Purge des tokens expirés (cron)](#14-purge-des-tokens-expirés-cron)                                                   | 🟡       |
+| 15  | [Limites sur les routes métier](#15-limites-sur-les-routes-métier)                                                     | 🟡       |
+| 16  | [Upload de fichiers](#16-upload-de-fichiers)                                                                           | 🟡       |
+| 17  | [Double authentification (TOTP)](#17-double-authentification-totp)                                                     | ⚪       |
+| 18  | [RGPD : export et suppression du compte](#18-rgpd--export-et-suppression-du-compte)                                    | ⚪       |
 
 ---
 
@@ -40,13 +40,13 @@ Chaque fiche suit le même plan :
 
 ⚙️ **Principe.** Un cookie avec le flag `HttpOnly` est envoyé automatiquement par le navigateur au serveur, mais **JavaScript ne peut pas le lire** (`document.cookie` ne le voit pas). Une XSS reste grave, mais elle ne peut plus exfiltrer le token.
 
-| Flag             | Effet                                                                |
-| ---------------- | -------------------------------------------------------------------- |
-| `HttpOnly`       | Illisible par JavaScript                                             |
-| `Secure`         | Envoyé uniquement en HTTPS                                           |
-| `SameSite=Lax`   | Pas envoyé par les requêtes `POST` venant d'un autre site (anti-CSRF, voir fiche 9) |
-| `Path=/`         | Valable pour tout le site                                            |
-| `Max-Age`        | Durée de vie, alignée sur celle du JWT                               |
+| Flag           | Effet                                                                               |
+| -------------- | ----------------------------------------------------------------------------------- |
+| `HttpOnly`     | Illisible par JavaScript                                                            |
+| `Secure`       | Envoyé uniquement en HTTPS                                                          |
+| `SameSite=Lax` | Pas envoyé par les requêtes `POST` venant d'un autre site (anti-CSRF, voir fiche 9) |
+| `Path=/`       | Valable pour tout le site                                                           |
+| `Max-Age`      | Durée de vie, alignée sur celle du JWT                                              |
 
 🛠️ **Mise en place (Next.js, auth maison).**
 
@@ -54,10 +54,14 @@ Chaque fiche suit le même plan :
 // app/api/auth/login/route.ts — après vérification du mot de passe
 import { cookies } from "next/headers";
 
-const token = jwt.sign({ sub: user.id, v: user.tokenVersion }, process.env.JWT_SECRET!, {
-  algorithm: "HS256",
-  expiresIn: "1h",
-});
+const token = jwt.sign(
+  { sub: user.id, v: user.tokenVersion },
+  process.env.JWT_SECRET!,
+  {
+    algorithm: "HS256",
+    expiresIn: "1h",
+  },
+);
 
 (await cookies()).set("session", token, {
   httpOnly: true,
@@ -84,6 +88,7 @@ const token = (await cookies()).get("session")?.value;
 **Côté mobile (Expo)**, il n'y a pas de XSS au sens web, mais `AsyncStorage` est un fichier en clair lisible sur un appareil rooté ou dans une sauvegarde. `expo-secure-store` utilise le **Keychain** (iOS) / **Keystore** (Android), qui sont chiffrés par le système. C'est ce que fait déjà ChronoApp.
 
 ⚠️ **Pièges.**
+
 - Mettre le token dans un cookie **sans** `HttpOnly` : aucun gain par rapport à `localStorage`.
 - Renvoyer aussi le token dans le body JSON « au cas où » : le front finit par le stocker en clair.
 - Le cookie protège le token, pas l'utilisateur : une XSS peut toujours faire des requêtes **depuis** la page. La XSS reste à corriger (fiche 11).
@@ -93,6 +98,7 @@ const token = (await cookies()).get("session")?.value;
 ## 2. Figer l'algorithme du JWT
 
 🎯 **Contre quoi.** Les attaques de **confusion d'algorithme**. Un JWT annonce lui-même son algorithme dans son en-tête (`{"alg": "HS256"}`). Si le serveur fait confiance à ce champ, un attaquant peut :
+
 - envoyer `"alg": "none"` → token non signé accepté par certaines librairies mal configurées ;
 - en RS256, passer en `HS256` et signer avec la **clé publique** (connue de tous) comme secret HMAC.
 
@@ -102,7 +108,9 @@ const token = (await cookies()).get("session")?.value;
 
 ```ts
 // jsonwebtoken
-const payload = jwt.verify(token, process.env.JWT_SECRET!, { algorithms: ["HS256"] });
+const payload = jwt.verify(token, process.env.JWT_SECRET!, {
+  algorithms: ["HS256"],
+});
 
 // jose (compatible Edge / middleware)
 import { jwtVerify } from "jose";
@@ -111,6 +119,7 @@ const { payload } = await jwtVerify(token, secret, { algorithms: ["HS256"] });
 ```
 
 ⚠️ **Pièges.**
+
 - `jwt.decode()` **ne vérifie rien** : il lit juste le contenu. Ne jamais l'utiliser pour authentifier.
 - Ne jamais mettre de donnée sensible dans le payload : il est encodé en base64, **pas chiffré**. N'importe qui peut le lire sur jwt.io.
 
@@ -133,6 +142,7 @@ const { payload } = await jwtVerify(token, secret, { algorithms: ["HS256"] });
 - **App mobile :** vérifier que `EXPO_PUBLIC_API_URL` commence par `https://` en production. Android bloque déjà le HTTP en clair par défaut sur les builds de production ; ne pas réactiver `usesCleartextTraffic`.
 
 ⚠️ **Pièges.**
+
 - `includeSubDomains` s'applique à **tous** les sous-domaines : s'assurer qu'aucun ne sert encore du HTTP.
 - Tester avec un `max-age` court (ex : 300) avant de mettre 2 ans : un navigateur garde l'ordre en mémoire même si tu retires l'en-tête.
 
@@ -153,7 +163,9 @@ const querySchema = z.object({
   order: z.enum(["asc", "desc"]).default("desc"),
 });
 
-const { sort, order } = querySchema.parse(Object.fromEntries(req.nextUrl.searchParams));
+const { sort, order } = querySchema.parse(
+  Object.fromEntries(req.nextUrl.searchParams),
+);
 
 // Avec Prisma : la clé est typée, aucun SQL brut
 await prisma.seance.findMany({ where: { userId }, orderBy: { [sort]: order } });
@@ -161,10 +173,14 @@ await prisma.seance.findMany({ where: { userId }, orderBy: { [sort]: order } });
 
 ```ts
 // Avec pg (Express) : la valeur vient de l'enum, donc sûre à interpoler
-await pool.query(`SELECT * FROM seance WHERE user_id = $1 ORDER BY ${sort} ${order}`, [userId]);
+await pool.query(
+  `SELECT * FROM seance WHERE user_id = $1 ORDER BY ${sort} ${order}`,
+  [userId],
+);
 ```
 
 ⚠️ **Pièges.**
+
 - Prisma `$queryRaw` avec template literal **est** paramétré ; `$queryRawUnsafe` et `Prisma.raw()` **ne le sont pas**.
 - Un filtre `LIKE` : échapper `%` et `_` sinon l'utilisateur peut faire des recherches très coûteuses (`%%%%%`).
 
@@ -173,6 +189,7 @@ await pool.query(`SELECT * FROM seance WHERE user_id = $1 ORDER BY ${sort} ${ord
 ## 5. Vérification de l'adresse email
 
 🎯 **Contre quoi.**
+
 - Créer un compte avec l'email de **quelqu'un d'autre** (usurpation, spam vers la victime).
 - Les fautes de frappe : l'utilisateur ne pourra jamais réinitialiser son mot de passe.
 - **Condition nécessaire à l'anti-énumération du register** : pour répondre la même chose que le compte existe ou non, la suite doit se passer **dans la boîte mail**.
@@ -218,7 +235,8 @@ export function generateToken() {
   const hash = crypto.createHash("sha256").update(raw).digest("hex"); // stocké en base
   return { raw, hash };
 }
-export const hashToken = (raw: string) => crypto.createHash("sha256").update(raw).digest("hex");
+export const hashToken = (raw: string) =>
+  crypto.createHash("sha256").update(raw).digest("hex");
 ```
 
 ```ts
@@ -229,7 +247,11 @@ const existing = await prisma.user.findUnique({ where: { email } });
 
 if (existing) {
   // Ne rien révéler dans la réponse, prévenir le vrai propriétaire
-  after(() => sendAccountExistsEmail(email).catch(() => console.error("MAIL_EXISTS_FAILED")));
+  after(() =>
+    sendAccountExistsEmail(email).catch(() =>
+      console.error("MAIL_EXISTS_FAILED"),
+    ),
+  );
   return NextResponse.json(GENERIC, { status: 202 });
 }
 
@@ -238,10 +260,17 @@ await prisma.user.create({
   data: {
     email,
     password: await bcrypt.hash(password, 12),
-    verificationTokens: { create: { tokenHash: hash, expiresAt: new Date(Date.now() + 24 * 3600_000) } },
+    verificationTokens: {
+      create: {
+        tokenHash: hash,
+        expiresAt: new Date(Date.now() + 24 * 3600_000),
+      },
+    },
   },
 });
-after(() => sendVerifyEmail(email, raw).catch(() => console.error("MAIL_VERIFY_FAILED")));
+after(() =>
+  sendVerifyEmail(email, raw).catch(() => console.error("MAIL_VERIFY_FAILED")),
+);
 return NextResponse.json(GENERIC, { status: 202 });
 ```
 
@@ -250,31 +279,44 @@ return NextResponse.json(GENERIC, { status: 202 });
 const tokenHash = hashToken(body.token);
 
 const ok = await prisma.$transaction(async (tx) => {
-  const token = await tx.emailVerificationToken.findUnique({ where: { tokenHash } });
+  const token = await tx.emailVerificationToken.findUnique({
+    where: { tokenHash },
+  });
   if (!token) return false;
   const { count } = await tx.emailVerificationToken.updateMany({
     where: { tokenHash, usedAt: null, expiresAt: { gt: new Date() } },
     data: { usedAt: new Date() },
   });
   if (count === 0) return false;
-  await tx.user.update({ where: { id: token.userId }, data: { emailVerifiedAt: new Date() } });
+  await tx.user.update({
+    where: { id: token.userId },
+    data: { emailVerifiedAt: new Date() },
+  });
   return true;
 });
 
-if (!ok) return NextResponse.json({ message: "Lien invalide ou expiré" }, { status: 400 });
+if (!ok)
+  return NextResponse.json(
+    { message: "Lien invalide ou expiré" },
+    { status: 400 },
+  );
 ```
 
 ```ts
 // Bloquer les actions tant que l'email n'est pas vérifié
 // Option simple : refuser le login
 if (!user.emailVerifiedAt) {
-  return NextResponse.json({ message: "Vérifiez votre adresse email" }, { status: 403 });
+  return NextResponse.json(
+    { message: "Vérifiez votre adresse email" },
+    { status: 403 },
+  );
 }
 ```
 
 > Le 403 au login ne révèle rien de plus qu'avant : il n'est renvoyé **qu'après** un mot de passe correct.
 
 ⚠️ **Pièges.**
+
 - Prévoir une route « renvoyer le mail de vérification » (rate limitée, réponse générique).
 - Comptes jamais vérifiés : les supprimer après X jours (cron, fiche 14), sinon l'adresse reste « prise ».
 - Le timing du register doit aussi être constant : `bcrypt.hash` n'est exécuté que pour un nouvel email → hacher quand même un mot de passe factice dans la branche `existing`, ou accepter ce risque résiduel (plus faible que le 409).
@@ -287,16 +329,17 @@ if (!user.emailVerifiedAt) {
 
 ⚙️ **Principe (NIST SP 800-63B).**
 
-| ✅ À faire                                  | ❌ À ne plus faire                                   |
-| ------------------------------------------- | ---------------------------------------------------- |
-| Longueur min 8 (12 recommandé)              | Imposer majuscule + chiffre + symbole                |
-| Accepter tous les caractères (espaces, emoji) | Forcer un changement tous les 90 jours             |
-| Max ≥ 64 caractères                         | Questions secrètes (« nom de votre animal »)         |
-| Refuser les mots de passe connus compromis  | Interdire le copier-coller (bloque les gestionnaires de mots de passe) |
+| ✅ À faire                                    | ❌ À ne plus faire                                                     |
+| --------------------------------------------- | ---------------------------------------------------------------------- |
+| Longueur min 8 (12 recommandé)                | Imposer majuscule + chiffre + symbole                                  |
+| Accepter tous les caractères (espaces, emoji) | Forcer un changement tous les 90 jours                                 |
+| Max ≥ 64 caractères                           | Questions secrètes (« nom de votre animal »)                           |
+| Refuser les mots de passe connus compromis    | Interdire le copier-coller (bloque les gestionnaires de mots de passe) |
 
 Les règles de composition produisent `Motdepasse1!` ; l'expiration produit `Motdepasse2!`. La **longueur** et l'**absence dans les fuites** sont ce qui compte.
 
 **API Have I Been Pwned (k-anonymity) :** on n'envoie jamais le mot de passe.
+
 1. Calculer le SHA-1 du mot de passe : `5BAA61E4C9B93F3F0682250B6CF8331B7EE68FD8`
 2. Envoyer seulement les **5 premiers caractères** : `GET /range/5BAA6`
 3. L'API renvoie les ~800 suffixes qui commencent par ce préfixe, avec leur nombre d'apparitions
@@ -309,7 +352,11 @@ Les règles de composition produisent `Motdepasse1!` ; l'expiration produit `Mot
 import crypto from "crypto";
 
 export async function isPwnedPassword(password: string): Promise<boolean> {
-  const sha1 = crypto.createHash("sha1").update(password).digest("hex").toUpperCase();
+  const sha1 = crypto
+    .createHash("sha1")
+    .update(password)
+    .digest("hex")
+    .toUpperCase();
   const prefix = sha1.slice(0, 5);
   const suffix = sha1.slice(5);
 
@@ -335,14 +382,20 @@ export async function isPwnedPassword(password: string): Promise<boolean> {
 export const passwordSchema = z
   .string()
   .min(12, "12 caractères minimum")
-  .refine((p) => new TextEncoder().encode(p).length <= 72, "Mot de passe trop long");
+  .refine(
+    (p) => new TextEncoder().encode(p).length <= 72,
+    "Mot de passe trop long",
+  );
 ```
 
 ```ts
 // Dans la route (la vérification est asynchrone)
 if (await isPwnedPassword(password)) {
   return NextResponse.json(
-    { message: "Ce mot de passe apparaît dans des fuites de données, choisissez-en un autre" },
+    {
+      message:
+        "Ce mot de passe apparaît dans des fuites de données, choisissez-en un autre",
+    },
     { status: 400 },
   );
 }
@@ -353,6 +406,7 @@ if (await isPwnedPassword(password)) {
 **Côté front :** un indicateur de robustesse (librairie `zxcvbn-ts`) aide l'utilisateur, mais la règle reste appliquée côté serveur.
 
 ⚠️ **Pièges.**
+
 - Ne vérifier HIBP qu'à la **création** et au **changement** du mot de passe, jamais au login (latence inutile).
 - « Fail open » (`return false` si l'API tombe) est un choix volontaire : la disponibilité de l'inscription passe avant.
 
@@ -364,12 +418,12 @@ if (await isPwnedPassword(password)) {
 
 ⚙️ **Principe.** Posséder la session ne suffit pas pour les actions **irréversibles ou qui prennent le contrôle du compte**. On redemande le mot de passe actuel, et on prévient l'utilisateur par un autre canal (email).
 
-| Action                  | Exigence                                                         |
-| ----------------------- | ---------------------------------------------------------------- |
-| Changer le mot de passe | Ancien mot de passe + révocation des sessions + mail de notification |
+| Action                  | Exigence                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------ |
+| Changer le mot de passe | Ancien mot de passe + révocation des sessions + mail de notification           |
 | Changer l'email         | Mot de passe + vérification de la **nouvelle** adresse + mail à l'**ancienne** |
-| Supprimer le compte     | Mot de passe                                                     |
-| Désactiver la 2FA       | Mot de passe + code 2FA                                          |
+| Supprimer le compte     | Mot de passe                                                                   |
+| Désactiver la 2FA       | Mot de passe + code 2FA                                                        |
 
 🛠️ **Mise en place — changement de mot de passe.**
 
@@ -385,14 +439,24 @@ export const changePasswordSchema = z.object({
 // app/api/account/password/route.ts
 export async function PATCH(req: NextRequest) {
   const userId = await getUserIdFromRequest(req);
-  if (!userId) return NextResponse.json({ message: "Non authentifié" }, { status: 401 });
+  if (!userId)
+    return NextResponse.json({ message: "Non authentifié" }, { status: 401 });
 
-  const parsed = changePasswordSchema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ message: "Données invalides" }, { status: 400 });
+  const parsed = changePasswordSchema.safeParse(
+    await req.json().catch(() => null),
+  );
+  if (!parsed.success)
+    return NextResponse.json({ message: "Données invalides" }, { status: 400 });
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user || !(await bcrypt.compare(parsed.data.currentPassword, user.password))) {
-    return NextResponse.json({ message: "Mot de passe actuel incorrect" }, { status: 400 });
+  if (
+    !user ||
+    !(await bcrypt.compare(parsed.data.currentPassword, user.password))
+  ) {
+    return NextResponse.json(
+      { message: "Mot de passe actuel incorrect" },
+      { status: 400 },
+    );
   }
 
   await prisma.$transaction([
@@ -406,7 +470,11 @@ export async function PATCH(req: NextRequest) {
     prisma.passwordResetToken.deleteMany({ where: { userId } }),
   ]);
 
-  after(() => sendPasswordChangedEmail(user.email).catch(() => console.error("MAIL_PWD_CHANGED_FAILED")));
+  after(() =>
+    sendPasswordChangedEmail(user.email).catch(() =>
+      console.error("MAIL_PWD_CHANGED_FAILED"),
+    ),
+  );
 
   // tokenVersion a changé : renvoyer un nouveau token pour la session courante
   const token = signSession({ sub: userId, v: user.tokenVersion + 1 });
@@ -428,6 +496,7 @@ model User {
 3. Clic sur le lien → `email = pendingEmail`, `pendingEmail = null`, `tokenVersion + 1`.
 
 ⚠️ **Pièges.**
+
 - Rate limiter la vérification du mot de passe actuel comme un login (sinon brute force depuis une session volée).
 - Le mail de notification ne doit **pas** contenir de lien « annuler » qui agit sans authentification.
 
@@ -439,27 +508,34 @@ model User {
 
 ⚙️ **Principe.** On ralentit l'**attaquant** (son IP, son volume) sans punir le **compte**.
 
-| Approche               | Brute force | Credential stuffing | Bloque la victime ? |
-| ---------------------- | ----------- | ------------------- | ------------------- |
-| Verrouillage du compte | ✅          | ❌ (1 essai par compte) | ❌ Oui            |
-| Rate limit par IP      | ✅ (1 IP)   | ✅                  | Non (sauf IP partagée) |
-| Rate limit par email   | ✅ (multi-IP) | —                 | Temporairement, avec fenêtre courte |
-| Délai progressif       | ✅          | —                   | Non, juste plus lent |
+| Approche               | Brute force   | Credential stuffing     | Bloque la victime ?                 |
+| ---------------------- | ------------- | ----------------------- | ----------------------------------- |
+| Verrouillage du compte | ✅            | ❌ (1 essai par compte) | ❌ Oui                              |
+| Rate limit par IP      | ✅ (1 IP)     | ✅                      | Non (sauf IP partagée)              |
+| Rate limit par email   | ✅ (multi-IP) | —                       | Temporairement, avec fenêtre courte |
+| Délai progressif       | ✅            | —                       | Non, juste plus lent                |
 
 🛠️ **Mise en place.** Combiner les deux limiteurs (déjà vus dans l'audit) avec une fenêtre **glissante** courte sur l'email, plutôt qu'un blocage définitif :
 
 ```ts
 // lib/rateLimit.ts (Upstash)
 export const loginIp = new Ratelimit({
-  redis, limiter: Ratelimit.slidingWindow(20, "1 m"), prefix: "ratelimit:login:ip",
+  redis,
+  limiter: Ratelimit.slidingWindow(20, "1 m"),
+  prefix: "ratelimit:login:ip",
 });
 export const loginEmail = new Ratelimit({
-  redis, limiter: Ratelimit.slidingWindow(10, "15 m"), prefix: "ratelimit:login:email",
+  redis,
+  limiter: Ratelimit.slidingWindow(10, "15 m"),
+  prefix: "ratelimit:login:email",
 });
 ```
 
 ```ts
-const [ip, mail] = await Promise.all([loginIp.limit(getClientIp(req)), loginEmail.limit(email)]);
+const [ip, mail] = await Promise.all([
+  loginIp.limit(getClientIp(req)),
+  loginEmail.limit(email),
+]);
 if (!ip.success || !mail.success) {
   return NextResponse.json(
     { message: "Trop de tentatives, réessayez plus tard" },
@@ -471,6 +547,7 @@ if (!ip.success || !mail.success) {
 Au-delà : ajouter un **CAPTCHA** (Cloudflare Turnstile, gratuit) après N échecs plutôt que bloquer.
 
 ⚠️ **Pièges.**
+
 - Le message 429 doit être le même que l'email existe ou non.
 - Ne pas remettre le compteur à zéro après un login réussi **par IP** (sinon l'attaquant intercale son propre compte valide).
 
@@ -481,18 +558,22 @@ Au-delà : ajouter un **CAPTCHA** (Cloudflare Turnstile, gratuit) après N éche
 🎯 **Contre quoi.** _Cross-Site Request Forgery_ : l'utilisateur est connecté à `monapp.fr` (cookie de session). Il visite `site-piege.com`, qui contient :
 
 ```html
-<form action="https://monapp.fr/api/account/delete" method="POST"><input type="hidden" ...></form>
-<script>document.forms[0].submit()</script>
+<form action="https://monapp.fr/api/account/delete" method="POST">
+  <input type="hidden" ... />
+</form>
+<script>
+  document.forms[0].submit();
+</script>
 ```
 
 Le navigateur envoie la requête **avec le cookie** de `monapp.fr` → l'action est exécutée au nom de la victime.
 
 ⚙️ **Principe.** Le CSRF n'existe que si l'authentification est envoyée **automatiquement** par le navigateur (cookies).
 
-| Mode d'auth                             | Vulnérable au CSRF ? | Protection                         |
-| --------------------------------------- | -------------------- | ---------------------------------- |
-| Header `Authorization: Bearer` (ChronoApp, app mobile) | Non | Le site piège ne connaît pas le token |
-| Cookie de session                       | Oui                  | `SameSite` + vérification `Origin` |
+| Mode d'auth                                            | Vulnérable au CSRF ? | Protection                            |
+| ------------------------------------------------------ | -------------------- | ------------------------------------- |
+| Header `Authorization: Bearer` (ChronoApp, app mobile) | Non                  | Le site piège ne connaît pas le token |
+| Cookie de session                                      | Oui                  | `SameSite` + vérification `Origin`    |
 
 🛠️ **Mise en place (auth par cookie).**
 
@@ -506,7 +587,10 @@ import { NextResponse, type NextRequest } from "next/server";
 const SAFE_METHODS = ["GET", "HEAD", "OPTIONS"];
 
 export function middleware(req: NextRequest) {
-  if (!SAFE_METHODS.includes(req.method) && req.nextUrl.pathname.startsWith("/api/")) {
+  if (
+    !SAFE_METHODS.includes(req.method) &&
+    req.nextUrl.pathname.startsWith("/api/")
+  ) {
     const origin = req.headers.get("origin");
     if (origin && origin !== req.nextUrl.origin) {
       return NextResponse.json({ message: "Origine refusée" }, { status: 403 });
@@ -531,6 +615,7 @@ export function middleware(req: NextRequest) {
 🎯 **Contre quoi.** Le navigateur applique la **Same-Origin Policy** : un script de `site-piege.com` ne peut pas **lire** la réponse d'une requête vers `monapp.fr`. CORS est le mécanisme qui **assouplit** cette règle. Le danger n'est donc pas d'oublier CORS, mais de l'**ouvrir trop**.
 
 ⚙️ **Principe.**
+
 - Par défaut, les routes API Next.js n'envoient **aucun** en-tête CORS → seules les pages de la même origine peuvent lire les réponses. C'est le réglage le plus sûr.
 - **Les apps mobiles ne sont pas concernées** : CORS est une règle du navigateur. React Native / Expo (hors Expo Web) appelle l'API sans aucune vérification CORS. Inutile d'ouvrir CORS pour ChronoApp mobile.
 - On n'ouvre CORS que si un **autre front web** (autre domaine) doit appeler l'API.
@@ -560,6 +645,7 @@ export function OPTIONS(req: Request) {
 ```
 
 ⚠️ **Pièges.**
+
 - `Access-Control-Allow-Origin: *` + cookies = refusé par le navigateur… alors certains renvoient l'`Origin` reçue **sans vérification**, ce qui autorise **tous** les sites. Toujours comparer à une liste.
 - Comparer avec `===`, pas `origin.includes("monsite.fr")` (`monsite.fr.attaquant.com` passe).
 - CORS **ne protège pas** du CSRF : la requête part quand même, seule la lecture de la réponse est bloquée.
@@ -602,12 +688,19 @@ Ou directement dans Zod : `website: z.url({ protocol: /^https?$/ })`.
 
 ```ts
 const escapeHtml = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+  s.replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ]!,
+  );
 ```
 
 **d) CSP** (`Content-Security-Policy`) : filet de sécurité qui empêche l'exécution de scripts non autorisés, même si une faille existe. Commencer par `default-src 'self'` et ajuster.
 
 ⚠️ **Pièges.**
+
 - Le JSON injecté dans un `<script>` (ex : état initial) doit être sérialisé proprement, sinon `</script>` dans une donnée casse la page.
 - La CSP de Next.js avec scripts inline nécessite un `nonce` : voir la doc officielle « Content Security Policy » de Next.js.
 
@@ -620,6 +713,7 @@ const escapeHtml = (s: string) =>
 ⚙️ **Principe.** `crypto.timingSafeEqual` compare **tous** les octets, quel que soit le résultat → temps identique.
 
 **Quand c'est nécessaire :** quand **ton code** compare un secret reçu à un secret attendu :
+
 - clé d'API / `CRON_SECRET` dans un header ;
 - signature de webhook (Stripe, GitHub…) ;
 - code 2FA comparé manuellement.
@@ -655,6 +749,7 @@ if (!safeCompare(auth, `Bearer ${process.env.CRON_SECRET}`)) {
 ## 13. Base de données : droits minimaux, réseau, sauvegardes
 
 🎯 **Contre quoi.**
+
 - Une injection SQL ou une fuite de `DATABASE_URL` avec le compte **superuser** = l'attaquant peut tout supprimer (`DROP DATABASE`), lire d'autres bases, voire exécuter des commandes.
 - Une base accessible depuis Internet = cible des scanners automatiques (brute force du mot de passe Postgres).
 - Pas de sauvegarde = une erreur de migration ou un ransomware est **définitif**.
@@ -679,19 +774,21 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
   GRANT USAGE, SELECT ON SEQUENCES TO app_user;
 ```
 
-| Variable           | Utilisateur        | Utilisée par                               |
-| ------------------ | ------------------ | ------------------------------------------ |
-| `DATABASE_URL`     | `app_user`         | L'application (Vercel)                     |
+| Variable               | Utilisateur            | Utilisée par                                                         |
+| ---------------------- | ---------------------- | -------------------------------------------------------------------- |
+| `DATABASE_URL`         | `app_user`             | L'application (Vercel)                                               |
 | `MIGRATE_DATABASE_URL` | propriétaire du schéma | `prisma migrate deploy` (CI ou en local), jamais déployée sur Vercel |
 
 > Sur un petit projet perso, garder un seul utilisateur est acceptable ; l'important est de **savoir** que c'est un compromis.
 
 **b) Réseau et chiffrement**
+
 - Railway : utiliser l'URL **privée** si l'API tourne aussi sur Railway ; sinon l'URL publique avec un mot de passe long.
 - Ajouter `?sslmode=require` à l'URL de connexion si l'hébergeur ne l'impose pas.
 - Ne jamais exposer le port 5432 d'un VPS sur Internet (pare-feu, tunnel SSH pour y accéder).
 
 **c) Sauvegardes**
+
 - Activer les sauvegardes automatiques de l'hébergeur (Railway, Neon, Supabase en proposent).
 - Sauvegarde manuelle avant chaque migration risquée : `pg_dump "$DATABASE_URL" -Fc -f backup_2026-10-01.dump`
 - **Tester une restauration** au moins une fois (`pg_restore -d base_de_test backup.dump`) : une sauvegarde jamais restaurée n'est pas une sauvegarde.
@@ -728,12 +825,22 @@ export async function GET(req: NextRequest) {
   const weekAgo = new Date(now.getTime() - 7 * 24 * 3600_000);
 
   const [reset, verify, unverified] = await prisma.$transaction([
-    prisma.passwordResetToken.deleteMany({ where: { OR: [{ expiresAt: { lt: now } }, { usedAt: { not: null } }] } }),
-    prisma.emailVerificationToken.deleteMany({ where: { OR: [{ expiresAt: { lt: now } }, { usedAt: { not: null } }] } }),
-    prisma.user.deleteMany({ where: { emailVerifiedAt: null, createdAt: { lt: weekAgo } } }),
+    prisma.passwordResetToken.deleteMany({
+      where: { OR: [{ expiresAt: { lt: now } }, { usedAt: { not: null } }] },
+    }),
+    prisma.emailVerificationToken.deleteMany({
+      where: { OR: [{ expiresAt: { lt: now } }, { usedAt: { not: null } }] },
+    }),
+    prisma.user.deleteMany({
+      where: { emailVerifiedAt: null, createdAt: { lt: weekAgo } },
+    }),
   ]);
 
-  return NextResponse.json({ reset: reset.count, verify: verify.count, unverified: unverified.count });
+  return NextResponse.json({
+    reset: reset.count,
+    verify: verify.count,
+    unverified: unverified.count,
+  });
 }
 ```
 
@@ -746,6 +853,7 @@ export async function GET(req: NextRequest) {
 ## 15. Limites sur les routes métier
 
 🎯 **Contre quoi.**
+
 - Un script qui crée 1 million de séances en boucle → base remplie, facture qui grimpe.
 - `GET /api/seance` sans pagination sur un compte avec 50 000 lignes → réponse énorme, timeout, mémoire saturée.
 - Un body JSON de 50 Mo → parsing coûteux.
@@ -757,11 +865,14 @@ export async function GET(req: NextRequest) {
 ```ts
 // Rate limit par utilisateur sur les écritures
 export const writeLimit = new Ratelimit({
-  redis, limiter: Ratelimit.slidingWindow(60, "1 m"), prefix: "ratelimit:write:user",
+  redis,
+  limiter: Ratelimit.slidingWindow(60, "1 m"),
+  prefix: "ratelimit:write:user",
 });
 
 const { success } = await writeLimit.limit(userId);
-if (!success) return NextResponse.json({ message: "Trop de requêtes" }, { status: 429 });
+if (!success)
+  return NextResponse.json({ message: "Trop de requêtes" }, { status: 429 });
 ```
 
 ```ts
@@ -771,7 +882,9 @@ const paginationSchema = z.object({
   cursor: z.string().cuid().optional(),
 });
 
-const { take, cursor } = paginationSchema.parse(Object.fromEntries(req.nextUrl.searchParams));
+const { take, cursor } = paginationSchema.parse(
+  Object.fromEntries(req.nextUrl.searchParams),
+);
 const seances = await prisma.seance.findMany({
   where: { userId },
   take,
@@ -783,7 +896,8 @@ const seances = await prisma.seance.findMany({
 ```ts
 // Quota métier : nombre max de ressources par utilisateur
 const count = await prisma.seance.count({ where: { userId } });
-if (count >= 1000) return NextResponse.json({ message: "Limite atteinte" }, { status: 403 });
+if (count >= 1000)
+  return NextResponse.json({ message: "Limite atteinte" }, { status: 403 });
 ```
 
 - **Taille du body** : Vercel limite déjà à ~4,5 Mo ; sur un serveur Express, `express.json({ limit: "100kb" })`.
@@ -795,6 +909,7 @@ if (count >= 1000) return NextResponse.json({ message: "Limite atteinte" }, { st
 ## 16. Upload de fichiers
 
 🎯 **Contre quoi.**
+
 - Uploader un `.html` ou `.svg` contenant du JavaScript, servi depuis ton domaine → XSS.
 - Un fichier nommé `../../.env` → écriture hors du dossier prévu (_path traversal_).
 - Un fichier de 2 Go → saturation du disque ou de la mémoire.
@@ -814,7 +929,8 @@ const ALLOWED = ["image/png", "image/jpeg", "image/webp"]; // pas de SVG
 
 export async function POST(req: NextRequest) {
   const userId = await getUserIdFromRequest(req);
-  if (!userId) return NextResponse.json({ message: "Non authentifié" }, { status: 401 });
+  if (!userId)
+    return NextResponse.json({ message: "Non authentifié" }, { status: 401 });
 
   const form = await req.formData();
   const file = form.get("file");
@@ -825,7 +941,10 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer());
   const type = await fileTypeFromBuffer(buffer); // lit les magic bytes
   if (!type || !ALLOWED.includes(type.mime)) {
-    return NextResponse.json({ message: "Format non autorisé" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Format non autorisé" },
+      { status: 400 },
+    );
   }
 
   const key = `avatars/${userId}/${randomUUID()}.${type.ext}`; // nom généré, jamais celui du client
@@ -839,6 +958,7 @@ export async function POST(req: NextRequest) {
 **Pour les gros fichiers :** _presigned URL_. Le serveur génère une URL d'upload temporaire et signée, le client envoie le fichier **directement** au stockage (le serveur ne le voit pas passer).
 
 ⚠️ **Pièges.**
+
 - **SVG = HTML** : il peut contenir `<script>`. Le refuser, ou le servir depuis un domaine séparé avec `Content-Disposition: attachment`.
 - Pour les images, ré-encoder (librairie `sharp`) supprime les métadonnées EXIF, qui contiennent parfois la **position GPS** de la photo.
 - Fichiers privés : bucket privé + URL signée à durée limitée, pas un bucket public avec des noms « difficiles à deviner ».
@@ -891,25 +1011,33 @@ export function encrypt(plain: string) {
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", KEY, iv);
   const data = Buffer.concat([cipher.update(plain, "utf8"), cipher.final()]);
-  return [iv, cipher.getAuthTag(), data].map((b) => b.toString("base64")).join(".");
+  return [iv, cipher.getAuthTag(), data]
+    .map((b) => b.toString("base64"))
+    .join(".");
 }
 
 export function decrypt(payload: string) {
-  const [iv, tag, data] = payload.split(".").map((s) => Buffer.from(s, "base64"));
+  const [iv, tag, data] = payload
+    .split(".")
+    .map((s) => Buffer.from(s, "base64"));
   const decipher = crypto.createDecipheriv("aes-256-gcm", KEY, iv);
   decipher.setAuthTag(tag);
-  return Buffer.concat([decipher.update(data), decipher.final()]).toString("utf8");
+  return Buffer.concat([decipher.update(data), decipher.final()]).toString(
+    "utf8",
+  );
 }
 ```
 
 **Codes de secours** : 10 codes aléatoires affichés **une seule fois**, stockés hachés (comme des mots de passe), chacun à usage unique. Ils évitent la perte définitive du compte si le téléphone est perdu.
 
 **Login en deux étapes :**
+
 1. `POST /login` : mot de passe correct et `totpEnabledAt` non nul → renvoyer un JWT court `{ sub, mfa: "pending" }` (5 min), **pas** la session.
 2. `POST /login/2fa { code }` : vérifier le JWT `pending` + le code TOTP (ou un code de secours) → renvoyer la vraie session.
 3. Toutes les routes métier refusent un token `mfa: "pending"`.
 
 ⚠️ **Pièges.**
+
 - Rate limiter la saisie du code : 6 chiffres = 1 million de possibilités, faisable sans limite.
 - Refuser la réutilisation d'un code déjà accepté dans la même fenêtre de 30 s.
 - Les **passkeys** (WebAuthn) sont l'étape suivante : plus simples pour l'utilisateur et résistantes au phishing (librairie `@simplewebauthn/server`).
@@ -921,6 +1049,7 @@ export function decrypt(payload: string) {
 🎯 **Contre quoi.** Une obligation légale (UE) plutôt qu'une attaque : l'utilisateur a droit d'**accéder** à ses données, de les **emporter** (portabilité) et de les faire **supprimer**. Moins de données conservées = moins de dégâts en cas de fuite.
 
 ⚙️ **Principe.**
+
 - **Minimisation** : ne collecter que ce qui sert (pas de date de naissance « au cas où »).
 - **Durée de conservation** définie pour chaque donnée (logs, comptes inactifs, tokens).
 - **Droits de l'utilisateur** accessibles sans écrire au support.
@@ -931,7 +1060,8 @@ export function decrypt(payload: string) {
 // app/api/account/export/route.ts
 export async function GET(req: NextRequest) {
   const userId = await getUserIdFromRequest(req);
-  if (!userId) return NextResponse.json({ message: "Non authentifié" }, { status: 401 });
+  if (!userId)
+    return NextResponse.json({ message: "Non authentifié" }, { status: 401 });
 
   const data = await prisma.user.findUnique({
     where: { id: userId },
@@ -956,23 +1086,35 @@ export async function GET(req: NextRequest) {
 // app/api/account/route.ts — suppression (avec ré-authentification, fiche 7)
 export async function DELETE(req: NextRequest) {
   const userId = await getUserIdFromRequest(req);
-  if (!userId) return NextResponse.json({ message: "Non authentifié" }, { status: 401 });
+  if (!userId)
+    return NextResponse.json({ message: "Non authentifié" }, { status: 401 });
 
-  const body = z.object({ password: z.string().min(1).max(128) }).safeParse(await req.json().catch(() => null));
-  if (!body.success) return NextResponse.json({ message: "Données invalides" }, { status: 400 });
+  const body = z
+    .object({ password: z.string().min(1).max(128) })
+    .safeParse(await req.json().catch(() => null));
+  if (!body.success)
+    return NextResponse.json({ message: "Données invalides" }, { status: 400 });
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user || !(await bcrypt.compare(body.data.password, user.password))) {
-    return NextResponse.json({ message: "Mot de passe incorrect" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Mot de passe incorrect" },
+      { status: 400 },
+    );
   }
 
   await prisma.user.delete({ where: { id: userId } }); // onDelete: Cascade supprime tout le reste
-  after(() => sendAccountDeletedEmail(user.email).catch(() => console.error("MAIL_DELETED_FAILED")));
+  after(() =>
+    sendAccountDeletedEmail(user.email).catch(() =>
+      console.error("MAIL_DELETED_FAILED"),
+    ),
+  );
   return new NextResponse(null, { status: 204 });
 }
 ```
 
 **Checklist RGPD minimale :**
+
 - [ ] Page « Politique de confidentialité » : quelles données, pourquoi, combien de temps, quels sous-traitants (Vercel, Railway, Resend, Sentry, Upstash).
 - [ ] Toutes les relations vers `User` en `onDelete: Cascade` (sinon la suppression échoue ou laisse des orphelins).
 - [ ] Données aussi supprimées chez les sous-traitants si elles y sont stockées (fichiers uploadés, contacts Resend).

@@ -1,16 +1,15 @@
 # Sécurité — Checklist pour projets avec BDD + auth email/password
 
-_Feuille de rappel issue de l'audit ChronoApp (`audit-securite.md`, 2026-09) et complétée avec les bonnes pratiques générales (OWASP ASVS, NIST 800-63B)._
 _Stack de référence : Next.js (API Routes) + Prisma + PostgreSQL + Zod — les principes s'appliquent à n'importe quel backend._
 
 **Légende priorité**
 
-| Niveau | Signification                                                      | Quand                     |
-| ------ | ------------------------------------------------------------------ | ------------------------- |
-| 🔴 P0  | Faille directe : vol de compte, fuite de données, accès à autrui   | Avant la première mise en ligne |
-| 🟠 P1  | Contournement des protections, abus, fuite indirecte               | Avant d'avoir des vrais utilisateurs |
-| 🟡 P2  | Défense en profondeur, robustesse                                  | Dans le premier mois      |
-| ⚪ P3  | Hygiène, confort, conformité                                       | En continu                |
+| Niveau | Signification                                                    | Quand                                |
+| ------ | ---------------------------------------------------------------- | ------------------------------------ |
+| 🔴 P0  | Faille directe : vol de compte, fuite de données, accès à autrui | Avant la première mise en ligne      |
+| 🟠 P1  | Contournement des protections, abus, fuite indirecte             | Avant d'avoir des vrais utilisateurs |
+| 🟡 P2  | Défense en profondeur, robustesse                                | Dans le premier mois                 |
+| ⚪ P3  | Hygiène, confort, conformité                                     | En continu                           |
 
 ---
 
@@ -39,9 +38,11 @@ password: z.string().min(12).refine(
 
 ```ts
 const userId = await getUserIdFromRequest(req);
-if (!userId) return NextResponse.json({ message: "Non authentifié" }, { status: 401 });
+if (!userId)
+  return NextResponse.json({ message: "Non authentifié" }, { status: 401 });
 const seance = await prisma.seance.findFirst({ where: { id, userId } });
-if (!seance) return NextResponse.json({ message: "Introuvable" }, { status: 404 });
+if (!seance)
+  return NextResponse.json({ message: "Introuvable" }, { status: 404 });
 ```
 
 ### 3. Validation stricte des entrées (côté serveur)
@@ -144,7 +145,11 @@ Un attaquant ne doit pas pouvoir savoir si un email a un compte — ni par le **
 ```ts
 const DUMMY_HASH = "$2b$12$..."; // généré une fois avec bcrypt.hash("dummy", 12)
 const ok = await bcrypt.compare(password, user?.password ?? DUMMY_HASH);
-if (!user || !ok) return NextResponse.json({ message: "Identifiants invalides" }, { status: 401 });
+if (!user || !ok)
+  return NextResponse.json(
+    { message: "Identifiants invalides" },
+    { status: 401 },
+  );
 ```
 
 - [ ] **Reset :** toujours `200 "Si un compte existe, un email a été envoyé"`.
@@ -152,7 +157,11 @@ if (!user || !ok) return NextResponse.json({ message: "Identifiants invalides" }
 
 ```ts
 import { after } from "next/server";
-after(() => sendResetEmail(user.email, rawToken).catch((e) => console.error("MAIL_RESET_FAILED", e)));
+after(() =>
+  sendResetEmail(user.email, rawToken).catch((e) =>
+    console.error("MAIL_RESET_FAILED", e),
+  ),
+);
 ```
 
 - [ ] **Register :** même statut et même corps que le compte existe ou non (ex : `202 "Vérifiez vos emails"`) → nécessite la vérification d'email (point 12). Si l'email existe déjà, envoyer un mail « quelqu'un a tenté de créer un compte avec votre adresse ».
@@ -289,26 +298,26 @@ async headers() {
 
 ## Récapitulatif express (à cocher avant chaque mise en prod)
 
-| Priorité | Point                                                        |
-| -------- | ------------------------------------------------------------ |
-| 🔴       | Mots de passe argon2id / bcrypt ≥ 12, borne 72 octets        |
-| 🔴       | Filtre `userId` (issu du token) sur toutes les requêtes      |
-| 🔴       | Zod côté serveur sur toutes les entrées, avec bornes         |
-| 🔴       | Pas de SQL brut concaténé                                    |
-| 🔴       | Secrets hors git, rien de secret en `*_PUBLIC_*`             |
-| 🔴       | JWT courts + révocation (`tokenVersion`)                     |
-| 🔴       | Token en cookie HttpOnly (web) / SecureStore (mobile)        |
+| Priorité | Point                                                              |
+| -------- | ------------------------------------------------------------------ |
+| 🔴       | Mots de passe argon2id / bcrypt ≥ 12, borne 72 octets              |
+| 🔴       | Filtre `userId` (issu du token) sur toutes les requêtes            |
+| 🔴       | Zod côté serveur sur toutes les entrées, avec bornes               |
+| 🔴       | Pas de SQL brut concaténé                                          |
+| 🔴       | Secrets hors git, rien de secret en `*_PUBLIC_*`                   |
+| 🔴       | JWT courts + révocation (`tokenVersion`)                           |
+| 🔴       | Token en cookie HttpOnly (web) / SecureStore (mobile)              |
 | 🔴       | Token de reset : aléatoire, haché, expirant, usage unique atomique |
-| 🔴       | HTTPS partout                                                |
-| 🟠       | Rate limit IP **et** email, préfixes distincts, IP fiable    |
-| 🟠       | Anti-énumération : message, statut **et** timing identiques  |
-| 🟠       | Vérification d'email                                         |
-| 🟠       | Emails normalisés (`trim().toLowerCase()`)                   |
-| 🟠       | Mot de passe ≥ 12, pas de règles de composition, liste noire |
-| 🟠       | Ré-authentification pour les opérations sensibles            |
-| 🟠       | Aucun email/IP/token dans les logs                           |
-| 🟠       | Erreurs génériques, pas de stack trace au client             |
-| 🟡       | En-têtes HTTP (CSP, HSTS, X-Frame-Options, nosniff)          |
-| 🟡       | CSRF / CORS selon le mode d'auth                             |
-| 🟡       | Utilisateur BDD à droits minimaux, BDD privée, backups       |
-| ⚪       | Dependabot, RGPD (export/suppression), tests d'auth          |
+| 🔴       | HTTPS partout                                                      |
+| 🟠       | Rate limit IP **et** email, préfixes distincts, IP fiable          |
+| 🟠       | Anti-énumération : message, statut **et** timing identiques        |
+| 🟠       | Vérification d'email                                               |
+| 🟠       | Emails normalisés (`trim().toLowerCase()`)                         |
+| 🟠       | Mot de passe ≥ 12, pas de règles de composition, liste noire       |
+| 🟠       | Ré-authentification pour les opérations sensibles                  |
+| 🟠       | Aucun email/IP/token dans les logs                                 |
+| 🟠       | Erreurs génériques, pas de stack trace au client                   |
+| 🟡       | En-têtes HTTP (CSP, HSTS, X-Frame-Options, nosniff)                |
+| 🟡       | CSRF / CORS selon le mode d'auth                                   |
+| 🟡       | Utilisateur BDD à droits minimaux, BDD privée, backups             |
+| ⚪       | Dependabot, RGPD (export/suppression), tests d'auth                |

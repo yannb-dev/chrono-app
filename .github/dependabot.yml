@@ -1,0 +1,109 @@
+# Dependabot — mises à jour automatiques des dépendances
+# Doc : https://docs.github.com/code-security/dependabot/working-with-dependabot/dependabot-options-reference
+#
+# Monorepo : deux projets npm indépendants (backend Next.js + frontend Expo),
+# chacun a son propre package-lock.json → une entrée par dossier.
+
+version: 2
+
+updates:
+  # ───────────────────────────── BACKEND (Next.js / Prisma) ─────────────────────────────
+  - package-ecosystem: "npm"
+    directory: "/backend/chronoapp"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "Europe/Paris"
+    target-branch: "main"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "chore(deps-back)"
+    groups:
+      # Next + eslint-config-next doivent rester alignés
+      next:
+        patterns:
+          - "next"
+          - "eslint-config-next"
+      # prisma (CLI) et @prisma/client doivent TOUJOURS avoir la même version
+      prisma:
+        patterns:
+          - "prisma"
+          - "@prisma/client"
+      # Tout le reste en patch/minor → une seule PR hebdo
+      backend-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+        exclude-patterns:
+          - "next"
+          - "eslint-config-next"
+          - "prisma"
+          - "@prisma/client"
+    ignore:
+      # Les majeures se font à la main (breaking changes à lire)
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # ───────────────────────────── FRONTEND (Expo / React Native) ─────────────────────────────
+  - package-ecosystem: "npm"
+    directory: "/frontend/chronoapp"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "Europe/Paris"
+    target-branch: "main"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "chore(deps-front)"
+    groups:
+      # Les paquets du SDK Expo sont versionnés ensemble → une seule PR
+      expo-sdk:
+        patterns:
+          - "expo"
+          - "expo-*"
+          - "@expo/*"
+          - "jest-expo"
+          - "eslint-config-expo"
+      frontend-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+        exclude-patterns:
+          - "expo"
+          - "expo-*"
+          - "@expo/*"
+          - "jest-expo"
+          - "eslint-config-expo"
+    ignore:
+      # Versions imposées par le SDK Expo : on les monte avec `npx expo install --fix`
+      # lors d'une montée de SDK, jamais isolément (sinon build EAS cassé).
+      - dependency-name: "react"
+      - dependency-name: "react-dom"
+      - dependency-name: "react-native"
+      - dependency-name: "react-native-*"
+      - dependency-name: "@react-native-picker/picker"
+      - dependency-name: "@types/react"
+      - dependency-name: "typescript"
+      # Majeures (dont montée de SDK Expo) : à la main
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # ───────────────────────────── GITHUB ACTIONS ─────────────────────────────
+  # Inactif tant qu'il n'y a pas de .github/workflows, prêt pour la CI.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "chore(ci)"
