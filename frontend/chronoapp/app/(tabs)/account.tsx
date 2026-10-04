@@ -21,8 +21,12 @@ export default function Account() {
   const handleDelete = async () => {
     setLoading(true);
 
+    const data = {
+      password: confirmText,
+    };
+
     try {
-      const deleteResponse = await deleteUser();
+      const deleteResponse = await deleteUser(data);
 
       if (deleteResponse) {
         await SecureStore.deleteItemAsync("accessToken");
@@ -52,23 +56,21 @@ export default function Account() {
       <View style={[styles.container, { justifyContent: "center" }]}>
         <View style={styles.containerError}>
           <Text style={[styles.text, { fontSize: 12 }]}>
-            Veuillez écrire "chronoapp" pour confirmer la suppression de votre
-            compte.
+            Veuillez écrire votre mot de passe pour confirmer la suppression de
+            votre compte.
           </Text>
           <TextInput
-            placeholder="chronoapp"
+            placeholder="Mot de passe"
             placeholderTextColor="#575656"
             value={confirmText}
             onChangeText={setConfirmText}
             style={styles.inputConfirmText}
           />
           <Pressable
-            style={[
+            style={({ pressed }) => [
               styles.btnSelect,
-              ,
-              confirmText !== "chronoapp" && styles.btnPressed,
+              pressed && styles.btnPressed,
             ]}
-            disabled={confirmText !== "chronoapp"}
             onPress={handleDelete}
           >
             <Text style={styles.text}>Valider</Text>
