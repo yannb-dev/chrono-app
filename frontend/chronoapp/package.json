@@ -21,11 +21,11 @@
     "@expo/vector-icons": "^15.0.3",
     "@hookform/resolvers": "^5.9.0",
     "@react-native-picker/picker": "2.11.4",
-    "@react-navigation/bottom-tabs": "^7.4.0",
+    "@react-navigation/bottom-tabs": "^7.20.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
-    "@sentry/react-native": "~7.11.0",
-    "@upstash/redis": "^1.38.4",
+    "@sentry/react-native": "~7.13.0",
+    "@upstash/redis": "^1.39.0",
     "date-fns": "^4.4.0",
     "expo": "~57.0.23",
     "expo-auth-session": "~57.0.11",
@@ -43,7 +43,7 @@
     "expo-web-browser": "~57.0.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-hook-form": "^7.85.0",
+    "react-hook-form": "^7.89.0",
     "react-native": "0.86.3",
     "react-native-gesture-handler": "~2.32.0",
     "react-native-reanimated": "4.5.1",
@@ -52,7 +52,7 @@
     "react-native-svg": "15.15.4",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.10.1",
-    "zod": "^4.4.3"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@testing-library/react-native": "^14.0.1",
