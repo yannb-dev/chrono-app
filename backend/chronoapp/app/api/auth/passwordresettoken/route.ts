@@ -10,7 +10,9 @@ import { ResetPasswordSchema } from "@/lib/schema/resetPasswordSchema";
 import { sendVerificationEmail } from "@/lib/mail";
 import { NewPasswordPatchSchema } from "@/lib/schema/newPasswordSchema";
 
-import { resetPasswordRateLimitIpEmail } from "@/lib/rateLimit";
+import { resetPasswordRateLimitIp } from "@/lib/rateLimit";
+import { resetPasswordRateLimitEmail } from "@/lib/rateLimit";
+import getClientIp from "@/lib/getClientIp";
 
 export async function POST(req: Request) {
   const data = await req.json().catch(() => null);
@@ -20,18 +22,22 @@ export async function POST(req: Request) {
   if (!safeData.success) {
     console.error(safeData.error, "Erreur du contrôle Zod sur resetpassword");
     return NextResponse.json(
-      { message: safeData.error.message },
+      { message: "Erreur lors du contrôle des valeurs" },
       { status: 400 },
     );
   }
 
-  const ip =
-    req.headers.get("x-forwarded-for") ||
-    req.headers.get("x-rel-ip") ||
-    "unknown";
+  const ip = getClientIp(req);
 
-  const ipCheck = await resetPasswordRateLimitIpEmail.limit(ip);
-  const EmailCheck = await resetPasswordRateLimitIpEmail.limit(
+  if (ip === "unknown") {
+    return NextResponse.json(
+      { message: "Client non identifiable" },
+      { status: 400 },
+    );
+  }
+
+  const ipCheck = await resetPasswordRateLimitIp.limit(ip);
+  const EmailCheck = await resetPasswordRateLimitEmail.limit(
     safeData.data.email,
   );
 
