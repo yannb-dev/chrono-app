@@ -24,6 +24,13 @@ export async function POST(req: Request) {
 
   const ip = getClientIp(req);
 
+  if (ip === "unknown") {
+    return NextResponse.json(
+      { message: "Client non identifiable" },
+      { status: 400 },
+    );
+  }
+
   const IpCheck = await loginRateLimitIP.limit(ip);
   const EmailCheck = await loginRateLimitEmail.limit(
     safeValue.data.email.trim().toLowerCase(),
