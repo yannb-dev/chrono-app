@@ -12,6 +12,7 @@ import { EndedPausedSchema } from "@/lib/schema/endedSchema";
 import { RegisterSchema } from "@/lib/schema/formRegister";
 import { LoginSchema } from "@/lib/schema/formLogin";
 import { ResetPasswordSchema } from "@/lib/schema/registerPasswordReset";
+import { DeleteControlUserSchema } from "@/lib/schema/deleteSchema";
 
 import { TimerRunner } from "@/types/api";
 import { TimerPause } from "@/types/api";
@@ -60,9 +61,10 @@ async function apiFetch<T>(
 }
 // User ======================================
 
-export function deleteUser() {
+export function deleteUser(data: DeleteControlUserSchema) {
   return apiFetch("/api/user", {
     method: "DELETE",
+    body: JSON.stringify(data),
   });
 }
 
