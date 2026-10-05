@@ -34,7 +34,7 @@ export async function DELETE(req: Request) {
 
       if (!control) {
         return NextResponse.json(
-          { message: "Mot de passe érroné" },
+          { message: "Mot de passe incorrect" },
           { status: 403 },
         );
       }

@@ -6,27 +6,36 @@ import { HttpError, NetworkError, extractErrorMessage } from "@/lib/errors";
 import * as SecureStore from "expo-secure-store";
 import { useAuth } from "@/context/AuthContext";
 
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import { deleteUser } from "@/services/api";
 import LoadingAnim from "@/components/LoadingAnim";
 import ErrorMessage from "@/components/ErrorMessage";
 
+import { DeleteControlUserSchema } from "@/lib/schema/deleteSchema";
+
 export default function Account() {
   const { logout } = useAuth();
   const [confirmeDelete, setConfirmDelete] = useState(false);
-  const [confirmText, setConfirmText] = useState("");
   const [loading, setLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
   const [error, setError] = useState(false);
 
-  const handleDelete = async () => {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(DeleteControlUserSchema),
+    defaultValues: { password: "" },
+  });
+
+  const onSubmit = async (valueForm: DeleteControlUserSchema) => {
     setLoading(true);
 
-    const data = {
-      password: confirmText,
-    };
-
     try {
-      const deleteResponse = await deleteUser(data);
+      const deleteResponse = await deleteUser(valueForm);
 
       if (deleteResponse) {
         await SecureStore.deleteItemAsync("accessToken");
@@ -51,6 +60,18 @@ export default function Account() {
     }
   };
 
+  if (error)
+    return (
+      <View>
+        <View>
+          <ErrorMessage detailSend={detailError} />
+          <Pressable onPress={() => setError(false)}>
+            <Text style={styles.btnSelect}>Réessayer</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+
   if (confirmeDelete) {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
@@ -59,19 +80,32 @@ export default function Account() {
             Veuillez écrire votre mot de passe pour confirmer la suppression de
             votre compte.
           </Text>
-          <TextInput
-            placeholder="Mot de passe"
-            placeholderTextColor="#575656"
-            value={confirmText}
-            onChangeText={setConfirmText}
-            style={styles.inputConfirmText}
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput
+                placeholder="Mot de passe"
+                placeholderTextColor="#575656"
+                value={value}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                style={styles.inputConfirmText}
+              />
+            )}
           />
+          {errors.password && (
+            <Text style={[styles.text, { marginBottom: 30, color: "gray" }]}>
+              {errors.password.message}
+            </Text>
+          )}
           <Pressable
+            testID="btnConfirm"
             style={({ pressed }) => [
               styles.btnSelect,
               pressed && styles.btnPressed,
             ]}
-            onPress={handleDelete}
+            onPress={handleSubmit(onSubmit)}
           >
             <Text style={styles.text}>Valider</Text>
           </Pressable>
@@ -85,18 +119,6 @@ export default function Account() {
       </View>
     );
   }
-
-  if (error)
-    return (
-      <View>
-        <View>
-          <ErrorMessage detailSend={detailError} />
-          <Pressable onPress={() => setError(false)}>
-            <Text style={styles.btnSelect}>Réessayer</Text>
-          </Pressable>
-        </View>
-      </View>
-    );
 
   return (
     <View>

@@ -115,7 +115,6 @@ export default function BtnAndList({ seance, reset }: Seance) {
           setDetailError("Une erreur inattendue est survenue");
         }
 
-        console.error("Erreur du fetch api/timerrunner", err);
         setError(true);
         const timeoutId = setTimeout(() => {
           setError(false);
