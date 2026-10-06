@@ -63,6 +63,7 @@ seanceId String
 userId String
 seance Seance @relation(fields: [seanceId], references: [id], onDelete: Cascade)
 
+@@unique([seanceId, numberRunner])
 }
 
 model TimerPause {

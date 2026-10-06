@@ -230,6 +230,7 @@ export default function BtnAndList({ seance, reset }: Seance) {
           />
         )}
       </View>
+
       <View style={styles.containerBtnSave}>
         <Pressable
           testID="btn-ended"

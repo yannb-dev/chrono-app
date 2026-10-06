@@ -1,5 +1,6 @@
 import getUserIdFromRequest from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { TimerRunnerSchema } from "@/lib/schema/timerrunnerSchema";
@@ -65,6 +66,14 @@ export async function POST(req: Request) {
 
     return NextResponse.json(timerRunner, { status: 201 });
   } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P2002") {
+        return Response.json(
+          { message: "Le coureurs est déjà enregistré" },
+          { status: 409 },
+        );
+      }
+    }
     console.error("Erreur du POST API/TIMERSESSION", err);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
