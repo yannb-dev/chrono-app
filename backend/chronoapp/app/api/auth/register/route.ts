@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       data: { email: safeData.data.email, password: hashedPassword },
     });
 
-    if (user) return NextResponse.json({ status: 201 });
+    if (user) return NextResponse.json(null, { status: 201 });
   } catch (error) {
     console.error("Erreur POST API/REGISTER", error);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });

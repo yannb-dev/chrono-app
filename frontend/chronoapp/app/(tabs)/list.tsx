@@ -103,7 +103,6 @@ export default function DetailScreen() {
   const handleDelete = async () => {
     try {
       const response = await deleteManySeance();
-
       if (response) {
         setList([]);
       }

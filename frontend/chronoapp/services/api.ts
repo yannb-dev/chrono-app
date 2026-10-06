@@ -21,6 +21,8 @@ import { HttpError, NetworkError } from "@/lib/errors";
 import { UserRegister } from "@/types/api";
 import { UserLogin } from "@/types/api";
 
+import { parseBody } from "./parseBody";
+
 async function apiFetch<T>(
   endpoint: string,
   options?: RequestInit,
@@ -31,7 +33,6 @@ async function apiFetch<T>(
   const isAuthEndpoint = endpoint.startsWith("/api/auth/");
 
   let response: Response;
-
   try {
     response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
@@ -43,22 +44,43 @@ async function apiFetch<T>(
       },
     });
   } catch (err) {
+    clearTimeout(timeoutId);
     console.error(err);
     throw new NetworkError("Pas de connexion réseau");
+  }
+
+  let parsed;
+  try {
+    parsed = await parseBody(response);
+  } catch {
+    throw new NetworkError("Lecture de la réponse interrompue");
   } finally {
     clearTimeout(timeoutId);
   }
 
-  if (response.status === 401 && !isAuthEndpoint) {
-    await SecureStore.deleteItemAsync("accessToken");
-    router.replace("/(auth)/login");
-    throw new HttpError(401, { message: "Session expirée" });
+  if (!response.ok) {
+    if (response.status === 401 && !isAuthEndpoint) {
+      await SecureStore.deleteItemAsync("accessToken");
+      router.replace("/(auth)/login");
+      throw new HttpError(401, { message: "Session expirée" });
+    }
+
+    const body =
+      parsed.kind === "json"
+        ? parsed.data
+        : parsed.kind === "text"
+          ? { message: parsed.text.slice(0, 200) }
+          : { message: "aucun détail" };
+
+    throw new HttpError(response.status, body);
   }
 
-  if (!response.ok) throw new HttpError(response.status, await response.json());
+  if (parsed.kind === "empty") return null as T;
+  if (parsed.kind === "json") return parsed.data as T;
 
-  return response.json();
+  throw new Error("Réponse inattendue : texte au lieu de JSON");
 }
+
 // User ======================================
 
 export function deleteUser(data: DeleteControlUserSchema) {
