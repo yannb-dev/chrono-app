@@ -104,7 +104,9 @@ describe("BtnAndList - affichage des erreurs", () => {
 
     await fireEvent.press(screen.getByTestId("btn-endRunner-1"));
 
-    expect(await screen.findByText("Le chronomètre n'est pas actif"));
+    expect(
+      await screen.findByText("Le chronomètre n'est pas actif"),
+    ).toBeTruthy();
   });
 
   // ==== TEST 3 ====
@@ -138,5 +140,23 @@ describe("BtnAndList - affichage des erreurs", () => {
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith("/");
     });
+  });
+
+  // ==== TEST 5 ====
+  //
+  it("Button runner disabled si chrono en PAUSE", async () => {
+    (postTimerRunner as jest.Mock).mockRejectedValueOnce(
+      new HttpError(409, {
+        message: "Le coureurs est déjà enregistré",
+      }),
+    );
+
+    await render(<BtnAndList seance={seance} reset={reset} />);
+
+    await fireEvent.press(screen.getByTestId("btn-endRunner-1"));
+
+    expect(
+      await screen.findByText("Le coureurs est déjà enregistré"),
+    ).toBeTruthy();
   });
 });
