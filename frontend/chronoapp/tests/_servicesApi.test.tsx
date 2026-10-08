@@ -4,6 +4,9 @@ import { parseBody } from "@/services/parseBody";
 import { triggerUnauthorized } from "@/lib/authEvents";
 import { HttpError, NetworkError } from "@/lib/errors";
 
+// ==== MOCK ====
+//
+
 jest.mock("expo-secure-store", () => ({ getItemAsync: jest.fn() }));
 jest.mock("@/config/api", () => ({ API_BASE_URL: "http://test" }));
 jest.mock("@/lib/authEvents", () => ({ triggerUnauthorized: jest.fn() }));
@@ -15,12 +18,21 @@ globalThis.fetch = mockFetch as unknown as typeof fetch;
 const mockedToken = SecureStore.getItemAsync as jest.Mock;
 const mockedParse = parseBody as jest.Mock;
 
+// ==== Nettoyage ====
+//
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockedToken.mockResolvedValue(null);
 });
 
+// ==== GROUPE DE TESTS ====
+//
+
 describe("apiFetch", () => {
+  // ==== TEST 1 ====
+  //
+
   it("ajoute le header Authorization quand un token existe", async () => {
     mockedToken.mockResolvedValue("abc123");
     mockFetch.mockResolvedValue({ ok: true, status: 200 });
@@ -37,6 +49,9 @@ describe("apiFetch", () => {
     );
   });
 
+  // ==== TEST 2 ====
+  //
+
   it("n'envoie pas Authorization sans token", async () => {
     mockFetch.mockResolvedValue({ ok: true, status: 200 });
     mockedParse.mockResolvedValue({ kind: "empty" });
@@ -47,11 +62,17 @@ describe("apiFetch", () => {
     expect(headers).not.toHaveProperty("Authorization");
   });
 
+  // ==== TEST 3 ====
+  //
+
   it("lève NetworkError si fetch échoue (mode avion)", async () => {
     mockFetch.mockRejectedValue(new TypeError("Network request failed"));
 
     await expect(apiFetch("/api/seance")).rejects.toBeInstanceOf(NetworkError);
   });
+
+  // ==== TEST 4 ====
+  //
 
   it("déclenche la déconnexion sur un 401 hors /api/auth/", async () => {
     mockFetch.mockResolvedValue({ ok: false, status: 401 });
@@ -60,6 +81,9 @@ describe("apiFetch", () => {
     await expect(apiFetch("/api/seance")).rejects.toBeInstanceOf(HttpError);
     expect(triggerUnauthorized).toHaveBeenCalledTimes(1);
   });
+
+  // ==== TEST 5 ====
+  //
 
   it("ne déconnecte PAS sur un 401 de /api/auth/login", async () => {
     mockFetch.mockResolvedValue({ ok: false, status: 401 });
