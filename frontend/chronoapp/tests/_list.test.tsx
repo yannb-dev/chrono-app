@@ -73,18 +73,23 @@ describe("List - affichage des erreurs", () => {
   ];
   // ==== TEST 1 ====
   //
-  it("affiche le message d'erreur HTTP renvoyé  => non autorisé", async () => {
-    (getSeance as jest.Mock).mockRejectedValueOnce(
-      new HttpError(401, {
-        message: "Non autorisé",
+  it("affiche le message d'erreur HTTP renvoyé  => aucune séance à supprimer", async () => {
+    (getSeance as jest.Mock).mockResolvedValueOnce(seanceFinish);
+    (deleteManySeance as jest.Mock).mockRejectedValueOnce(
+      new HttpError(404, {
+        message: "Aucune séance",
       }),
     );
 
     await render(<DetailScreen />);
 
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith("/(auth)/login");
-    });
+    await fireEvent.press(screen.getByTestId("delete-seance"));
+    expect(
+      await screen.findByText("Supprimer toutes les courses ?"),
+    ).toBeTruthy();
+    await fireEvent.press(screen.getByTestId("btnConfirm"));
+
+    expect(await screen.findByText("Aucune séance")).toBeTruthy();
   });
 
   // ==== TEST 2 ====
@@ -106,7 +111,7 @@ describe("List - affichage des erreurs", () => {
     );
 
     await render(<DetailScreen />);
-    expect(await screen.findByText("Aucune séance"));
+    expect(await screen.findByText("Aucune séance")).toBeTruthy();
 
     await fireEvent.press(screen.getByText("Réessayer"));
     expect(screen.queryByText("Aucune séance")).toBeNull();
@@ -115,15 +120,24 @@ describe("List - affichage des erreurs", () => {
   // ==== TEST 5 ====
   //
   it("Charge les séances puis les effaces", async () => {
-    (getSeance as jest.Mock).mockResolvedValue(seance);
+    (getSeance as jest.Mock).mockResolvedValue(seanceFinish);
     await render(<DetailScreen />);
-    expect(await screen.findByTestId("test123")).toBeTruthy;
     await fireEvent.press(await screen.findByTestId("delete-seance"));
+    await fireEvent.press(await screen.findByTestId("btnConfirm"));
     expect(deleteManySeance).toHaveBeenCalled();
-    expect(await screen.findByTestId("test123")).toBeFalsy;
   });
 
   // ==== TEST 6 ====
+  //
+  it("Charge les séances, press trash puis annule", async () => {
+    (getSeance as jest.Mock).mockResolvedValue(seanceFinish);
+    await render(<DetailScreen />);
+    await fireEvent.press(screen.getByTestId("delete-seance"));
+    await fireEvent.press(screen.getByTestId("btnBack"));
+    expect(deleteManySeance).not.toHaveBeenCalled();
+  });
+
+  // ==== TEST 7 ====
   //
   it("OnPress séance redirection =>  /run ", async () => {
     (getSeance as jest.Mock).mockResolvedValue(seance);
@@ -139,7 +153,7 @@ describe("List - affichage des erreurs", () => {
     });
   });
 
-  // ==== TEST 7 ====
+  // ==== TEST 8 ====
   //
   it("OnPress séance redirection =>  /resultat ", async () => {
     (getSeance as jest.Mock).mockResolvedValue(seanceFinish);
