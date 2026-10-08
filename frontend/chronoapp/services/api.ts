@@ -23,14 +23,12 @@ import { UserLogin } from "@/types/api";
 
 import { parseBody } from "./parseBody";
 
-import { useAuth } from "@/context/AuthContext";
+import { triggerUnauthorized } from "@/lib/authEvents";
 
-async function apiFetch<T>(
+export default async function apiFetch<T>(
   endpoint: string,
   options?: RequestInit,
 ): Promise<T> {
-  const { logout } = useAuth();
-
   const tokenSecureStore = await SecureStore.getItemAsync("accessToken");
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -66,8 +64,7 @@ async function apiFetch<T>(
 
   if (!response.ok) {
     if (response.status === 401 && !isAuthEndpoint) {
-      logout();
-      router.replace("/(auth)/login");
+      triggerUnauthorized();
       throw new HttpError(401, { message: "Session expirée" });
     }
 
