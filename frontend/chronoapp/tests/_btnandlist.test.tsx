@@ -4,6 +4,7 @@ import {
   waitFor,
   screen,
   fireEvent,
+  act,
 } from "@testing-library/react-native";
 import BtnAndList from "@/components/BtnAndList";
 import { HttpError } from "@/lib/errors";
@@ -35,6 +36,18 @@ const seance = {
   createdAt: new Date("2026-10-03T13:37:58.190Z"),
   startedAt: null,
   state: "NoStart",
+  userId: "test345",
+  timerRunners: [],
+  timerpauses: [],
+};
+
+const seanceWithStart = {
+  totalRunner: 10,
+  colorRunner: "blue",
+  id: "test123",
+  createdAt: new Date("2026-10-03T13:37:58.190Z"),
+  startedAt: new Date("2026-10-03T16:37:58.190Z"),
+  state: "InProgress",
   userId: "test345",
   timerRunners: [],
   timerpauses: [],
@@ -73,10 +86,12 @@ const timerRunner = {
 describe("BtnAndList - affichage des erreurs", () => {
   afterEach(async () => {
     await cleanup();
+    jest.useRealTimers();
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
   });
 
   // ==== TEST 1 ====
@@ -116,7 +131,7 @@ describe("BtnAndList - affichage des erreurs", () => {
       <BtnAndList seance={seanceWithResultTimerRunner} reset={reset} />,
     );
 
-    expect(await screen.findByText("N°5"));
+    expect(await screen.findByText("N°5")).toBeTruthy();
     expect(await screen.findByTestId("btn-endRunner-5")).toHaveStyle({
       backgroundColor: "rgb(212,212,212)",
     });
@@ -158,5 +173,37 @@ describe("BtnAndList - affichage des erreurs", () => {
     expect(
       await screen.findByText("Le coureurs est déjà enregistré"),
     ).toBeTruthy();
+  });
+
+  // ==== TEST 6 ====
+  //
+
+  it("ignore le second press pendant que le premier est en cours", async () => {
+    (postTimerRunner as jest.Mock).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(
+            () =>
+              resolve({
+                numberRunner: 1,
+                endedAt: new Date("2026-10-03T13:37:59.190Z"),
+                seanceId: "test123",
+              }),
+            2000,
+          );
+        }),
+    );
+
+    await render(<BtnAndList seance={seanceWithStart} reset={reset} />);
+    const btn = screen.getByTestId("btn-endRunner-1");
+
+    fireEvent.press(btn);
+    fireEvent.press(btn);
+
+    expect(postTimerRunner).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      jest.advanceTimersByTime(2000);
+    });
   });
 });
