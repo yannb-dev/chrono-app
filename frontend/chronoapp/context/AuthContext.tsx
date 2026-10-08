@@ -1,6 +1,8 @@
 // context/AuthContext.tsx
 import { createContext, useContext, useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
+import { setOnUnauthorized } from "@/lib/authEvents";
+import { router } from "expo-router";
 
 type AuthContextType = {
   token: string | null;
@@ -31,6 +33,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await SecureStore.deleteItemAsync("accessToken");
     setToken(null);
   };
+
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      logout();
+      router.replace("/(auth)/login");
+    });
+
+    return () => setOnUnauthorized(null);
+  }, [logout]);
 
   return (
     <AuthContext.Provider value={{ token, isLoading, login, logout }}>

@@ -23,11 +23,13 @@ import { UserLogin } from "@/types/api";
 
 import { parseBody } from "./parseBody";
 
-async function apiFetch<T>(
+import { triggerUnauthorized } from "@/lib/authEvents";
+
+export default async function apiFetch<T>(
   endpoint: string,
   options?: RequestInit,
 ): Promise<T> {
-  const token = await SecureStore.getItemAsync("accessToken");
+  const tokenSecureStore = await SecureStore.getItemAsync("accessToken");
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
   const isAuthEndpoint = endpoint.startsWith("/api/auth/");
@@ -39,7 +41,9 @@ async function apiFetch<T>(
       signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(tokenSecureStore
+          ? { Authorization: `Bearer ${tokenSecureStore}` }
+          : {}),
         ...options?.headers,
       },
     });
@@ -60,8 +64,7 @@ async function apiFetch<T>(
 
   if (!response.ok) {
     if (response.status === 401 && !isAuthEndpoint) {
-      await SecureStore.deleteItemAsync("accessToken");
-      router.replace("/(auth)/login");
+      triggerUnauthorized();
       throw new HttpError(401, { message: "Session expirée" });
     }
 
