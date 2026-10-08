@@ -1,123 +1,74 @@
-import {
-  render,
-  screen,
-  fireEvent,
-  cleanup,
-  waitFor,
-} from "@testing-library/react-native";
-
+import * as SecureStore from "expo-secure-store";
 import apiFetch from "@/services/api";
+import { parseBody } from "@/services/parseBody";
+import { triggerUnauthorized } from "@/lib/authEvents";
+import { HttpError, NetworkError } from "@/lib/errors";
 
-// ==== MOCK ====
+jest.mock("expo-secure-store", () => ({ getItemAsync: jest.fn() }));
+jest.mock("@/config/api", () => ({ API_BASE_URL: "http://test" }));
+jest.mock("@/lib/authEvents", () => ({ triggerUnauthorized: jest.fn() }));
+jest.mock("@/services/parseBody", () => ({ parseBody: jest.fn() }));
 
-const mockPush = jest.fn();
+const mockFetch = jest.fn();
+globalThis.fetch = mockFetch as unknown as typeof fetch;
 
-jest.mock("expo-router", () => ({
-  router: { push: (...args: unknown[]) => mockPush(...args) },
-  Stack: {
-    Screen: () => null,
-  },
-}));
+const mockedToken = SecureStore.getItemAsync as jest.Mock;
+const mockedParse = parseBody as jest.Mock;
 
-jest.mock("@/services/api", () => ({
-  apiFetch: jest.fn(),
-}));
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockedToken.mockResolvedValue(null);
+});
 
-jest.mock("@/context/AuthContext", () => ({
-  useAuth: () => ({
-    logout: jest.fn().mockResolvedValue(undefined),
-  }),
-}));
+describe("apiFetch", () => {
+  it("ajoute le header Authorization quand un token existe", async () => {
+    mockedToken.mockResolvedValue("abc123");
+    mockFetch.mockResolvedValue({ ok: true, status: 200 });
+    mockedParse.mockResolvedValue({ kind: "json", data: { id: 1 } });
 
-// ==== GROUPE DE TEST ====
+    const result = await apiFetch<{ id: number }>("/api/seance");
 
-describe("Services/API - affichage des erreurs", () => {
-  afterEach(async () => {
-    await cleanup();
+    expect(result).toEqual({ id: 1 });
+    expect(mockFetch).toHaveBeenCalledWith(
+      "http://test/api/seance",
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: "Bearer abc123" }),
+      }),
+    );
   });
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+  it("n'envoie pas Authorization sans token", async () => {
+    mockFetch.mockResolvedValue({ ok: true, status: 200 });
+    mockedParse.mockResolvedValue({ kind: "empty" });
+
+    await apiFetch("/api/seance");
+
+    const headers = mockFetch.mock.calls[0][1].headers;
+    expect(headers).not.toHaveProperty("Authorization");
   });
 
-  // ==== Valeur fictive de test ====
+  it("lève NetworkError si fetch échoue (mode avion)", async () => {
+    mockFetch.mockRejectedValue(new TypeError("Network request failed"));
 
-  // ==== TEST 1 ====
-  //
-  it("affiche les messages d'erreurs sous les input + ne lance pas la function", async () => {
-    await render(<apiFetch />);
-    await remplirFormulaireInValid();
-    await fireEvent.press(screen.getByText("Se connecter"));
-
-    expect(await screen.findByText("Email requis")).toBeTruthy();
-    expect(await screen.findByText("Mot de passe requis")).toBeTruthy();
-    expect(postLogin).not.toHaveBeenCalled();
+    await expect(apiFetch("/api/seance")).rejects.toBeInstanceOf(NetworkError);
   });
 
-  //   // ==== TEST 2 ====
-  //   //
-  //   it("affiche le message d'erreur HTTP renvoyé par l'API => mauvais format", async () => {
-  //     (postLogin as jest.Mock).mockRejectedValueOnce(
-  //       new HttpError(400, {
-  //         message: "Format de l'email ou du mot de passe non conformes",
-  //       }),
-  //     );
+  it("déclenche la déconnexion sur un 401 hors /api/auth/", async () => {
+    mockFetch.mockResolvedValue({ ok: false, status: 401 });
+    mockedParse.mockResolvedValue({ kind: "empty" });
 
-  //     await render(<LoginScreen />);
-  //     await remplirFormulaireValid();
-  //     await fireEvent.press(screen.getByText("Se connecter"));
-  //     expect(
-  //       screen.getByText("Format de l'email ou du mot de passe non conformes"),
-  //     ).toBeTruthy();
-  //   });
+    await expect(apiFetch("/api/seance")).rejects.toBeInstanceOf(HttpError);
+    expect(triggerUnauthorized).toHaveBeenCalledTimes(1);
+  });
 
-  //   // ==== TEST 3 ====
-  //   //
-  //   it("affiche le message d'erreur HTTP renvoyé par l'API identification", async () => {
-  //     (postLogin as jest.Mock).mockRejectedValueOnce(
-  //       new HttpError(401, { message: "Identifications invalides" }),
-  //     );
+  it("ne déconnecte PAS sur un 401 de /api/auth/login", async () => {
+    mockFetch.mockResolvedValue({ ok: false, status: 401 });
+    mockedParse.mockResolvedValue({
+      kind: "json",
+      data: { message: "Identifiants invalides" },
+    });
 
-  //     await render(<LoginScreen />);
-  //     await remplirFormulaireValid();
-  //     await fireEvent.press(screen.getByText("Se connecter"));
-
-  //     expect(await screen.findByText("Identifications invalides")).toBeTruthy();
-  //   });
-
-  //   // ==== TEST 4 ====
-  //   //
-  //   it("affiche un message quand le réseau est indisponible", async () => {
-  //     (postLogin as jest.Mock).mockRejectedValueOnce(
-  //       new NetworkError("Pas de connexion réseau"),
-  //     );
-
-  //     await render(<LoginScreen />);
-  //     await remplirFormulaireValid();
-  //     await fireEvent.press(screen.getByText("Se connecter"));
-
-  //     expect(await screen.findByText("Pas de connexion réseau")).toBeTruthy();
-  //   });
-
-  //   // ==== TEST 5 ====
-  //   //
-  //   it("action sur button MOT DE PASSE OUBLIE doit rediriger", async () => {
-  //     await render(<LoginScreen />);
-  //     await fireEvent.press(screen.getByText("Mot de passe oublié"));
-
-  //     await waitFor(() => {
-  //       expect(mockPush).toHaveBeenCalledWith("/(auth)/passwordReset");
-  //     });
-  //   });
-
-  //   // ===== TEST 6 ====
-  //   //
-  //   it("action sur button S'INSCRIRE doit rediriger", async () => {
-  //     await render(<LoginScreen />);
-  //     await fireEvent.press(screen.getByText("S'inscrire"));
-
-  //     await waitFor(() => {
-  //       expect(mockPush).toHaveBeenCalledWith("/(auth)/register");
-  //     });
-  //   });
+    await expect(apiFetch("/api/auth/login")).rejects.toBeInstanceOf(HttpError);
+    expect(triggerUnauthorized).not.toHaveBeenCalled();
+  });
 });
