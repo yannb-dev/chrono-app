@@ -26,6 +26,7 @@ export default function DetailScreen() {
   const [error, setError] = useState(false);
   const [detailError, setDetailError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const initListPage = () => {
     let cancelled = false;
@@ -116,6 +117,35 @@ export default function DetailScreen() {
     }
   };
 
+  if (confirmDelete) {
+    return (
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <View style={styles.containerError}>
+          <Text style={[styles.text, { fontSize: 12 }]}>
+            Supprimer toutes les courses ?
+          </Text>
+          <Pressable
+            testID="btnConfirm"
+            style={({ pressed }) => [
+              styles.btnSelect,
+              pressed && styles.btnPressed,
+            ]}
+            onPress={() => handleDelete()}
+          >
+            <Text style={styles.text}>Valider</Text>
+          </Pressable>
+          <Pressable
+            testID="btnBack"
+            style={{ marginTop: 12 }}
+            onPress={() => setConfirmDelete(false)}
+          >
+            <Text style={styles.text}>Retour</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {loading ? (
@@ -130,7 +160,7 @@ export default function DetailScreen() {
               <Pressable
                 style={({ pressed }) => [pressed && styles.btntrashPressed]}
                 testID="delete-seance"
-                onPress={handleDelete}
+                onPress={() => setConfirmDelete(true)}
               >
                 <IconSymbol name={"delete.forward"} />
               </Pressable>
