@@ -1,7 +1,6 @@
 import { styles } from "@/lib/styles";
 import { useState } from "react";
 import { View, Text, Pressable, TextInput } from "react-native";
-import { router } from "expo-router";
 import { HttpError, NetworkError, extractErrorMessage } from "@/lib/errors";
 import * as SecureStore from "expo-secure-store";
 import { useAuth } from "@/context/AuthContext";
@@ -43,10 +42,6 @@ export default function Account() {
       }
     } catch (err) {
       if (err instanceof HttpError) {
-        if (err.status === 401) {
-          await SecureStore.deleteItemAsync("accessToken");
-          router.replace("/(auth)/login");
-        }
         setDetailError(extractErrorMessage(err.body));
       } else if (err instanceof NetworkError) {
         setDetailError(err.message);

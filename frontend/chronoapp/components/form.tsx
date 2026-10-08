@@ -4,7 +4,6 @@ import { View, Text, Pressable, FlatList } from "react-native";
 import { styles } from "@/lib/styles";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 
 import { HttpError, NetworkError, extractErrorMessage } from "@/lib/errors";
 
@@ -51,10 +50,6 @@ export default function Form() {
       }
     } catch (err) {
       if (err instanceof HttpError) {
-        if (err.status === 401) {
-          await SecureStore.deleteItemAsync("accessToken");
-          router.replace("/(auth)/login");
-        }
         setDetailError(extractErrorMessage(err.body));
       } else if (err instanceof NetworkError) {
         setDetailError(err.message);
