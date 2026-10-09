@@ -3,6 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import getUserIdFromRequest from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import getClientIp from "@/lib/getClientIp";
+import {
+  userRateLimitEmailWeb,
+  userRateLimitIpMobil,
+  userRateLimitIpWeb,
+} from "@/lib/rateLimit";
 
 import {
   DeleteControlUserPasswordSchema,
@@ -19,6 +25,26 @@ export async function DELETE(req: Request) {
       return NextResponse.json(
         { message: "Format non conforme" },
         { status: 400 },
+      );
+    }
+
+    const ip = getClientIp(req);
+
+    if (ip === "unknown") {
+      return NextResponse.json(
+        { message: "Client non identifiable" },
+        { status: 400 },
+      );
+    }
+
+    const IpCheck = await userRateLimitIpMobil.limit(ip);
+
+    if (!IpCheck.success) {
+      return NextResponse.json(
+        { message: "Trop de tentatives. Réessaie plus tard." },
+        {
+          status: 429,
+        },
       );
     }
 
@@ -66,6 +92,27 @@ export async function DELETE(req: Request) {
       return NextResponse.json(
         { message: "Format non conforme" },
         { status: 400 },
+      );
+    }
+
+    const ip = getClientIp(req);
+
+    if (ip === "unknown") {
+      return NextResponse.json(
+        { message: "Client non identifiable" },
+        { status: 400 },
+      );
+    }
+
+    const IpCheck = await userRateLimitIpWeb.limit(ip);
+    const EmailCheck = await userRateLimitEmailWeb.limit(safeValue.data.email);
+
+    if (!IpCheck.success || !EmailCheck) {
+      return NextResponse.json(
+        { message: "Trop de tentatives. Réessaie plus tard." },
+        {
+          status: 429,
+        },
       );
     }
 
