@@ -1,5 +1,5 @@
 import { View, FlatList, Pressable, Text } from "react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 import { styles } from "@/lib/styles";
 
@@ -36,6 +36,8 @@ export default function BtnAndList({ seance, reset }: Seance) {
   const [arrayResult, setArrayResult] = useState<TimerRunner[]>([]);
   const [arrayNumber, setArrayNumber] = useState<List[]>([]);
   const [messageConfirmEnded, setMessageConfirmEnded] = useState(false);
+
+  const pendingRunners = useRef<Set<number>>(new Set());
 
   // Déclenchement de l'arrivée du coureur ===============================================
   useEffect(() => {
@@ -81,6 +83,9 @@ export default function BtnAndList({ seance, reset }: Seance) {
   }, [reset]);
 
   const handleEndRunner = async (id: string, numberRunner: number) => {
+    if (pendingRunners.current.has(numberRunner)) return;
+    pendingRunners.current.add(numberRunner);
+
     const data = {
       numberRunner: numberRunner,
       endedAt: new Date(),
@@ -114,6 +119,8 @@ export default function BtnAndList({ seance, reset }: Seance) {
         const timeoutId = setTimeout(() => {
           setError(false);
         }, 3000);
+      } finally {
+        pendingRunners.current.delete(numberRunner);
       }
     }
   };

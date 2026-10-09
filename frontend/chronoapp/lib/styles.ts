@@ -397,6 +397,15 @@ export const styles = StyleSheet.create({
     transform: [{ scale: 1.1 }],
   },
 
+  containerConfirm: {
+    height: "20%",
+    width: "90%",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    backgroundColor: gray,
+    borderRadius: 5,
+  },
+
   // [id].tsx run
 
   containerResult: {
