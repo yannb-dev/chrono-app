@@ -97,6 +97,8 @@ export default function DetailScreen() {
   };
 
   const handleDelete = async () => {
+    setConfirmDelete(false);
+
     try {
       const response = await deleteManySeance();
       if (response) {
@@ -120,27 +122,34 @@ export default function DetailScreen() {
   if (confirmDelete) {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
-        <View style={styles.containerError}>
+        <View style={styles.containerConfirm}>
           <Text style={[styles.text, { fontSize: 12 }]}>
             Supprimer toutes les courses ?
           </Text>
-          <Pressable
-            testID="btnConfirm"
-            style={({ pressed }) => [
-              styles.btnSelect,
-              pressed && styles.btnPressed,
-            ]}
-            onPress={() => handleDelete()}
+          <View
+            style={{
+              flexDirection: "row",
+              width: "100%",
+              height: "50%",
+              justifyContent: "space-evenly",
+              alignItems: "center",
+            }}
           >
-            <Text style={styles.text}>Valider</Text>
-          </Pressable>
-          <Pressable
-            testID="btnBack"
-            style={{ marginTop: 12 }}
-            onPress={() => setConfirmDelete(false)}
-          >
-            <Text style={styles.text}>Retour</Text>
-          </Pressable>
+            <Pressable
+              testID="btnConfirm"
+              style={({ pressed }) => [
+                styles.btnSelect,
+                { width: 60 },
+                pressed && styles.btnPressed,
+              ]}
+              onPress={() => handleDelete()}
+            >
+              <Text style={styles.text}>Oui</Text>
+            </Pressable>
+            <Pressable testID="btnBack" onPress={() => setConfirmDelete(false)}>
+              <Text style={styles.text}>Non</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     );
