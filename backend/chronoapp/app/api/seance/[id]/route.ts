@@ -57,7 +57,7 @@ export async function DELETE(
       },
     });
 
-    return NextResponse.json({ status: 204 });
+    return new NextResponse(null, { status: 204 });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {

@@ -3,34 +3,134 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import getUserIdFromRequest from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import getClientIp from "@/lib/getClientIp";
+import {
+  userRateLimitEmailWeb,
+  userRateLimitIpMobil,
+  userRateLimitIpWeb,
+} from "@/lib/rateLimit";
 
-import { DeleteControlUserSchema } from "@/lib/schema/deleteSchema";
+import {
+  DeleteControlUserPasswordSchema,
+  DeleteControlUserEmailPasswordSchema,
+} from "@/lib/schema/deleteSchema";
 
 export async function DELETE(req: Request) {
   const userId = await getUserIdFromRequest(req);
+  const body = await req.json();
 
-  if (!userId) {
-    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
-  }
+  if (userId) {
+    const safeValue = DeleteControlUserPasswordSchema.safeParse(body.value);
+    if (!safeValue.success) {
+      return NextResponse.json(
+        { message: "Format non conforme" },
+        { status: 400 },
+      );
+    }
 
-  const password = await req.json();
+    const ip = getClientIp(req);
 
-  const safeValue = DeleteControlUserSchema.safeParse(password);
+    if (ip === "unknown") {
+      return NextResponse.json(
+        { message: "Client non identifiable" },
+        { status: 400 },
+      );
+    }
 
-  if (!safeValue.success) {
-    return NextResponse.json(
-      { message: "Format du mot de passe non conforme" },
-      { status: 400 },
+    const IpCheck = await userRateLimitIpMobil.limit(ip);
+
+    if (!IpCheck.success) {
+      return NextResponse.json(
+        { message: "Trop de tentatives. Réessaie plus tard." },
+        {
+          status: 429,
+        },
+      );
+    }
+
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (user) {
+        const control = await bcrypt.compare(
+          safeValue.data.password,
+          user.password,
+        );
+
+        if (!control) {
+          return NextResponse.json(
+            { message: "Mot de passe incorrect" },
+            { status: 403 },
+          );
+        }
+        await prisma.user.delete({
+          where: { id: user.id, email: user.email },
+        });
+      }
+
+      return new NextResponse(null, { status: 204 });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === "P2025") {
+          return Response.json(
+            { message: "Utilisateur introuvable" },
+            { status: 404 },
+          );
+        }
+      }
+
+      console.error("Erreur du POST API/USER/DELETE", err);
+      return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
+    }
+  } else {
+    const safeValue = DeleteControlUserEmailPasswordSchema.safeParse(
+      body.value,
     );
-  }
+    if (!safeValue.success) {
+      return NextResponse.json(
+        { message: "Format non conforme" },
+        { status: 400 },
+      );
+    }
 
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    const ip = getClientIp(req);
 
-    if (user) {
-      const control = bcrypt.compare(safeValue.data.password, user.password);
+    if (ip === "unknown") {
+      return NextResponse.json(
+        { message: "Client non identifiable" },
+        { status: 400 },
+      );
+    }
+
+    const IpCheck = await userRateLimitIpWeb.limit(ip);
+    const EmailCheck = await userRateLimitEmailWeb.limit(safeValue.data.email);
+
+    if (!IpCheck.success || !EmailCheck) {
+      return NextResponse.json(
+        { message: "Trop de tentatives. Réessaie plus tard." },
+        {
+          status: 429,
+        },
+      );
+    }
+
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email: safeValue.data.email },
+      });
+
+      if (!user) {
+        return NextResponse.json(
+          { message: "Utilisateur introuvable" },
+          { status: 404 },
+        );
+      }
+      const control = await bcrypt.compare(
+        safeValue.data.password,
+        user.password,
+      );
 
       if (!control) {
         return NextResponse.json(
@@ -39,19 +139,22 @@ export async function DELETE(req: Request) {
         );
       }
       await prisma.user.delete({
-        where: { id: userId },
+        where: { id: user.id, email: user.email },
       });
-    }
 
-    return NextResponse.json({ status: 204 });
-  } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      if (err.code === "P2025") {
-        return Response.json({ message: "User introuvable" }, { status: 404 });
+      return new NextResponse(null, { status: 204 });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === "P2025") {
+          return NextResponse.json(
+            { message: "Utilisateur introuvable" },
+            { status: 404 },
+          );
+        }
       }
-    }
 
-    console.error("Erreur du POST API/USER/DELETE", err);
-    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
+      console.error("Erreur du POST API/USER/DELETE", err);
+      return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
+    }
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import FormResetPassword from "./component/formResetPassword";
+import FormResetPassword from "../component/formResetPassword";
 import Image from "next/image";
 
 type token = string | null;
