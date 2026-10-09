@@ -83,7 +83,7 @@ export default function FormDeleteUser() {
   }
 
   return (
-    <div className="h-[40%] w-150 flex flex-col justify-center items-center font-mono rounded-xl bg-gray-300">
+    <div className="h-[50%] w-150 p-8 flex flex-col justify-center items-center font-mono rounded-xl bg-gray-300">
       <h1 className="text-gray-900 text-lg mt-12 mb-12">
         Vous êtes sur le point de supprimer votre compte. Cette action est
         irrévocable.

@@ -4,57 +4,98 @@ import { Prisma } from "@prisma/client";
 import getUserIdFromRequest from "@/lib/auth";
 import bcrypt from "bcryptjs";
 
-import { DeleteControlUserSchema } from "@/lib/schema/deleteSchema";
+import {
+  DeleteControlUserPasswordSchema,
+  DeleteControlUserEmailPasswordSchema,
+} from "@/lib/schema/deleteSchema";
 
 export async function DELETE(req: Request) {
   const userId = await getUserIdFromRequest(req);
+  const body = await req.json();
 
-  if (!userId) {
-    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
-  }
+  if (userId) {
+    const safeValue = DeleteControlUserPasswordSchema.safeParse(body);
+    if (!safeValue.success) {
+      return NextResponse.json(
+        { message: "Format non conforme" },
+        { status: 400 },
+      );
+    }
 
-  const password = await req.json();
-
-  const safeValue = DeleteControlUserSchema.safeParse(password);
-
-  if (!safeValue.success) {
-    return NextResponse.json(
-      { message: "Format du mot de passe non conforme" },
-      { status: 400 },
-    );
-  }
-
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (user) {
-      const control = bcrypt.compare(safeValue.data.password, user.password);
-
-      if (!control) {
-        return NextResponse.json(
-          { message: "Mot de passe incorrect" },
-          { status: 403 },
-        );
-      }
-      await prisma.user.delete({
+    try {
+      const user = await prisma.user.findUnique({
         where: { id: userId },
       });
-    }
 
-    return NextResponse.json({ status: 204 });
-  } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      if (err.code === "P2025") {
-        return Response.json(
-          { message: "Utilisateur introuvable" },
-          { status: 404 },
-        );
+      if (user) {
+        const control = bcrypt.compare(safeValue.data.password, user.password);
+
+        if (!control) {
+          return NextResponse.json(
+            { message: "Mot de passe incorrect" },
+            { status: 403 },
+          );
+        }
+        await prisma.user.delete({
+          where: { id: user.id, email: user.email },
+        });
       }
+
+      return NextResponse.json({ status: 204 });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === "P2025") {
+          return Response.json(
+            { message: "Utilisateur introuvable" },
+            { status: 404 },
+          );
+        }
+      }
+
+      console.error("Erreur du POST API/USER/DELETE", err);
+      return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
+    }
+  } else {
+    const safeValue = DeleteControlUserEmailPasswordSchema.safeParse(body);
+    if (!safeValue.success) {
+      return NextResponse.json(
+        { message: "Format non conforme" },
+        { status: 400 },
+      );
     }
 
-    console.error("Erreur du POST API/USER/DELETE", err);
-    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email: safeValue.data.email },
+      });
+
+      if (user) {
+        const control = bcrypt.compare(safeValue.data.password, user.password);
+
+        if (!control) {
+          return NextResponse.json(
+            { message: "Mot de passe incorrect" },
+            { status: 403 },
+          );
+        }
+        await prisma.user.delete({
+          where: { id: user.id, email: user.email },
+        });
+      }
+
+      return NextResponse.json({ status: 204 });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === "P2025") {
+          return Response.json(
+            { message: "Utilisateur introuvable" },
+            { status: 404 },
+          );
+        }
+      }
+
+      console.error("Erreur du POST API/USER/DELETE", err);
+      return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
+    }
   }
 }
