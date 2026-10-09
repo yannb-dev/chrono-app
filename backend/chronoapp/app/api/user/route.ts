@@ -47,7 +47,10 @@ export async function DELETE(req: Request) {
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
-        return Response.json({ message: "User introuvable" }, { status: 404 });
+        return Response.json(
+          { message: "Utilisateur introuvable" },
+          { status: 404 },
+        );
       }
     }
 
