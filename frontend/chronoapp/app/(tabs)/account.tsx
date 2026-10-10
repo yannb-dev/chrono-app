@@ -35,12 +35,10 @@ export default function Account() {
     setLoading(true);
 
     try {
-      const deleteResponse = await deleteUser(valueForm);
+      await deleteUser(valueForm);
 
-      if (deleteResponse) {
-        await SecureStore.deleteItemAsync("accessToken");
-        await logout();
-      }
+      await SecureStore.deleteItemAsync("accessToken");
+      await logout();
     } catch (err) {
       if (err instanceof HttpError) {
         setDetailError(extractErrorMessage(err.body));

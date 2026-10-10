@@ -121,9 +121,6 @@ export default function RunPage() {
   // ========== Gestion du button [play] soit pour le démarrage, soit pour mettre fin à la pause
 
   const handlePlay = async () => {
-    console.log(elapsed, "compte de secondes");
-    console.log(timerPauseInProgress, "groupe de pause");
-    console.log(timerPausesLocal, "save local");
     setReset(false);
     if (!timerPauseInProgress) {
       if (stateChrono) return;
