@@ -56,7 +56,7 @@ export default function Privacy() {
             Qui est responsable des données
           </h2>
           <p className="ml-2">
-            L'application est éditée par <strong>yannB-Dev</strong> . Pour toute
+            L'application est éditée par <strong>yannB-Dev</strong>. Pour toute
             question sur les données, écrire à yannblondeaudev@gmail.com.
           </p>
         </div>
@@ -85,7 +85,7 @@ export default function Privacy() {
               <div className="w-[30%] p-2">Identifiant de compte</div>
               <div className="w-[70%] p-2">
                 Se connecter. Relier les séances à votre compte, et vérifier que
-                vous estes le seul à y accéder.
+                vous êtes le seul à y accéder.
               </div>
             </div>
             <div className="w-full flex ">
@@ -108,7 +108,7 @@ export default function Privacy() {
           </p>
           <ul className="p-6">
             <li>
-              <strong>Vercel : </strong>hébergement de l'API.
+              <strong>Vercel :</strong> hébergement de l'API.
             </li>
             <li>
               <strong>Neon :</strong> base de données.
@@ -121,7 +121,7 @@ export default function Privacy() {
         <div id="duree" className="w-full mt-8">
           <h2 className="text-lg font-bold mb-4">Durée de conservation</h2>
           <p className="ml-2">
-            Les données sont conservées tant que ton compte existe. À la
+            Les données sont conservées tant que votre compte existe. À la
             suppression du compte, elles sont effacées de la base de données
             immédiatement.
           </p>
@@ -129,10 +129,10 @@ export default function Privacy() {
         <div id="security" className="w-full mt-8">
           <h2 className="text-lg font-bold mb-4">Sécurité</h2>
           <p className="ml-2">
-            Les échanges entre l'application et nos serveurs sont chiffrés en
-            HTTPS. Ton jeton de connexion est stocké dans l'espace sécurisé de
-            ton téléphone, et chaque requête vérifie que les données demandées
-            t'appartiennent.
+            Les échanges entre l'application et les serveurs sont chiffrés en
+            HTTPS. Le jeton de connexion est stocké dans l'espace sécurisé de
+            votre téléphone, et chaque requête vérifie que les données demandées
+            vous appartiennent.
           </p>
         </div>
         <div id="droit" className="w-full mt-8">
