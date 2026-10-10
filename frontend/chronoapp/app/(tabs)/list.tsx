@@ -100,10 +100,9 @@ export default function DetailScreen() {
     setConfirmDelete(false);
 
     try {
-      const response = await deleteManySeance();
-      if (response) {
-        setList([]);
-      }
+      await deleteManySeance();
+
+      setList([]);
     } catch (err) {
       if (err instanceof HttpError) {
         setDetailError(extractErrorMessage(err.body));
