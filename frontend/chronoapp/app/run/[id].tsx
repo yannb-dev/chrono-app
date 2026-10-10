@@ -121,6 +121,7 @@ export default function RunPage() {
   // ========== Gestion du button [play] soit pour le démarrage, soit pour mettre fin à la pause
 
   const handlePlay = async () => {
+    setReset(false);
     if (!timerPauseInProgress) {
       if (stateChrono) return;
 
@@ -209,14 +210,14 @@ export default function RunPage() {
 
     if (safePatch.success) {
       try {
-        const responseTimerPause = await deleteTimerPause(seanceGet.id);
-        const responseTimerRunner = await deleteAllTimerRunner(seanceGet.id);
-        const responseSeance = await patchSeance(safePatch.data, seanceGet.id);
+        await deleteTimerPause(seanceGet.id);
+        await deleteAllTimerRunner(seanceGet.id);
+        await patchSeance(safePatch.data, seanceGet.id);
 
-        if (responseTimerPause && responseSeance && responseTimerRunner) {
-          setElapsed(0);
-          setReset(true);
-        }
+        setElapsed(0);
+        setReset(true);
+        setTimerPauseInProgress(null);
+        timerPausesLocal.current = [];
       } catch (err) {
         if (err instanceof HttpError) {
           setDetailError(extractErrorMessage(err.body));
@@ -237,9 +238,11 @@ export default function RunPage() {
   const handlePause = async () => {
     if (!seanceGet) return;
 
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     setStateChrono(false);
-    // setDisabledPause(true);
 
     const data = {
       pausedAt: new Date(),

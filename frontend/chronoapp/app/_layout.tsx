@@ -7,13 +7,12 @@ import { AuthGate } from "@/components/AuthGate";
 import * as Sentry from "@sentry/react-native";
 
 Sentry.init({
-  dsn: "https://e5f23116913adac65a5ef4176fe51122@o4512107660771328.ingest.us.sentry.io/4512107677483008",
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DNS,
 
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 0,
   // sendDefaultPii: true,
 
-  // enableLogs: true,
-  enableNativeCrashHandling: true,
+  enableLogs: !__DEV__,
 
   // replaysSessionSampleRate: 0.1,
   // replaysOnErrorSampleRate: 1,
@@ -21,7 +20,17 @@ Sentry.init({
     // Sentry.mobileReplayIntegration(),
     // Sentry.feedbackIntegration(),
   ],
-  debug: __DEV__,
+  debug: false,
+  ignoreErrors: [
+    "Network request failed", // perte de connexion, attendue sur mobile
+    "AbortError",
+  ],
+  beforeBreadcrumb(breadcrumb) {
+    if (breadcrumb.category === "console" && breadcrumb.level !== "error") {
+      return null;
+    }
+    return breadcrumb;
+  },
 });
 
 SplashScreen.preventAutoHideAsync();

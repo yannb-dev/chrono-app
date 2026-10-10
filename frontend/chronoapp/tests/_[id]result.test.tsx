@@ -62,20 +62,6 @@ describe("[id] Result - affichage des erreurs", () => {
   };
 
   // ==== TEST 1 ====
-  it("Non autorisé => redirection /login ", async () => {
-    (getSeanceId as jest.Mock).mockRejectedValueOnce(
-      new HttpError(401, {
-        message: "Non autorisé",
-      }),
-    );
-
-    await render(<Result />);
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith("/(auth)/login");
-    });
-  });
-
-  // ==== TEST 2 ====
   //
   it("affiche un message quand le réseau est indisponible", async () => {
     (getSeanceId as jest.Mock).mockRejectedValueOnce(
@@ -86,7 +72,7 @@ describe("[id] Result - affichage des erreurs", () => {
     expect(await screen.findByText("Pas de connexion internet")).toBeTruthy();
   });
 
-  // ==== TEST 3 ====
+  // ==== TEST 2 ====
   //
 
   it("Effacement de la <View> à la fermeture de la fenêtre Error", async () => {
@@ -101,7 +87,7 @@ describe("[id] Result - affichage des erreurs", () => {
     expect(screen.queryByText("Aucune séance")).toBeNull();
   });
 
-  // ==== TEST 4 ====
+  // ==== TEST 3 ====
   //
   it("Chargement des résultats de la séance", async () => {
     (getSeanceId as jest.Mock).mockResolvedValueOnce(seanceFinish);

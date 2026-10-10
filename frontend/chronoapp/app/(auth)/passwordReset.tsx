@@ -114,7 +114,9 @@ export default function PasswordReset() {
               )}
             />
             {errors.email && (
-              <Text style={[styles.text, { marginBottom: 30, color: "gray" }]}>
+              <Text
+                style={[styles.textError, { marginBottom: 30, color: "gray" }]}
+              >
                 {errors.email?.message}
               </Text>
             )}

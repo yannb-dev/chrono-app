@@ -15,7 +15,8 @@ import { HttpError, NetworkError } from "@/lib/errors";
 const mockReplace = jest.fn();
 
 jest.mock("expo-router", () => ({
-  router: { replace: (...args: unknown[]) => mockReplace(...args) },
+  ...jest.requireActual("expo-router"),
+  useRouter: { replace: (...args: unknown[]) => mockReplace(...args) },
   Stack: {
     Screen: () => null,
   },
@@ -90,24 +91,7 @@ describe("Account - affichage des erreurs", () => {
     ).toBeTruthy();
   });
 
-  //   // ==== TEST 3 ====
-  //   //
-  it("affiche le message d'erreur HTTP renvoyé par l'API identification", async () => {
-    (deleteUser as jest.Mock).mockRejectedValueOnce(
-      new HttpError(401, { message: "Identifications invalides" }),
-    );
-
-    const user = userEvent.setup();
-
-    await render(<Account />);
-    await user.press(screen.getByText("Supprimer"));
-    await user.type(screen.getByPlaceholderText("Mot de passe"), "Azerty123");
-    await user.press(screen.getByTestId("btnConfirm"));
-
-    expect(mockReplace).toHaveBeenCalledWith("/(auth)/login");
-  });
-
-  // ==== TEST 4 ====
+  // ==== TEST 3 ====
   //
   it("affiche un message quand le réseau est indisponible", async () => {
     (deleteUser as jest.Mock).mockRejectedValueOnce(

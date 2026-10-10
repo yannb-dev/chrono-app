@@ -17,10 +17,15 @@ import {
 
 export async function DELETE(req: Request) {
   const userId = await getUserIdFromRequest(req);
+
+  if (!userId) {
+    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+  }
   const body = await req.json();
 
   if (userId) {
-    const safeValue = DeleteControlUserPasswordSchema.safeParse(body.value);
+    const safeValue = DeleteControlUserPasswordSchema.safeParse(body);
+
     if (!safeValue.success) {
       return NextResponse.json(
         { message: "Format non conforme" },
@@ -85,9 +90,8 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
     }
   } else {
-    const safeValue = DeleteControlUserEmailPasswordSchema.safeParse(
-      body.value,
-    );
+    const safeValue = DeleteControlUserEmailPasswordSchema.safeParse(body);
+
     if (!safeValue.success) {
       return NextResponse.json(
         { message: "Format non conforme" },

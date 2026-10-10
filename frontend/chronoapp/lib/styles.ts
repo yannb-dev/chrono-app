@@ -39,7 +39,7 @@ export const styles = StyleSheet.create({
 
   textError: {
     fontFamily: "Orbitron-Medium",
-    color: rose,
+    fontSize: 8,
   },
 
   errorForm: {

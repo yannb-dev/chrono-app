@@ -1,6 +1,7 @@
 import { styles } from "@/lib/styles";
 import { useState } from "react";
 import { View, Text, Pressable, TextInput } from "react-native";
+import { Link } from "expo-router";
 import { HttpError, NetworkError, extractErrorMessage } from "@/lib/errors";
 import * as SecureStore from "expo-secure-store";
 import { useAuth } from "@/context/AuthContext";
@@ -34,12 +35,10 @@ export default function Account() {
     setLoading(true);
 
     try {
-      const deleteResponse = await deleteUser(valueForm);
+      await deleteUser(valueForm);
 
-      if (deleteResponse) {
-        await SecureStore.deleteItemAsync("accessToken");
-        await logout();
-      }
+      await SecureStore.deleteItemAsync("accessToken");
+      await logout();
     } catch (err) {
       if (err instanceof HttpError) {
         setDetailError(extractErrorMessage(err.body));
@@ -57,11 +56,11 @@ export default function Account() {
 
   if (error)
     return (
-      <View>
-        <View>
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <View style={styles.containerError}>
           <ErrorMessage detailSend={detailError} />
-          <Pressable onPress={() => setError(false)}>
-            <Text style={styles.btnSelect}>Réessayer</Text>
+          <Pressable style={styles.btnSelect} onPress={() => setError(false)}>
+            <Text style={styles.text}>Réessayer</Text>
           </Pressable>
         </View>
       </View>
@@ -82,6 +81,7 @@ export default function Account() {
               <TextInput
                 placeholder="Mot de passe"
                 placeholderTextColor="#575656"
+                secureTextEntry
                 value={value}
                 onBlur={onBlur}
                 onChangeText={onChange}
@@ -90,7 +90,9 @@ export default function Account() {
             )}
           />
           {errors.password && (
-            <Text style={[styles.text, { marginBottom: 30, color: "gray" }]}>
+            <Text
+              style={[styles.textError, { marginBottom: 30, color: "gray" }]}
+            >
               {errors.password.message}
             </Text>
           )}
@@ -148,6 +150,13 @@ export default function Account() {
           >
             <Text style={styles.text}>Supprimer</Text>
           </Pressable>
+          <Link href="https://chrono-app-blond.vercel.app/privacy" asChild>
+            <Pressable style={{ marginTop: 60 }} onPress={() => console.log}>
+              <Text style={[styles.text, { fontSize: 10 }]}>
+                Politique de confidentialité
+              </Text>
+            </Pressable>
+          </Link>
         </View>
       )}
     </View>
