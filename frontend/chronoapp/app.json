@@ -12,6 +12,7 @@
     },
     "android": {
       "package": "com.yanndev181steam.chronoapp",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -50,8 +51,7 @@
           "project": "chronoapp",
           "organization": "yannb"
         }
-      ],
-      "@sentry/react-native"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
