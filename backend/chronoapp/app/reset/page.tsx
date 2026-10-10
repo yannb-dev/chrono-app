@@ -33,7 +33,7 @@ export default function PasswordReset() {
           width={180}
           height={1800}
         />
-        <div className="h-30 w-[50%] flex justify-center items-center bg-gray-300 rounded-sm mt-20">
+        <div className="h-30 w-[50%] flex justify-center items-center border border-green-400 bg-gray-100 rounded-sm mt-20">
           <h1 className="text-gray-900 text-sm">
             Lien invalide, veuiller relancer une demande de réinitialisation de
             mot de passe
