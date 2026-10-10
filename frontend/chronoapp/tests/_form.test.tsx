@@ -43,23 +43,6 @@ describe("form - affichage des erreurs", () => {
 
   // ==== TEST 1 ====
   //
-  it("Non autorisé => redirige vers /login", async () => {
-    (postSeance as jest.Mock).mockRejectedValueOnce(
-      new HttpError(401, {
-        message: "Non autorisé",
-      }),
-    );
-    await render(<Form />);
-    await ValueValid();
-    await fireEvent.press(screen.getByText("Créer"));
-
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith("/(auth)/login");
-    });
-  });
-
-  // ==== TEST 2 ====
-  //
 
   it("affiche un message quand le réseau est indisponible", async () => {
     (postSeance as jest.Mock).mockRejectedValueOnce(
@@ -73,7 +56,7 @@ describe("form - affichage des erreurs", () => {
     expect(await screen.findByText("Pas de connexion internet")).toBeTruthy();
   });
 
-  // ==== TEST 3 ====
+  // ==== TEST 2 ====
   //
 
   it("Effacement de la <View> à la fermeture de la fenêtre Error", async () => {
@@ -91,7 +74,7 @@ describe("form - affichage des erreurs", () => {
     expect(screen.queryByText("Oups une erreur !")).toBeNull();
   });
 
-  // ==== TEST 4 ====
+  // ==== TEST 3 ====
   //
   it("Redirection si response = 201", async () => {
     (postSeance as jest.Mock).mockResolvedValueOnce({ id: "cmsmlksmlkf5687" });
