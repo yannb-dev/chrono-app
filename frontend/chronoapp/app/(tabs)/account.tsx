@@ -58,11 +58,11 @@ export default function Account() {
 
   if (error)
     return (
-      <View>
-        <View>
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <View style={styles.containerError}>
           <ErrorMessage detailSend={detailError} />
-          <Pressable onPress={() => setError(false)}>
-            <Text style={styles.btnSelect}>Réessayer</Text>
+          <Pressable style={styles.btnSelect} onPress={() => setError(false)}>
+            <Text style={styles.text}>Réessayer</Text>
           </Pressable>
         </View>
       </View>
@@ -83,6 +83,7 @@ export default function Account() {
               <TextInput
                 placeholder="Mot de passe"
                 placeholderTextColor="#575656"
+                secureTextEntry
                 value={value}
                 onBlur={onBlur}
                 onChangeText={onChange}
@@ -91,7 +92,9 @@ export default function Account() {
             )}
           />
           {errors.password && (
-            <Text style={[styles.text, { marginBottom: 30, color: "gray" }]}>
+            <Text
+              style={[styles.textError, { marginBottom: 30, color: "gray" }]}
+            >
               {errors.password.message}
             </Text>
           )}

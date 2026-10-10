@@ -101,7 +101,9 @@ export default function LoginScreen() {
               )}
             />
             {errors.email && (
-              <Text style={[styles.text, { marginBottom: 30, color: "gray" }]}>
+              <Text
+                style={[styles.textError, { marginBottom: 30, color: "gray" }]}
+              >
                 {errors.email.message}
               </Text>
             )}
@@ -121,7 +123,9 @@ export default function LoginScreen() {
               )}
             />
             {errors.password && (
-              <Text style={[styles.text, { marginBottom: 30, color: "gray" }]}>
+              <Text
+                style={[styles.textError, { marginBottom: 30, color: "gray" }]}
+              >
                 {errors.password.message}
               </Text>
             )}
