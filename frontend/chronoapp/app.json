@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "chronoapp",
+    "name": "Chrono App",
     "slug": "chronoapp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "",
+    "icon": "./assets/images/icon.png",
     "scheme": "chronoapp",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -47,7 +47,7 @@
         "@sentry/react-native/expo",
         {
           "url": "https://sentry.io/",
-          "project": "react-native",
+          "project": "chronoapp",
           "organization": "yannb"
         }
       ]
