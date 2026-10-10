@@ -1,6 +1,7 @@
 import { styles } from "@/lib/styles";
 import { useState } from "react";
 import { View, Text, Pressable, TextInput } from "react-native";
+import { Link } from "expo-router";
 import { HttpError, NetworkError, extractErrorMessage } from "@/lib/errors";
 import * as SecureStore from "expo-secure-store";
 import { useAuth } from "@/context/AuthContext";
@@ -148,6 +149,13 @@ export default function Account() {
           >
             <Text style={styles.text}>Supprimer</Text>
           </Pressable>
+          <Link href="https://chrono-app-blond.vercel.app/privacy" asChild>
+            <Pressable style={{ marginTop: 60 }} onPress={() => console.log}>
+              <Text style={[styles.text, { fontSize: 10 }]}>
+                Politique de confidentialité
+              </Text>
+            </Pressable>
+          </Link>
         </View>
       )}
     </View>
