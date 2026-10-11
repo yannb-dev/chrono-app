@@ -17,11 +17,6 @@
       "<rootDir>/jest.setup.js"
     ]
   },
-  "overrides": {
-    "@hookform/resolvers": {
-      "ajv": "$ajv"
-    }
-  },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@hookform/resolvers": "^5.9.0",
