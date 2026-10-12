@@ -138,8 +138,9 @@ export default function Account() {
               { fontSize: 12, marginBottom: 40, padding: 10 },
             ]}
           >
-            Vous souhaitez supprimer votre compte ? Cette action entrainera la
-            suppresion de l'ensemble de vos données sans récupéraiton possible.
+            Vous souhaitez supprimer votre compte ChronoApp ? Cette action
+            entrainera la suppresion immédiate de la totalité de vos données
+            sans récupération possible.
           </Text>
           <Pressable
             style={({ pressed }) => [

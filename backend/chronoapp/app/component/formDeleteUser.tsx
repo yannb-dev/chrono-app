@@ -79,7 +79,10 @@ export default function FormDeleteUser() {
   if (messageConfirmValid) {
     return (
       <div className="h-100 w-200 flex flex-col justify-center items-center p-10 rounded-xl border border-green-400 bg-gray-100">
-        <p>Votre compte a été supprimé.</p>
+        <p>
+          Votre compte a été supprimé, Tous les données utilisateurs ont été
+          supprimées.
+        </p>
         <p className="mt-4">Vous pouvez fermer cet onglet.</p>
       </div>
     );
@@ -89,8 +92,9 @@ export default function FormDeleteUser() {
     <div className="h-[50%] w-150 p-8 flex flex-col justify-center items-center font-mono rounded-xl border border-green-400 bg-gray-100">
       <div className="m-4 p-2 bg-red-200 rounded-md border border-white">
         <h1 className="text-gray-800 text-sm">
-          Vous êtes sur le point de supprimer votre compte. Cette action est
-          irréversible.
+          Vous êtes sur le point de supprimer votre compte ChronoApp. Cette
+          action est irréversible. Elle entrainera la suppressions de la
+          totalité de vos données.
         </h1>
       </div>
 
@@ -98,7 +102,8 @@ export default function FormDeleteUser() {
         <IoIosWarning className="text-4xl text-red-500 " />
       </div>
       <h1 className="text-gray-900 text-sm mt-12 mb-12">
-        Veuillez saisie votre email et votre mot de passe.
+        Veuillez saisir votre e-mail et votre mot de passe pour supprimer votre
+        compte.
       </h1>
       <form
         className="flex flex-col items-center"
