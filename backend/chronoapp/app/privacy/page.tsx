@@ -88,11 +88,18 @@ export default function Privacy() {
                 vous êtes le seul à y accéder.
               </div>
             </div>
-            <div className="w-full flex ">
+            <div className="w-full flex border-b border-green-400">
               <div className="w-[30%] p-2">Activité dans l'app</div>
               <div className="w-[70%] p-2">
                 Enregistrer les séances et les temps des coureurs pour une
                 lecture ultérieure.
+              </div>
+            </div>
+            <div className="w-full flex ">
+              <div className="w-[30%] p-2">Rapport de bug</div>
+              <div className="w-[70%] p-2">
+                Sauvegarder les bugs afin de les identifer et de les corriger.
+                Aucune donnée sensible n'est tranféré vers le gestionnaire.
               </div>
             </div>
           </div>
@@ -115,6 +122,10 @@ export default function Privacy() {
             </li>
             <li>
               <strong>Expo & Google :</strong> déploiement de l'application.
+            </li>
+            <li>
+              <strong>Sentry :</strong> détections et corrections des bugs,
+              informations utilisateur direct non transmises.
             </li>
           </ul>
         </div>
