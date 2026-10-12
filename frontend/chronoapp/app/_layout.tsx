@@ -9,26 +9,45 @@ import * as Sentry from "@sentry/react-native";
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DNS,
 
-  tracesSampleRate: 0,
-  // sendDefaultPii: true,
+  // Pas d'IP, de cookies, ni de headers par défaut
+  sendDefaultPii: false,
 
-  enableLogs: !__DEV__,
+  // Pas de captures d'écran ni de hiérarchie de vues jointes aux erreurs
+  attachScreenshot: false,
+  attachViewHierarchy: false,
 
-  // replaysSessionSampleRate: 0.1,
-  // replaysOnErrorSampleRate: 1,
-  integrations: [
-    // Sentry.mobileReplayIntegration(),
-    // Sentry.feedbackIntegration(),
-  ],
-  debug: false,
-  ignoreErrors: [
-    "Network request failed", // perte de connexion, attendue sur mobile
-    "AbortError",
-  ],
+  tracesSampleRate: 0.1,
+
+  beforeSend(event) {
+    if (event.user) {
+      delete event.user.ip_address;
+      delete event.user.email;
+    }
+
+    if (event.request?.headers) {
+      delete event.request.headers["Authorization"];
+      delete event.request.headers["authorization"];
+      delete event.request.headers["Cookie"];
+    }
+
+    if (event.request?.url) {
+      event.request.url = event.request.url.split("#")[0];
+    }
+    return event;
+  },
+
   beforeBreadcrumb(breadcrumb) {
+    if (breadcrumb.category === "fetch" || breadcrumb.category === "xhr") {
+      if (breadcrumb.data?.url) {
+        breadcrumb.data.url = breadcrumb.data.url.split("?")[0];
+      }
+    }
     if (breadcrumb.category === "console" && breadcrumb.level !== "error") {
       return null;
     }
+
+    if (breadcrumb.category === "ui.input") return null;
+
     return breadcrumb;
   },
 });
