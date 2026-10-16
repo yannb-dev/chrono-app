@@ -11,6 +11,7 @@
       "supportsTablet": true
     },
     "android": {
+      "blockedPermissions": ["com.google.android.gms.permission.AD_ID"],
       "package": "com.yanndev181steam.chronoapp",
       "versionCode": 1,
       "adaptiveIcon": {
