@@ -20,9 +20,6 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@hookform/resolvers": "^5.9.0",
-    "@react-navigation/bottom-tabs": "^7.20.0",
-    "@react-navigation/elements": "^2.6.3",
-    "@react-navigation/native": "^7.1.8",
     "@sentry/react-native": "~7.11.0",
     "date-fns": "^4.4.0",
     "expo": "~57.0.30",
