@@ -11,7 +11,7 @@ export default function Privacy() {
         width={180}
         height={180}
       />
-      <div className="w-[50%] flex flex-col">
+      <div className="w-[80%] md:w-[50%] flex flex-col">
         <div className="w-full">
           <p className="text-xs">Dernière mise à jour : 10 octobre 2026</p>
           <h1 className="text-3xl mt-6 mb-10">
@@ -27,7 +27,7 @@ export default function Privacy() {
           <h3 className="text-sm">
             <strong>Sur cette page :</strong>
           </h3>
-          <div className="w-full mt-4 ml-4 grid grid-cols-3 gap-4 text-xs">
+          <div className="mt-4 ml-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
             <a className="underline" href="#responsable">
               Qui est responsable
             </a>
@@ -189,7 +189,7 @@ export default function Privacy() {
               <li>Confirmez la suppression de votre compte"</li>
             </ul>
           </div>
-          <div className="w-[80%] bg-amber-300 rounded-sm p-2 mt-6">
+          <div className="w-[80%] flex justify-center bg-amber-300 rounded-sm p-2 mt-6">
             La suppression est définitive : compte et séances seront effacés et
             ne peuvent pas être récupérés.
           </div>
