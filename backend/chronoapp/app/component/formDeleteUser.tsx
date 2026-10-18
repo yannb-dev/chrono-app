@@ -59,9 +59,15 @@ export default function FormDeleteUser() {
   if (error) {
     return (
       <div className="h-screen w-full flex flex-col justify-center items-center font-mono">
-        <div className="h-30 w-200 flex flex-col justify-center items-center p-10 rounded-xl border border-green-400 bg-gray-100">
+        <div className="w-[90%] md:w-[70%]  flex flex-col justify-center items-center p-10 rounded-xl border border-green-400 bg-gray-100">
           <p>Oups une erreur est survenue</p>
           <p>{detailError}</p>
+          <button
+            className="w-60 p-2 rounded-sm bg-green-500 mt-10 hover:bg-white hover:border-2 hover:border-green-500 "
+            onClick={() => setError(false)}
+          >
+            Réessayer
+          </button>
         </div>
       </div>
     );
@@ -78,7 +84,7 @@ export default function FormDeleteUser() {
 
   if (messageConfirmValid) {
     return (
-      <div className="h-100 w-200 flex flex-col justify-center items-center p-10 rounded-xl border border-green-400 bg-gray-100">
+      <div className="h-100 w-[90%] md:w-[70%]  flex flex-col justify-center items-center p-10 rounded-xl border border-green-400 bg-gray-100">
         <p>
           Votre compte a été supprimé, Tous les données utilisateurs ont été
           supprimées.
@@ -89,8 +95,8 @@ export default function FormDeleteUser() {
   }
 
   return (
-    <div className="h-[50%] w-150 p-8 flex flex-col justify-center items-center font-mono rounded-xl border border-green-400 bg-gray-100">
-      <div className="m-4 p-2 bg-red-200 rounded-md border border-white">
+    <div className="w-[90%] md:w-[50%] p-8 flex flex-col justify-center items-center font-mono rounded-xl border border-green-400 bg-gray-100">
+      <div className="mt-6 mb-6 p-2 bg-red-200 rounded-md border border-white">
         <h1 className="text-gray-800 text-sm">
           Vous êtes sur le point de supprimer votre compte ChronoApp. Cette
           action est irréversible. Elle entrainera la suppressions de la
