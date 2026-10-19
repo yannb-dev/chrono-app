@@ -9,7 +9,7 @@ const EnvSchema = z.object({
   RESEND_TOKEN: z
     .string()
     .min(32, "RESEND_TOKEN doit faire au moins 32 caractères"),
-  APP_URL: z.string().url(),
+  APP_URL: z.string(),
   UPSTASH_REDIS_REST_TOKEN: z
     .string()
     .min(32, "UPSTASH_REDIS_REST_TOKEN doit faire au moins 32 caractères"),
