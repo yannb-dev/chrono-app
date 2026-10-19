@@ -36,17 +36,24 @@ export async function POST(req: Request) {
     );
   }
 
-  const ipCheck = await resetPasswordRateLimitIp.limit(ip);
-  const EmailCheck = await resetPasswordRateLimitEmail.limit(
-    safeData.data.email,
-  );
+  try {
+    const ipCheck = await resetPasswordRateLimitIp.limit(ip);
+    const EmailCheck = await resetPasswordRateLimitEmail.limit(
+      safeData.data.email,
+    );
 
-  if (!ipCheck.success || !EmailCheck.success) {
+    if (!ipCheck.success || !EmailCheck.success) {
+      return NextResponse.json(
+        { message: "Trop de tentatives. Réessaie plus tard." },
+        {
+          status: 429,
+        },
+      );
+    }
+  } catch {
     return NextResponse.json(
-      { message: "Trop de tentatives. Réessaie plus tard." },
-      {
-        status: 429,
-      },
+      { message: "Service temporairement indisponible" },
+      { status: 503 },
     );
   }
 
