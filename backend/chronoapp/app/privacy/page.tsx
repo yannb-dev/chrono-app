@@ -180,7 +180,7 @@ export default function Privacy() {
                 Ouvrez la page web{" "}
                 <a
                   className="underline"
-                  href="https://chrono-app-blond-vercel.app/delete-user"
+                  href="https://chrono-app-blond.vercel.app/delete-user"
                 >
                   ChronoApp
                 </a>
