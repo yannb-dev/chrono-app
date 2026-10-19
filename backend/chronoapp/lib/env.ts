@@ -13,7 +13,7 @@ const EnvSchema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z
     .string()
     .min(32, "UPSTASH_REDIS_REST_TOKEN doit faire au moins 32 caractères"),
-  UPSH_REDIS_REST_URL: z.string().url(),
+  UPSTASH_REDIS_REST_URL: z.string().url(),
 });
 
 export const env = EnvSchema.parse(process.env);
