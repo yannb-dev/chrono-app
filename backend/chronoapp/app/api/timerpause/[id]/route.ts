@@ -64,6 +64,13 @@ export async function PATCH(
     );
   }
 
+  if (safeValue.data.endedAt.getTime() < searchPausedAt.pausedAt.getTime()) {
+    return NextResponse.json(
+      { message: "Erreur d'enregistrement" },
+      { status: 400 },
+    );
+  }
+
   try {
     const calcul =
       safeValue.data.endedAt.getTime() - searchPausedAt.pausedAt.getTime();

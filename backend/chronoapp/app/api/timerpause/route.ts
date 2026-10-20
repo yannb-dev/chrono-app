@@ -62,7 +62,16 @@ export async function POST(req: Request) {
       where: { id: safeTimerPause.data?.seanceId, userId: userId },
     });
 
-    if (controleSeance) {
+    if (controleSeance?.startedAt) {
+      if (
+        controleSeance.startedAt.getTime() >
+        safeTimerPause.data.pausedAt.getTime()
+      )
+        return NextResponse.json(
+          { message: "Valeur d'enregistrement incohérente" },
+          { status: 400 },
+        );
+
       const newTimerPause = await prisma.timerPause.create({
         data: {
           seanceId: safeTimerPause.data.seanceId,
@@ -74,7 +83,7 @@ export async function POST(req: Request) {
       return NextResponse.json(newTimerPause, { status: 201 });
     } else {
       return NextResponse.json(
-        { message: "La séance liée n'appartient pas à l'utilisateur" },
+        { message: "Le chronomètre n'est pas lancé pour cette seance" },
         { status: 403 },
       );
     }
