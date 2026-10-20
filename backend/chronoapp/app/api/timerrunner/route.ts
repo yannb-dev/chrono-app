@@ -3,13 +3,47 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
+import getClientIp from "@/lib/getClientIp";
 import { TimerRunnerSchema } from "@/lib/schema/timerrunnerSchema";
+
+import {
+  timerrunnerRateLimitIpMobile,
+  timerrunnerRateLimitUserId,
+} from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   const userId = await getUserIdFromRequest(req);
 
   if (!userId) {
     return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+  }
+
+  const ip = getClientIp(req);
+
+  if (ip === "unknown") {
+    return NextResponse.json(
+      { message: "Client non identifiable" },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const IpCheck = await timerrunnerRateLimitIpMobile.limit(ip);
+    const UserIdCheck = await timerrunnerRateLimitUserId.limit(userId);
+
+    if (!IpCheck.success || !UserIdCheck.success) {
+      return NextResponse.json(
+        { message: "Trop de tentatives. Réessaie plus tard." },
+        {
+          status: 429,
+        },
+      );
+    }
+  } catch {
+    return NextResponse.json(
+      { message: "Service temporairement indisponible" },
+      { status: 503 },
+    );
   }
 
   const valuePost = await req.json().catch(() => null);

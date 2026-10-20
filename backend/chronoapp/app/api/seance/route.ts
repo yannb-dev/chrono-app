@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   try {
     const response = await prisma.seance.findMany({
       where: { userId: userId },
-      include: { timerpauses: true, timerRunners: true },
+      orderBy: { createdAt: "desc" },
     });
 
     return NextResponse.json(response, { status: 200 });
