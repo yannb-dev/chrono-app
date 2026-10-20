@@ -79,6 +79,7 @@ export async function PATCH(
       where: {
         id: id,
         userId: userId,
+        endedAt: null,
       },
       data: {
         endedAt: safeValue.data?.endedAt,
