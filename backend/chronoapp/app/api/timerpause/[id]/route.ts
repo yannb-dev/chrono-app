@@ -52,26 +52,26 @@ export async function PATCH(
     );
   }
 
-  const searchPausedAt = await prisma.timerPause.findUnique({
-    where: { id, userId },
-    select: { pausedAt: true },
-  });
-
-  if (!searchPausedAt) {
-    return NextResponse.json(
-      { message: "Aucune pause en cours" },
-      { status: 404 },
-    );
-  }
-
-  if (safeValue.data.endedAt.getTime() < searchPausedAt.pausedAt.getTime()) {
-    return NextResponse.json(
-      { message: "Erreur d'enregistrement" },
-      { status: 400 },
-    );
-  }
-
   try {
+    const searchPausedAt = await prisma.timerPause.findUnique({
+      where: { id, userId },
+      select: { pausedAt: true },
+    });
+
+    if (!searchPausedAt) {
+      return NextResponse.json(
+        { message: "Aucune pause en cours" },
+        { status: 404 },
+      );
+    }
+
+    if (safeValue.data.endedAt.getTime() < searchPausedAt.pausedAt.getTime()) {
+      return NextResponse.json(
+        { message: "Erreur d'enregistrement" },
+        { status: 400 },
+      );
+    }
+
     const calcul =
       safeValue.data.endedAt.getTime() - searchPausedAt.pausedAt.getTime();
 
