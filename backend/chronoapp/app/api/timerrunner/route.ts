@@ -57,47 +57,51 @@ export async function POST(req: Request) {
     );
   }
 
-  const searchSeance = await prisma.seance.findUnique({
-    where: {
-      id: safeTimerRunner.data.seanceId,
-      userId: userId,
-    },
-    select: { startedAt: true, timerpauses: true },
-  });
-
-  if (
-    !searchSeance?.startedAt ||
-    searchSeance?.timerpauses.find((pause) => pause.endedAt === null)
-  ) {
-    return NextResponse.json(
-      { message: "Le chronomètre n'est pas actif" },
-      { status: 404 },
-    );
-  }
-
-  const somPauses = await prisma.timerPause.aggregate({
-    where: { seanceId: safeTimerRunner.data.seanceId },
-    _sum: {
-      pauseDurationMs: true,
-    },
-  });
-
-  const chrono =
-    safeTimerRunner.data.endedAt.getTime() - searchSeance?.startedAt?.getTime();
-
-  const result = chrono - (somPauses._sum.pauseDurationMs ?? 0);
-
   try {
-    const timerRunner = await prisma.timerRunner.create({
-      data: {
-        numberRunner: safeTimerRunner.data.numberRunner,
-        endedAt: safeTimerRunner.data.endedAt,
-        seanceId: safeTimerRunner.data.seanceId,
-        duration: result,
-        userId: userId,
-      },
-    });
+    let timerRunner = {};
 
+    await prisma.$transaction(async (tx) => {
+      const searchSeance = await tx.seance.findUnique({
+        where: {
+          id: safeTimerRunner.data.seanceId,
+          userId: userId,
+        },
+        select: { startedAt: true, timerpauses: true },
+      });
+
+      if (
+        !searchSeance?.startedAt ||
+        searchSeance?.timerpauses.find((pause) => pause.endedAt === null)
+      ) {
+        return NextResponse.json(
+          { message: "Le chronomètre n'est pas actif" },
+          { status: 404 },
+        );
+      }
+
+      const somPauses = await tx.timerPause.aggregate({
+        where: { seanceId: safeTimerRunner.data.seanceId },
+        _sum: {
+          pauseDurationMs: true,
+        },
+      });
+
+      const chrono =
+        safeTimerRunner.data.endedAt.getTime() -
+        searchSeance?.startedAt?.getTime();
+
+      const result = chrono - (somPauses._sum.pauseDurationMs ?? 0);
+
+      timerRunner = await tx.timerRunner.create({
+        data: {
+          numberRunner: safeTimerRunner.data.numberRunner,
+          endedAt: safeTimerRunner.data.endedAt,
+          seanceId: safeTimerRunner.data.seanceId,
+          duration: result,
+          userId: userId,
+        },
+      });
+    });
     return NextResponse.json(timerRunner, { status: 201 });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
