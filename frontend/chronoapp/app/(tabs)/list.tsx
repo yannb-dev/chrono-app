@@ -72,11 +72,11 @@ export default function DetailScreen() {
 
   if (error)
     return (
-      <View>
-        <View>
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <View style={styles.containerError}>
           <ErrorMessage detailSend={detailError} />
-          <Pressable onPress={handleCloseError}>
-            <Text style={styles.btnSelect}>Réessayer</Text>
+          <Pressable style={styles.btnSelect} onPress={handleCloseError}>
+            <Text>Réessayer</Text>
           </Pressable>
         </View>
       </View>
