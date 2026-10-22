@@ -3,7 +3,7 @@ import { z } from "zod";
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
 export const TimerRunnerSchema = z.object({
-  numberRunner: z.number().int(),
+  numberRunner: z.number().int().min(1).max(20),
   endedAt: z.coerce
     .date()
     .refine((d) => d.getTime() >= Date.now() - ONE_HOUR_MS),

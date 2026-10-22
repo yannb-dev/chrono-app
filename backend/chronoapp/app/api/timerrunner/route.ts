@@ -11,6 +11,15 @@ import {
   timerrunnerRateLimitUserId,
 } from "@/lib/rateLimit";
 
+class HttpError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
 export async function POST(req: Request) {
   const userId = await getUserIdFromRequest(req);
 
@@ -58,25 +67,35 @@ export async function POST(req: Request) {
   }
 
   try {
-    let timerRunner = {};
-
-    await prisma.$transaction(async (tx) => {
+    const timerRunner = await prisma.$transaction(async (tx) => {
       const searchSeance = await tx.seance.findUnique({
         where: {
           id: safeTimerRunner.data.seanceId,
           userId: userId,
         },
-        select: { startedAt: true, timerpauses: true },
+        select: { startedAt: true, timerpauses: true, state: true },
       });
 
-      if (
-        !searchSeance?.startedAt ||
-        searchSeance?.timerpauses.find((pause) => pause.endedAt === null)
-      ) {
-        return NextResponse.json(
-          { message: "Le chronomètre n'est pas actif" },
-          { status: 404 },
+      if (!searchSeance) {
+        throw new HttpError(
+          404,
+          "Séance inexistante, enregistrement impossible",
         );
+      }
+
+      if (searchSeance?.state === "Finish") {
+        throw new HttpError(
+          409,
+          "La séance est terminé, impossible d'ajouter un coureur",
+        );
+      }
+
+      if (
+        searchSeance?.state === "NoStart" ||
+        searchSeance?.timerpauses.find((pause) => pause.endedAt === null) ||
+        searchSeance?.startedAt === null
+      ) {
+        throw new HttpError(409, "Le chronomètre n'est pas actif");
       }
 
       const somPauses = await tx.timerPause.aggregate({
@@ -92,7 +111,7 @@ export async function POST(req: Request) {
 
       const result = chrono - (somPauses._sum.pauseDurationMs ?? 0);
 
-      timerRunner = await tx.timerRunner.create({
+      return tx.timerRunner.create({
         data: {
           numberRunner: safeTimerRunner.data.numberRunner,
           endedAt: safeTimerRunner.data.endedAt,
@@ -104,6 +123,13 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(timerRunner, { status: 201 });
   } catch (err) {
+    if (err instanceof HttpError) {
+      return NextResponse.json(
+        { message: err.message },
+        { status: err.status },
+      );
+    }
+
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2002") {
         return Response.json(
