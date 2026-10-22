@@ -108,22 +108,21 @@ export async function DELETE(req: Request) {
   }
 
   try {
-    await prisma.seance.deleteMany({
+    const deleteSeance = await prisma.seance.deleteMany({
       where: {
         userId: userId,
       },
     });
 
+    if (!deleteSeance) {
+      return NextResponse.json(
+        { message: "Séances introuvables" },
+        { status: 404 },
+      );
+    }
+
     return new NextResponse(null, { status: 204 });
   } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      if (err.code === "P2025") {
-        return Response.json(
-          { message: "Séance introuvable" },
-          { status: 404 },
-        );
-      }
-    }
     console.error({ err }, { status: 500 });
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }

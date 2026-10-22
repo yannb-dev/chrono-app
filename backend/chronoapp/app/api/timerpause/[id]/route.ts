@@ -119,17 +119,15 @@ export async function DELETE(
       where: { seanceId: id, userId: userId },
     });
 
-    return new NextResponse(null, { status: 204 });
-  } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      if (err.code === "P2025") {
-        return Response.json(
-          { message: "TimerPause introuvable" },
-          { status: 404 },
-        );
-      }
+    if (!timerPause) {
+      return NextResponse.json(
+        { message: "Pauses introuvables" },
+        { status: 404 },
+      );
     }
 
+    return new NextResponse(null, { status: 204 });
+  } catch (err) {
     console.error("Erreur du POST API/TIMERPAUSE", err);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
