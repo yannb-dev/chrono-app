@@ -108,7 +108,9 @@ describe("Page DELETE-USER", () => {
     await user.click(await screen.findByText("Supprimer"));
 
     expect(
-      screen.getByText("Votre compte a été supprimé."),
+      screen.getByText(
+        "Votre compte a été supprimé, Tous les données utilisateurs ont été supprimées.",
+      ),
     ).toBeInTheDocument();
 
     expect(fetch).toHaveBeenCalledWith(

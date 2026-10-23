@@ -1,7 +1,6 @@
 import getUserIdFromRequest from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 
 import { SeanceSchema } from "@/lib/schema/seanceSchema";
 
@@ -108,13 +107,13 @@ export async function DELETE(req: Request) {
   }
 
   try {
-    const deleteSeance = await prisma.seance.deleteMany({
+    const { count } = await prisma.seance.deleteMany({
       where: {
         userId: userId,
       },
     });
 
-    if (!deleteSeance) {
+    if (count === 0) {
       return NextResponse.json(
         { message: "Séances introuvables" },
         { status: 404 },
