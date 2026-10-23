@@ -50,7 +50,7 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const deleteSeance = await prisma.seance.delete({
+    await prisma.seance.delete({
       where: {
         id: id,
         userId: userId,
