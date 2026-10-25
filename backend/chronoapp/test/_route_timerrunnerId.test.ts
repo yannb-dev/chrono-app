@@ -89,7 +89,7 @@ describe("DELETE /api/timerrunner/123Aze", () => {
     const res = await DELETE(makeDelete({}), makeParams("123Aze"));
 
     expect(res.status).toBe(401);
-    expect(prismaMock.timerRunner.findMany).not.toHaveBeenCalled();
+    expect(prismaMock.timerRunner.deleteMany).not.toHaveBeenCalled();
   });
 
   //     //     // ==== TEST 2 ====

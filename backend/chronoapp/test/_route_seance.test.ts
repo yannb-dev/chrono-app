@@ -119,7 +119,7 @@ describe("POST /api/seance", () => {
 
   // ==== TEST 6 ====
   //
-  it("renvoie 503 - si limiteur", async () => {
+  it("renvoie 429 - ratelimit déclenché par USERID", async () => {
     const userMock = vi.mocked(getUserIdFromRequest);
     userMock.mockResolvedValue("idtest123+" as never);
     limitMockUserId.mockResolvedValue(blocked as never);
@@ -134,7 +134,7 @@ describe("POST /api/seance", () => {
 
   // ==== TEST 7 ====
   //
-  it("renvoie 429 - ratelimit déclenché par USERID", async () => {
+  it("renvoie 503 - ratelimit HS", async () => {
     const userMock = vi.mocked(getUserIdFromRequest);
     userMock.mockResolvedValue("idtest123+" as never);
     limitMockUserId.mockRejectedValue(new Error("Upstash down") as never);

@@ -1,21 +1,12 @@
 // @vitest-environment node
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { prismaMock } from "@/test/prismaMock";
 import { GET, PATCH, DELETE } from "@/app/api/seance/[id]/route";
-import {
-  seanceRateLimitUserId,
-  seanceRateLimitIpMobile,
-} from "@/lib/rateLimit";
 
 vi.mock("@/lib/auth", () => ({ default: vi.fn() }));
 import getUserIdFromRequest from "@/lib/auth";
 import { Prisma } from "@prisma/client";
-
-vi.mock("@/lib/rateLimit", () => ({
-  seanceRateLimitUserId: { limit: vi.fn() },
-  seanceRateLimitIpMobile: { limit: vi.fn() },
-}));
 
 const userMock = vi.mocked(getUserIdFromRequest);
 
@@ -34,7 +25,7 @@ const returnSeance = {
 //======= GET ===========
 //=======================
 
-describe("GET /api/seance[id]", () => {
+describe("GET /api/seance/[id]", () => {
   const makeGet = () => new Request("http://localhost/api/seance/123Aze");
   const makeParams = (id: string) => ({ params: Promise.resolve({ id }) });
 
@@ -83,7 +74,7 @@ describe("GET /api/seance[id]", () => {
 // //======= PATCH ===========
 // //========================
 
-describe("POST /api/seance", () => {
+describe("PATCH /api/seance/[id]", () => {
   const makePatch = (body: unknown) =>
     new Request("http://localhost/api/seance/123Aze", {
       method: "PATCH",
@@ -93,13 +84,19 @@ describe("POST /api/seance", () => {
   const makeParams = (id: string) => ({ params: Promise.resolve({ id }) });
 
   const goodValue = {
-    startedAt: new Date("2026-10-23T19:07:35.010Z"),
+    startedAt: new Date("2026-01-01T10:00:20Z"),
     state: "InProgress",
   };
   const badValue = { startedAt: "20/01/2020", state: "" };
 
   beforeEach(() => {
     userMock.mockResolvedValue("u1" as never);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T10:00:20Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   //   // ==== TEST 3 ====
@@ -128,7 +125,7 @@ describe("POST /api/seance", () => {
 
   //   // ==== TEST 5 ====
   //   //
-  it("valide renvoi un 200", async () => {
+  it("valide, renvoi un 200", async () => {
     const userMock = vi.mocked(getUserIdFromRequest);
     const userId = "idtest123+";
     const created = {
@@ -136,9 +133,9 @@ describe("POST /api/seance", () => {
       totalRunner: 15,
       colorRunner: "rgb(39, 91, 245)",
       userId,
-      startedAt: new Date("2026-10-23T19:07:35.010Z"),
+      startedAt: new Date("2026-01-01T10:10:20Z"),
       state: "InProgress",
-      createdAt: new Date("2026-10-23T19:07:35.010Z"),
+      createdAt: new Date("2026-01-01T10:10:20Z"),
     };
 
     userMock.mockResolvedValue(userId as never);
@@ -157,7 +154,7 @@ describe("POST /api/seance", () => {
   //   //======= DELETE =============
   //   //============================
 
-  describe("DELETE /api/seance/123Aze", () => {
+  describe("DELETE /api/seance/[id]", () => {
     const userId = "idtest123+";
     const makeDelete = (body: unknown) =>
       new Request("http://localhost/api/seance/123Aze", {
