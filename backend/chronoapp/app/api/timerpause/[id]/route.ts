@@ -5,7 +5,6 @@ import { Prisma } from "@prisma/client";
 
 import { TimerPauseSchemaUpdate } from "@/lib/schema/timerPauseSchema";
 
-// Function GET recherche l'ensemble des timerPause VIA l'ID de la séance liée celui ci fourni par [id]
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
