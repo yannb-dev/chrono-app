@@ -13,6 +13,15 @@ import { LoginSchema } from "@/lib/schema/loginSchema";
 export async function POST(req: Request) {
   const value = await req.json().catch(() => null);
 
+  const safeValue = LoginSchema.safeParse(value);
+
+  if (!safeValue.success) {
+    return NextResponse.json(
+      { message: "Format de l'email ou du mot de passe non conformes" },
+      { status: 400 },
+    );
+  }
+
   const ip = getClientIp(req);
 
   if (ip === "unknown") {
@@ -40,15 +49,6 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { message: "Service temporairement indisponible" },
       { status: 503 },
-    );
-  }
-
-  const safeValue = LoginSchema.safeParse(value);
-
-  if (!safeValue.success) {
-    return NextResponse.json(
-      { message: "Format de l'email ou du mot de passe non conformes" },
-      { status: 400 },
     );
   }
 

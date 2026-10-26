@@ -39,7 +39,7 @@ describe("POST /api/auth/login", () => {
   const limitMockIp = vi.mocked(loginRateLimitIP.limit);
 
   const ok = { success: true, limit: 5, remaining: 4, reset: 0 };
-  const blocked = { success: false, limit: 60, remaining: 0, reset: 0 };
+  const blocked = { success: false, limit: 5, remaining: 0, reset: 0 };
 
   beforeEach(() => {
     limitMockIp.mockResolvedValue(ok as never);
