@@ -50,7 +50,7 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const deleteSeance = await prisma.seance.delete({
+    await prisma.seance.delete({
       where: {
         id: id,
         userId: userId,
@@ -89,11 +89,12 @@ export async function PATCH(
 
   const patchSchema = SeanceUpdateSchema.partial().refine(
     (data) => Object.keys(data).length > 0,
-    { message: "Au moins un cham doit être fourni" },
+    { message: "Au moins un champ doit être fourni" },
   );
 
   const safeValuePatch = patchSchema.safeParse(valuePatch);
 
+  console.error("Erreur Zod PATCH ==>", safeValuePatch.error);
   if (!safeValuePatch.success) {
     return NextResponse.json(
       { message: "Erreur de soumission" },

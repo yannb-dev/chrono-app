@@ -64,11 +64,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: { email: safeData.data.email, password: hashedPassword },
     });
 
-    if (user) return NextResponse.json(null, { status: 201 });
+    return NextResponse.json(null, { status: 201 });
   } catch (error) {
     console.error("Erreur POST API/REGISTER", error);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });

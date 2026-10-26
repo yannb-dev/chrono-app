@@ -1,6 +1,7 @@
 import getUserIdFromRequest from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 
 export async function GET(
   req: Request,
@@ -46,22 +47,23 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const deleteTimerRunner = await prisma.timerRunner.delete({
+    await prisma.timerRunner.delete({
       where: {
         id: id,
         userId: userId,
       },
     });
 
-    if (!deleteTimerRunner) {
-      return NextResponse.json(
-        { message: "Coureur introuvable" },
-        { status: 404 },
-      );
-    }
-
     return new NextResponse(null, { status: 204 });
   } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P2025") {
+        return Response.json(
+          { message: "Séance introuvable" },
+          { status: 404 },
+        );
+      }
+    }
     console.error({ err }, { status: 500 });
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }

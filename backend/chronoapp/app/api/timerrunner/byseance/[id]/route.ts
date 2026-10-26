@@ -15,15 +15,15 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const deleteTimerRunner = await prisma.timerRunner.deleteMany({
+    const { count } = await prisma.timerRunner.deleteMany({
       where: {
         seanceId: id,
         userId: userId,
       },
     });
 
-    if (!deleteTimerRunner) {
-      return Response.json(
+    if (count === 0) {
+      return NextResponse.json(
         { message: "Coureurs introuvables" },
         { status: 404 },
       );

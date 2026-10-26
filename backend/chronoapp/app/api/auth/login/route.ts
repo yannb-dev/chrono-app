@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   try {
     const IpCheck = await loginRateLimitIP.limit(ip);
     const EmailCheck = await loginRateLimitEmail.limit(
-      safeValue.data.email.trim().toLowerCase(),
+      value.email.trim().toLowerCase(),
     );
 
     if (!IpCheck.success || !EmailCheck.success) {
@@ -55,6 +55,7 @@ export async function POST(req: Request) {
   try {
     const userSearch = await prisma.user.findUnique({
       where: { email: safeValue.data?.email },
+      select: { password: true, id: true, tokenVersion: true },
     });
 
     const hash = "$2b$10$VUj4JXqrv6THyQGneEsax.HzWPKLVwA3JxHMM9hzEJVCktvJxVYKi";

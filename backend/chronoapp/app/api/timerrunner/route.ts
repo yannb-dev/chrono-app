@@ -60,6 +60,7 @@ export async function POST(req: Request) {
   const safeTimerRunner = TimerRunnerSchema.safeParse(valuePost);
 
   if (!safeTimerRunner.success) {
+    console.error(safeTimerRunner.error);
     return NextResponse.json(
       { message: "Erreur de soumission" },
       { status: 400 },
