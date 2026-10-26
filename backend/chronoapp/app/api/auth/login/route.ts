@@ -13,15 +13,6 @@ import { LoginSchema } from "@/lib/schema/loginSchema";
 export async function POST(req: Request) {
   const value = await req.json().catch(() => null);
 
-  const safeValue = LoginSchema.safeParse(value);
-
-  if (!safeValue.success) {
-    return NextResponse.json(
-      { message: "Format de l'email ou du mot de passe non conformes" },
-      { status: 400 },
-    );
-  }
-
   const ip = getClientIp(req);
 
   if (ip === "unknown") {
@@ -34,7 +25,7 @@ export async function POST(req: Request) {
   try {
     const IpCheck = await loginRateLimitIP.limit(ip);
     const EmailCheck = await loginRateLimitEmail.limit(
-      safeValue.data.email.trim().toLowerCase(),
+      value.email.trim().toLowerCase(),
     );
 
     if (!IpCheck.success || !EmailCheck.success) {
@@ -52,9 +43,19 @@ export async function POST(req: Request) {
     );
   }
 
+  const safeValue = LoginSchema.safeParse(value);
+
+  if (!safeValue.success) {
+    return NextResponse.json(
+      { message: "Format de l'email ou du mot de passe non conformes" },
+      { status: 400 },
+    );
+  }
+
   try {
     const userSearch = await prisma.user.findUnique({
       where: { email: safeValue.data?.email },
+      select: { password: true, id: true, tokenVersion: true },
     });
 
     const hash = "$2b$10$VUj4JXqrv6THyQGneEsax.HzWPKLVwA3JxHMM9hzEJVCktvJxVYKi";
