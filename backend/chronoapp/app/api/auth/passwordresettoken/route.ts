@@ -162,7 +162,7 @@ export async function PATCH(req: Request) {
         },
         data: { usedAt: new Date() },
       });
-      if (count === 0) throw new Error("Lien invalide ou expiré");
+      if (count === 0) throw new Error("LINK_INVALID");
 
       await tx.user.update({
         where: { id: searchPasswordResetToken.userId },
@@ -175,6 +175,12 @@ export async function PATCH(req: Request) {
       { status: 200 },
     );
   } catch (error) {
+    if (error instanceof Error && error.message === "LINK_INVALID") {
+      return NextResponse.json(
+        { message: "Lien invalide ou expiré" },
+        { status: 400 },
+      );
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2025") {
         return NextResponse.json(
