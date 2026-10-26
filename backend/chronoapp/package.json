@@ -19,7 +19,7 @@
     "@vercel/functions": "^3.9.11",
     "bcryptjs": "^3.0.3",
     "jsonwebtoken": "^9.0.3",
-    "next": "^16.3.8",
+    "next": "^16.4.1",
     "postcss": "^8.5.28",
     "prisma": "^6.19.3",
     "react": "19.3.0",
