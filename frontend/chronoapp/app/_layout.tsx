@@ -6,16 +6,34 @@ import { AuthProvider } from "@/context/AuthContext";
 import { AuthGate } from "@/components/AuthGate";
 import * as Sentry from "@sentry/react-native";
 
+const SENSITIVE_HEADERS = new Set([
+  "authorization",
+  "cookie",
+  "set-cookie",
+  "x-api-key",
+]);
+
+function scrubHeaders(headers?: Record<string, unknown>) {
+  if (!headers) return;
+  for (const key of Object.keys(headers)) {
+    if (SENSITIVE_HEADERS.has(key.toLowerCase())) {
+      delete headers[key];
+    }
+  }
+}
+
+const TOKEN_REGEX =
+  /(Bearer\s+)[A-Za-z0-9\-._~+/]+=*|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g;
+
+function scrubString(value?: string) {
+  return value?.replace(TOKEN_REGEX, "[Filtered]");
+}
+
 Sentry.init({
-  dsn: process.env.EXPO_PUBLIC_SENTRY_DNS,
-
-  // Pas d'IP, de cookies, ni de headers par défaut
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
   sendDefaultPii: false,
-
-  // Pas de captures d'écran ni de hiérarchie de vues jointes aux erreurs
   attachScreenshot: false,
   attachViewHierarchy: false,
-
   tracesSampleRate: 0.1,
 
   beforeSend(event) {
@@ -24,30 +42,40 @@ Sentry.init({
       delete event.user.email;
     }
 
-    if (event.request?.headers) {
-      delete event.request.headers["Authorization"];
-      delete event.request.headers["authorization"];
-      delete event.request.headers["Cookie"];
+    if (event.request) {
+      scrubHeaders(event.request.headers);
+      delete event.request.cookies;
+      if (event.request.url) {
+        event.request.url = event.request.url.split(/[?#]/)[0];
+      }
+      delete event.request.query_string;
     }
 
-    if (event.request?.url) {
-      event.request.url = event.request.url.split("#")[0];
-    }
+    event.message = scrubString(event.message);
+    event.exception?.values?.forEach((ex) => {
+      ex.value = scrubString(ex.value);
+    });
+
     return event;
   },
 
   beforeBreadcrumb(breadcrumb) {
     if (breadcrumb.category === "fetch" || breadcrumb.category === "xhr") {
-      if (breadcrumb.data?.url) {
-        breadcrumb.data.url = breadcrumb.data.url.split("?")[0];
+      if (breadcrumb.data) {
+        scrubHeaders(breadcrumb.data.request_headers);
+        scrubHeaders(breadcrumb.data.headers);
+        if (typeof breadcrumb.data.url === "string") {
+          breadcrumb.data.url = breadcrumb.data.url.split("?")[0];
+        }
       }
     }
+
     if (breadcrumb.category === "console" && breadcrumb.level !== "error") {
       return null;
     }
-
     if (breadcrumb.category === "ui.input") return null;
 
+    breadcrumb.message = scrubString(breadcrumb.message);
     return breadcrumb;
   },
 });
