@@ -18,9 +18,6 @@ import {
 export async function DELETE(req: Request) {
   const userId = await getUserIdFromRequest(req);
 
-  if (!userId) {
-    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
-  }
   const body = await req.json();
 
   if (userId) {
@@ -58,22 +55,27 @@ export async function DELETE(req: Request) {
         where: { id: userId },
       });
 
-      if (user) {
-        const control = await bcrypt.compare(
-          safeValue.data.password,
-          user.password,
+      if (!user) {
+        return Response.json(
+          { message: "Utilisateur introuvable" },
+          { status: 404 },
         );
-
-        if (!control) {
-          return NextResponse.json(
-            { message: "Mot de passe incorrect" },
-            { status: 403 },
-          );
-        }
-        await prisma.user.delete({
-          where: { id: user.id, email: user.email },
-        });
       }
+
+      const control = await bcrypt.compare(
+        safeValue.data.password,
+        user.password,
+      );
+
+      if (!control) {
+        return NextResponse.json(
+          { message: "Mot de passe incorrect" },
+          { status: 403 },
+        );
+      }
+      await prisma.user.delete({
+        where: { id: user.id, email: user.email },
+      });
 
       return new NextResponse(null, { status: 204 });
     } catch (err) {
@@ -111,7 +113,7 @@ export async function DELETE(req: Request) {
     const IpCheck = await userRateLimitIpWeb.limit(ip);
     const EmailCheck = await userRateLimitEmailWeb.limit(safeValue.data.email);
 
-    if (!IpCheck.success || !EmailCheck) {
+    if (!IpCheck.success || !EmailCheck.success) {
       return NextResponse.json(
         { message: "Trop de tentatives. Réessaie plus tard." },
         {

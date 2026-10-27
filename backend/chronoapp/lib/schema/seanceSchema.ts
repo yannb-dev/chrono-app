@@ -3,7 +3,7 @@ import { z } from "zod";
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
 export const SeanceSchema = z.object({
-  totalRunner: z.number().int().min(1).max(40),
+  totalRunner: z.number().int().min(1).max(20),
   colorRunner: z.string().min(1).max(20),
 });
 
