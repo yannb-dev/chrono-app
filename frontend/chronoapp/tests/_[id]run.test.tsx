@@ -75,18 +75,6 @@ describe("[id] Run - affichage des erreurs", () => {
     userId: "cmuqygi0d000rpkgx1pc6z1",
   };
 
-  const seanceInProgressWithDate = {
-    colorRunner: "rgb(15, 184, 68)",
-    createdAt: new Date(),
-    id: "cmusfsyb20001pkf1uxdltyrn",
-    startedAt: new Date(),
-    state: "InProgress",
-    timerRunners: [],
-    timerpauses: [],
-    totalRunner: 20,
-    userId: "cmuqygi0d000rpkgx1pc6z1",
-  };
-
   const timerPause = {
     id: "cmskjdfkj7877hh",
     pausedAt: "2026-10-03T13:38:00.190Z",
@@ -116,7 +104,7 @@ describe("[id] Run - affichage des erreurs", () => {
     );
 
     await render(<RunPage />);
-    expect(await screen.findByText("Aucune séance"));
+    expect(await screen.findByText("Aucune séance")).toBeTruthy();
 
     await fireEvent.press(screen.getByText("Réessayer"));
     expect(screen.queryByText("Aucune séance")).toBeNull();
