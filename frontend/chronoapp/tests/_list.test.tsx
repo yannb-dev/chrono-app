@@ -9,12 +9,10 @@ import DetailScreen from "@/app/(tabs)/list";
 import { getSeance } from "@/services/api";
 import { deleteManySeance } from "@/services/api";
 import { HttpError, NetworkError } from "@/lib/errors";
-import { useFocusEffect } from "expo-router";
 
 // ==== MOCK ====
 //
 const mockReplace = jest.fn();
-const mockPush = jest.fn();
 
 jest.mock("expo-router", () => ({
   router: {
