@@ -31,7 +31,8 @@ export default function FormDeleteUser() {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          value,
+          email: value.email,
+          password: value.password,
         }),
       });
 

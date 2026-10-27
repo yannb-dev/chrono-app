@@ -94,7 +94,6 @@ export async function PATCH(
 
   const safeValuePatch = patchSchema.safeParse(valuePatch);
 
-  console.error("Erreur Zod PATCH ==>", safeValuePatch.error);
   if (!safeValuePatch.success) {
     return NextResponse.json(
       { message: "Erreur de soumission" },
@@ -110,6 +109,7 @@ export async function PATCH(
 
     return NextResponse.json(udpateSeance, { status: 200 });
   } catch (err) {
+    console.error("Erreur API/PATCH/SEANCE", err);
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
         return Response.json(
@@ -119,7 +119,6 @@ export async function PATCH(
       }
     }
 
-    console.error("Erreur API/PATCH/SEANCE", err);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
