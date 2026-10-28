@@ -53,7 +53,7 @@ export async function PATCH(
 
   try {
     const searchPausedAt = await prisma.timerPause.findUnique({
-      where: { id, userId },
+      where: { id, userId, endedAt: null },
       select: { pausedAt: true },
     });
 
