@@ -7,8 +7,10 @@ import { SeanceSchema } from "@/lib/schema/seanceSchema";
 import getClientIp from "@/lib/getClientIp";
 
 import {
-  seanceRateLimitIpMobile,
-  seanceRateLimitUserId,
+  seanceRateLimitIpMobilePOST,
+  seanceRateLimitUserIdPOST,
+  seanceRateLimitIpMobileGET,
+  seanceRateLimitUserIdGET,
 } from "@/lib/rateLimit";
 
 export async function GET(req: Request) {
@@ -18,10 +20,39 @@ export async function GET(req: Request) {
     return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   }
 
+  const ip = getClientIp(req);
+
+  if (ip === "unknown") {
+    return NextResponse.json(
+      { message: "Client non identifiable" },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const IpCheck = await seanceRateLimitIpMobileGET.limit(ip);
+    const UserIdCheck = await seanceRateLimitUserIdGET.limit(userId);
+
+    if (!IpCheck.success || !UserIdCheck.success) {
+      return NextResponse.json(
+        { message: "Trop de tentatives. Réessaie plus tard." },
+        {
+          status: 429,
+        },
+      );
+    }
+  } catch {
+    return NextResponse.json(
+      { message: "Service temporairement indisponible" },
+      { status: 503 },
+    );
+  }
+
   try {
     const response = await prisma.seance.findMany({
       where: { userId: userId },
       orderBy: { createdAt: "desc" },
+      select: { createdAt: true, state: true, colorRunner: true, id: true },
     });
 
     return NextResponse.json(response, { status: 200 });
@@ -48,8 +79,8 @@ export async function POST(req: Request) {
   }
 
   try {
-    const IpCheck = await seanceRateLimitIpMobile.limit(ip);
-    const UserIdCheck = await seanceRateLimitUserId.limit(userId);
+    const IpCheck = await seanceRateLimitIpMobilePOST.limit(ip);
+    const UserIdCheck = await seanceRateLimitUserIdPOST.limit(userId);
 
     if (!IpCheck.success || !UserIdCheck.success) {
       return NextResponse.json(
