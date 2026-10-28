@@ -50,7 +50,10 @@ export async function POST(req: Request) {
   const safeTimerPause = TimerPauseSchema.safeParse(valuePost);
 
   if (!safeTimerPause.success) {
-    console.error("Erreur de contrôle Zod POST API/TIMERPAUSE");
+    console.error(
+      "Erreur de contrôle Zod POST API/TIMERPAUSE",
+      safeTimerPause.error,
+    );
     return NextResponse.json(
       { message: "Erreur de soumission" },
       { status: 400 },
@@ -62,31 +65,36 @@ export async function POST(req: Request) {
       where: { id: safeTimerPause.data?.seanceId, userId: userId },
     });
 
-    if (controleSeance?.startedAt) {
-      if (
-        controleSeance.startedAt.getTime() >
-        safeTimerPause.data.pausedAt.getTime()
-      )
-        return NextResponse.json(
-          { message: "Valeur d'enregistrement incohérente" },
-          { status: 400 },
-        );
+    if (!controleSeance)
+      return NextResponse.json(
+        { message: "Séance introuvable" },
+        { status: 404 },
+      );
 
-      const newTimerPause = await prisma.timerPause.create({
-        data: {
-          seanceId: safeTimerPause.data.seanceId,
-          pausedAt: safeTimerPause.data.pausedAt,
-          userId: userId,
-        },
-      });
-
-      return NextResponse.json(newTimerPause, { status: 201 });
-    } else {
+    if (!controleSeance?.startedAt)
       return NextResponse.json(
         { message: "Le chronomètre n'est pas lancé pour cette seance" },
         { status: 403 },
       );
-    }
+
+    if (
+      controleSeance.startedAt.getTime() >
+      safeTimerPause.data.pausedAt.getTime()
+    )
+      return NextResponse.json(
+        { message: "Valeur d'enregistrement incohérente" },
+        { status: 400 },
+      );
+
+    const newTimerPause = await prisma.timerPause.create({
+      data: {
+        seanceId: safeTimerPause.data.seanceId,
+        pausedAt: safeTimerPause.data.pausedAt,
+        userId: userId,
+      },
+    });
+
+    return NextResponse.json(newTimerPause, { status: 201 });
   } catch (err) {
     console.error("Erreur POST timerPause", err);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
