@@ -1,251 +1,176 @@
-# Revue pédagogique — Tests (Jest + React Native Testing Library)
+# Revue pédagogique — Tests (Jest + RNTL côté mobile · Vitest côté API)
 
-> Périmètre : `frontend/chronoapp/tests/` (9 fichiers, 39 tests), `jest.setup.js`, config Jest. Backend : aucun test.
-> Date : 2026-10-03 · Outils : `jest-expo` 57, `@testing-library/react-native` 14.
+> Périmètre : `frontend/chronoapp/tests/` (11 fichiers), `backend/chronoapp/test/` (12 fichiers + `prismaMock.ts`), outillage et CI · Date : 2026-10-27 · Revue précédente : [`archive/2026-10-04/reviewTestingLibrary.md`](archive/2026-10-04/reviewTestingLibrary.md).
 
----
+## État constaté (commandes exécutées)
 
-## État constaté
-
-```
-$ npx jest --ci
-Test Suites: 9 passed, 9 total
-Tests:       39 passed, 39 total
-A worker process has failed to exit gracefully ... tests leaking due to improper teardown.
-```
-
-Tout est vert ✅ — mais « vert » ne veut pas dire « protégé » : **4 tests passent quoi qu'il arrive** (voir §1), et la sortie contient des `console.error` attendus + une fuite de timers.
-
-| Domaine | Note | Commentaire |
+| Suite | Commande | Résultat |
 | --- | --- | --- |
-| Couverture des écrans | 🟢 | 9 écrans/composants testés, cas d'erreur HTTP / réseau / succès systématiques |
-| Requêtes RNTL | 🟢 | `findBy*` pour l'asynchrone, `getByPlaceholderText`, `getAllByRole("button")` |
-| Isolation | 🟢 | `jest.mock("@/services/api")`, `clearAllMocks` en `beforeEach` |
-| Fiabilité des assertions | 🔴 | Assertions sans effet (`toBeTruthy` sans `()`, `expect(promise)`) |
-| Ce qui est testé | 🟠 | Beaucoup de détails d'implémentation (couleurs, redirection 401 dupliquée) |
-| Couches non testées | 🟠 | `apiFetch`, `AuthContext`, `AuthGate`, `account.tsx`, `ViewChrono`, backend |
-| Outillage | 🟠 | `jest --watchAll` en script unique, config Jest orpheline à la racine, pas de CI |
+| Frontend | `npx jest --ci` | **11 suites, 47 tests, tous verts** (8,2 s) — sortie polluée par des `console.error` attendus |
+| Backend | `npx vitest run` | **12 fichiers, 105 tests, tous verts** (6 s) |
+| CI | `.github/workflows/` | **Absente** (seul `dependabot.yml`) — CI-02 #100 ouverte |
+
+Évolution depuis le 2026-10-04 : frontend 39 → 47 tests, backend **0 → 105**. C'est le plus gros progrès du projet.
 
 ---
 
 ## ✅ Ce qui est bien fait
 
-1. **Structure Arrange / Act / Assert lisible** et homogène dans tous les fichiers, avec des helpers (`remplirFormulaireValid`, `ValueValid`).
-2. **Mock à la bonne frontière** : tu mockes `@/services/api` (ta frontière réseau) plutôt que `fetch` dans chaque test d'écran. Les composants sont testés en isolation de l'API.
-3. **Tests des trois chemins** pour chaque écran : erreur HTTP, `NetworkError`, succès. C'est exactement la matrice qu'on attend.
-4. **`findBy*`** pour attendre l'UI asynchrone au lieu de `setTimeout` maison.
-5. **Faux timers** (`jest.useFakeTimers` + `advanceTimersByTime(3000)`) pour la redirection différée de `passwordReset` — bonne technique, bien restaurée en `afterEach`.
-6. **`expect(postLogin).not.toHaveBeenCalled()`** quand le formulaire est invalide : tu testes qu'une action **n'a pas** lieu, souvent oublié.
-7. **Mock de `useFocusEffect`** (`callback => callback()`) : astucieux et suffisant.
+1. **Tests backend au bon niveau** : les handlers sont appelés directement avec un vrai `Request` (`new Request(url, { method, headers, body })`), Prisma est mocké à la frontière avec `vitest-mock-extended` + `mockReset` dans `beforeEach` (`test/prismaMock.ts`). C'est la technique standard pour tester des route handlers Next sans base de données.
+2. **Les chemins d'erreur sont couverts** : 401, 400 (Zod), 400 (IP absente), 429 (IP et email séparément), **503 (Upstash HS)**, 404, 409, 500. Tu testes ce qui peut casser, pas seulement le chemin heureux.
+3. **Assertions de sécurité réelles** : `expect(prismaMock.user.delete).not.toHaveBeenCalled()` après un mauvais mot de passe ; « bcrypt est quand même appelé avec le hash factice » (`_route_login.test.ts`) ; « updateMany ne touche aucune ligne (race condition) » (`_route_passwordReset.test.ts`). Ce sont des tests qui protègent une propriété de sécurité, pas un détail d'implémentation.
+4. **Ownership vérifié** : `toHaveBeenCalledWith({ where: { id, userId } })` dans les tests `GET` — si quelqu'un retire `userId` du `where`, le test casse.
+5. **Test du double tap exemplaire** (`tests/_btnandlist.test.tsx:181-205`) : la promesse de `postTimerRunner` est maintenue en attente, deux `press` synchrones, `toHaveBeenCalledTimes(1)`. Il échoue vraiment si on retire le `Set` (FRONT-03).
+6. **`services/api.ts` enfin testé** (`tests/_servicesApi.test.tsx`) : header `Authorization`, `NetworkError` en mode avion, 401 → `triggerUnauthorized`, **pas** de déconnexion sur `/api/auth/login`.
+7. **Faux timers** maîtrisés côté backend (`vi.setSystemTime`) pour tester la borne « date de plus d'une heure ».
 
 ---
 
-## 🔴 Priorité 1 — Tests qui ne testent rien (faux positifs)
+## 🔴 Priorité 1 — Tests qui ne testent rien (TEST-01 fermée, 3 faux positifs sur 4 toujours présents)
 
-C'est le point le plus important de cette revue : un test qui ne peut pas échouer donne une fausse confiance.
+TEST-01 (#97) a été fermée aujourd'hui, mais trois des quatre faux positifs listés sont **inchangés** dans le code. Seul `_list.test.tsx` a été corrigé.
 
-### 1.1 Matcher non appelé
+### 1.1 Le test « RESET » appuie toujours sur un bouton désactivé
 
 ```ts
-// _list.test.tsx:120 et :123
-expect(await screen.findByTestId("test123")).toBeTruthy;   // ← pas de ()
-expect(await screen.findByTestId("test123")).toBeFalsy;    // ← pas de ()
-
-// _index.test.tsx:58
-expect(screen.findByText("Démarrer")).toBeFalsy;           // ← pas de () ET pas de await
+// tests/_[id]run.test.tsx:151-171
+(getSeanceId as jest.Mock).mockResolvedValueOnce(seanceNoStart);
+(deleteTimerPause as jest.Mock).mockResolvedValueOnce({ ok: 204 });
+await render(<RunPage />);
+await fireEvent.press(screen.getByTestId("reset"));   // disabled={!stateChrono} → onPress jamais appelé
 ```
 
-`toBeTruthy` sans parenthèses est une simple **lecture de propriété** : aucune assertion n'est exécutée. Pire, la ligne `:123` voudrait vérifier que la séance a disparu, mais `findByTestId` **throw** si l'élément est absent — l'intention et le code sont inversés.
+**Vérifié à nouveau par un test temporaire** (écrit, exécuté, supprimé) : après ce `press`, `deleteTimerPause` a été appelé **0 fois**. Les assertions décrivent l'état initial de l'écran.
+
+Ce faux positif a un coût réel aujourd'hui : il cache le bug n°1 de cette revue. Le reset échoue dès qu'il n'y a pas de pause (`reviewBackend.md` §1.1), et aucun test ne le voit, car (1) ce test n'atteint jamais `handleReset`, (2) les mocks renvoient toujours un succès (`{ ok: 204 }`, qui n'est d'ailleurs pas ce que renvoie `apiFetch` sur un 204 : il renvoie `null`).
+
+Le test qui aurait détecté la régression :
 
 ```ts
-// ✅ vérifier une disparition
-await waitFor(() => expect(screen.queryByTestId("test123")).toBeNull());
-// ou
-await waitForElementToBeRemoved(() => screen.queryByTestId("test123"));
+it("reset sans pause : remet le chrono à zéro", async () => {
+  (getSeanceId as jest.Mock).mockResolvedValueOnce(seanceNoStart);
+  (patchSeance as jest.Mock).mockResolvedValueOnce(seanceInProgress);
+  (resetSeance as jest.Mock).mockResolvedValueOnce(seanceNoStart);   // après BACK-04
+
+  await render(<RunPage />);
+  await fireEvent.press(await screen.findByTestId("play"));
+  await fireEvent.press(await screen.findByTestId("reset"));
+
+  await waitFor(() => expect(resetSeance).toHaveBeenCalledWith(seanceNoStart.id));
+  expect(await screen.findByText("00:00:00")).toBeOnTheScreen();
+  expect(screen.getByTestId("play")).toBeEnabled();
+});
+
+it("reset refusé par le serveur : le chrono continue", async () => {
+  // … resetSeance rejette HttpError(409) → message affiché ET bouton pause toujours actif
+});
 ```
 
-Pour `_index.test.tsx` (test « logout ») : `HomeScreen` ne gère pas la navigation après logout (c'est `AuthGate`), donc il n'y a **rien à observer** dans ce composant. Le bon test : vérifier que `logout` du Context a été appelé.
+### 1.2 `toBeFalsy` sans parenthèses ni `await`
 
 ```ts
-const mockLogout = jest.fn();
-jest.mock("@/context/AuthContext", () => ({ useAuth: () => ({ logout: mockLogout }) }));
-// ...
-await fireEvent.press(screen.getByTestId("logout"));
-expect(mockLogout).toHaveBeenCalledTimes(1);
+// tests/_index.test.tsx:57-59
+await waitFor(() => {
+  expect(screen.findByText("Démarrer")).toBeFalsy;   // lecture de propriété, aucune assertion
+});
 ```
 
-> 💡 La règle ESLint `jest/valid-expect` (plugin `eslint-plugin-jest`) détecte automatiquement ces deux erreurs.
+Inchangé. Le correctif proposé reste valable : mocker `useAuth` et vérifier `expect(mockLogout).toHaveBeenCalledTimes(1)`.
 
-### 1.2 `expect(promise).toBeTruthy()`
+### 1.3 `expect(promise).toBeTruthy()`
 
 ```ts
-// _passwordReset.test.tsx:77-79
+// tests/_passwordReset.test.tsx:77-79
 expect(
-  screen.findByText("Erreur du contrôle Zod sur resetpassword"),   // ← Promise, pas d'await
+  screen.findByText("Erreur du contrôle Zod sur resetpassword"),   // Promise → toujours truthy
 ).toBeTruthy();
 ```
 
-Une `Promise` est toujours truthy → le test passe même si le texte n'apparaît jamais. Ajoute `await` :
+Inchangé. Ajoute `await` — et le test deviendra rouge, car ce texte est un log serveur, pas un message affiché. C'est la preuve que ce test n'a jamais rien vérifié.
 
-```ts
-expect(await screen.findByText("…")).toBeOnTheScreen();
-```
-
-### 1.3 Le test « RESET » appuie sur un bouton désactivé
-
-```ts
-// _[id]run.test.tsx:177-197  "OnPress sur RESET => …"
-(getSeanceId as jest.Mock).mockResolvedValueOnce(seanceNoStart);
-await render(<RunPage />);
-await fireEvent.press(screen.getByTestId("reset"));
-```
-
-Avec `seanceNoStart`, le chrono n'est pas lancé → le bouton reset a `disabled={!stateChrono}` → RNTL **n'appelle pas** `onPress`. Vérifié : `deleteTimerPause` est appelé **0 fois**. Les assertions qui suivent décrivent simplement l'état initial. Les 3 `mockResolvedValueOnce` (`postTimerPause`, `deleteTimerPause`, `deleteAllTimerRunner`) ne servent à rien.
-
-Le scénario réel : play → reset.
-
-```ts
-(getSeanceId as jest.Mock).mockResolvedValueOnce(seanceNoStart);
-(patchSeance as jest.Mock)
-  .mockResolvedValueOnce(seanceInProgress)   // play
-  .mockResolvedValueOnce(seanceNoStart);     // reset
-(deleteTimerPause as jest.Mock).mockResolvedValueOnce(null);
-(deleteAllTimerRunner as jest.Mock).mockResolvedValueOnce(null);
-
-await render(<RunPage />);
-await fireEvent.press(await screen.findByTestId("play"));
-await fireEvent.press(await screen.findByTestId("reset"));
-
-await waitFor(() => expect(deleteTimerPause).toHaveBeenCalledWith(seanceNoStart.id));
-expect(await screen.findByText("00:00:00")).toBeOnTheScreen();
-expect(screen.getByTestId("play")).toBeEnabled();
-```
-
-> 🎓 **Réflexe TDD** (ta préférence) : avant de considérer un test comme valide, **casse volontairement le code** (commente l'appel à `deleteTimerPause`) et vérifie que le test devient rouge. Si tout reste vert, le test ne protège rien.
-
-### 1.4 `expect(...)` sans matcher
-
-```ts
-// _btnandlist.test.tsx:107, _form.test.tsx:88, _list.test.tsx:109, _[id]run.test.tsx:133 …
-expect(await screen.findByText("Le chronomètre n'est pas actif"));
-```
-
-Ça fonctionne (c'est `findByText` qui throw si absent), mais l'`expect` est décoratif et le lecteur croit à une assertion. Écris-le explicitement : `expect(await screen.findByText("…")).toBeOnTheScreen();`.
+> 🎓 **Concept** (V-04) : fermer une issue de tests demande une preuve, pas une impression. Le critère de fin de #97 était : « chaque test devient rouge si on commente le code qu'il couvre (vérifié à la main) ». Prends l'habitude, avant de fermer, de **casser volontairement** le code couvert (commente l'appel, inverse la condition) et de regarder le test passer au rouge. Si tout reste vert, l'issue n'est pas finie. `eslint-plugin-jest` (TEST-04, #112) aurait détecté automatiquement 1.2 et 1.3 (`jest/valid-expect`).
 
 ---
 
-## 🟠 Priorité 2 — Que tester ? (comportement vs implémentation)
+## 🟠 Priorité 2 — Tests qui trompent ou figent un mauvais comportement
 
-### 2.1 Tester les couleurs, c'est tester le CSS
+### 2.1 `_route_timerrunner.test.ts` importe `afterEach` depuis `node:test`
 
 ```ts
-// _[id]run.test.tsx:151-171
-expect(await screen.findByTestId("play")).toHaveStyle({ backgroundColor: "rgb(176, 171, 171)" });
+// backend/chronoapp/test/_route_timerrunner.test.ts:13
+import { afterEach } from "node:test";
 ```
 
-Si tu changes la couleur du thème, 9 assertions cassent alors que l'app fonctionne. Ce que l'utilisateur perçoit, c'est « le bouton est désactivé » :
+C'est le `afterEach` du runner **natif de Node**, pas celui de Vitest : il n'est jamais exécuté par Vitest. `vi.useRealTimers()` ne tourne donc pas après chaque test ; les faux timers restent actifs jusqu'à la fin du fichier. Aujourd'hui ça ne casse rien (l'isolation par fichier limite les dégâts), mais le premier test asynchrone basé sur `setTimeout` ajouté dans ce fichier restera bloqué sans raison apparente. Importe `afterEach` depuis `"vitest"` (une auto-complétion d'IDE malheureuse, classique).
+
+Dans le même fichier, `valuePost.endedAt: new Date()` est évalué **avant** `vi.setSystemTime(…)` : le test fonctionne seulement parce que la vraie date du jour est postérieure à la date simulée. Utilise des dates fixes partout.
+
+### 2.2 Des tests qui figent un comportement vulnérable
+
+`_route_user.test.ts:123-145` (branche web) attend `404` pour un utilisateur inconnu et `403` pour un mauvais mot de passe, et vérifie que `bcrypt.compare` n'est **pas** appelé quand l'utilisateur n'existe pas. C'est exactement l'énumération décrite dans `reviewSecurity.md` §1.1. De même, `_route_timerpauseId.test.ts` (« renvoie 404 - Aucun timerPause ») et `_route_timerrunnerBySeance.test.ts` figent le 404 qui casse le reset.
+
+Ce n'est pas une faute de test : tu as testé ce que fait le code. Mais quand la règle change, **commence par changer le test** (il devient rouge), puis le code. C'est l'ordre TDD.
 
 ```ts
-expect(screen.getByTestId("play")).toBeDisabled();
-expect(screen.getByTestId("pause")).toBeEnabled();
-```
+it("401 générique - utilisateur inconnu : bcrypt appelé avec le hash factice", async () => {
+  userIdMock.mockResolvedValue(null as never);
+  prismaMock.user.findUnique.mockResolvedValue(null as never);
+  compareMock.mockResolvedValue(false as never);
 
-Même remarque pour `_btnandlist.test.tsx:118` (gris = déjà arrivé) → `toBeDisabled()`.
+  const res = await DELETE(makeDelete(validBody));
 
-### 2.2 Les tests 401 figent du code dupliqué
-
-Les tests « Non autorisé => redirection /login » (form, list, result, run) mockent `services/api` et vérifient que **le composant** redirige. Or ce comportement est censé vivre dans `apiFetch` (voir `reviewFrontend.md` §1.2). Quand tu centraliseras le 401, ces 4 tests casseront alors que l'app marchera mieux : ils testent **où** est le code, pas **ce que** vit l'utilisateur.
-
-→ Après le refactor : supprime-les des écrans et teste le 401 **une seule fois**, dans les tests de `apiFetch` (§3.1).
-
-### 2.3 Préférer les requêtes accessibles aux `testID`
-
-Ordre de préférence recommandé par Testing Library :
-
-1. `getByRole("button", { name: "Se connecter" })`
-2. `getByLabelText` / `getByPlaceholderText` / `getByText`
-3. `getByTestId` — en dernier recours
-
-Aujourd'hui les boutons icône (play, pause, reset, logout, poubelle) n'ont pas de nom accessible, d'où les `testID`. En ajoutant `accessibilityLabel="Pause"` (ce qui améliore aussi TalkBack), tu peux écrire `getByRole("button", { name: "Pause" })` : **le test et l'accessibilité progressent ensemble**.
-
-### 2.4 Mocks au nom trompeur
-
-```ts
-// _list.test.tsx:20-23
-router: {
-  replace: (...args) => mockReplace(...args),
-  push:    (...args) => mockReplace(...args),   // ← push branché sur mockReplace
-},
-```
-
-Les tests 6 et 7 (« redirection => /run ») vérifient `mockReplace` alors que le code appelle `router.push`. Ça passe, mais si quelqu'un remplace `push` par `replace` dans le composant (changement de comportement : plus de retour arrière possible), aucun test ne le verra. Crée `mockPush` séparément.
-
----
-
-## 🟠 Priorité 3 — Ce qui n'est pas testé
-
-### 3.1 `services/api.ts` — la couche la plus critique
-
-Elle contient : injection du token, timeout, 401 → déconnexion, conversion des erreurs. Tout est mocké ailleurs, donc **jamais exécuté** en test. Exemple :
-
-```ts
-// tests/api.test.ts
-import * as SecureStore from "expo-secure-store";
-import { getSeance, deleteManySeance } from "@/services/api";
-import { HttpError, NetworkError } from "@/lib/errors";
-
-jest.mock("expo-secure-store");
-jest.mock("expo-router", () => ({ router: { replace: jest.fn() } }));
-
-beforeEach(() => {
-  (SecureStore.getItemAsync as jest.Mock).mockResolvedValue("tok123");
-  global.fetch = jest.fn();
-});
-
-it("ajoute le header Authorization", async () => {
-  (fetch as jest.Mock).mockResolvedValue(new Response("[]", { status: 200 }));
-  await getSeance();
-  expect(fetch).toHaveBeenCalledWith(
-    expect.stringContaining("/api/seance"),
-    expect.objectContaining({ headers: expect.objectContaining({ Authorization: "Bearer tok123" }) }),
-  );
-});
-
-it("401 → supprime le token et lève HttpError", async () => {
-  (fetch as jest.Mock).mockResolvedValue(new Response("{}", { status: 401 }));
-  await expect(getSeance()).rejects.toBeInstanceOf(HttpError);
-  expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith("accessToken");
-});
-
-it("échec réseau → NetworkError", async () => {
-  (fetch as jest.Mock).mockRejectedValue(new TypeError("Network request failed"));
-  await expect(getSeance()).rejects.toBeInstanceOf(NetworkError);
-});
-
-it("204 → ne plante pas", async () => {
-  (fetch as jest.Mock).mockResolvedValue(new Response(null, { status: 204 }));
-  await expect(deleteManySeance()).resolves.toBeNull();   // rouge aujourd'hui → TDD !
+  expect(res.status).toBe(401);
+  expect(compareMock).toHaveBeenCalledTimes(1);
+  expect(await res.json()).toEqual({ message: "Identifiants invalides" });
 });
 ```
 
-Le dernier test est **rouge aujourd'hui** : c'est le point de départ idéal pour corriger le bug 204 en TDD.
+### 2.3 `_deleteUser.test.tsx` (formulaire web) teste des chemins qui n'existent pas
 
-### 3.2 Autres cibles, par rapport effort / valeur
+| Test | Problème |
+| --- | --- |
+| « Mauvais mot de passe à la validation » (l.73) | Mocke `prisma.user.findUnique` — un composant client n'appelle jamais Prisma. Le test est une copie du test 1 (email invalide) |
+| « Mauvais mot de passe à la suppression » (l.96) | Teste en réalité le **succès** (204) |
+| « Renvoi un message d'erreur si 404 » (l.124) | `fetch` **rejette** un `HttpError(403)`. Un vrai `fetch` ne rejette jamais sur un statut HTTP : il résout `{ ok: false, status }`. La branche `if (!response.ok)` du composant n'est donc jamais exécutée |
+| « … si NetworkError » (l.149) | `fetch` ne lève jamais de `NetworkError` (classe maison) mais un `TypeError`. En réalité l'utilisateur verrait « Une erreur inattendue » |
 
-| Cible | Pourquoi | Difficulté |
+Le mock doit imiter **la vraie API** :
+
+```ts
+vi.mocked(fetch).mockResolvedValueOnce(
+  new Response(JSON.stringify({ message: "Identifiants invalides" }), { status: 401 }),
+);
+// …
+expect(await screen.findByText("Identifiants invalides")).toBeInTheDocument();
+
+vi.mocked(fetch).mockRejectedValueOnce(new TypeError("Failed to fetch"));   // vraie panne réseau
+```
+
+> 🎓 **Concept** : un mock est une **promesse** sur le comportement de la dépendance. S'il fait quelque chose que la vraie dépendance ne fait jamais, le test vérifie un monde imaginaire. Avant d'écrire `mockRejectedValue`, demande-toi : « le vrai `fetch` peut-il rejeter avec ça ? »
+
+### 2.4 Titres qui contredisent le test
+
+| Fichier | Titre | Ce qui est vérifié |
 | --- | --- | --- |
-| `ViewChrono` | Fonction pure de formatage (`3661 → "01:01:01"`, `59.9 → "00:00:59"`) | ⭐ — `it.each` idéal |
-| `extractErrorMessage` / `toUserMessage` | Fonctions pures | ⭐ |
-| Schémas Zod (`formRegister`, …) | Règles de mot de passe sans passer par l'UI | ⭐ |
-| `AuthContext` | `login` écrit dans SecureStore, `logout` vide le state | ⭐⭐ — `renderHook(() => useAuth(), { wrapper: AuthProvider })` |
-| `AuthGate` | Sans token → `/login` ; avec token dans `(auth)` → `/` | ⭐⭐ — mock `useSegments` |
-| `account.tsx` | Bouton « Valider » désactivé tant que le texte ≠ « chronoapp » ; suppression → `logout` | ⭐⭐ |
-| `run/[id].tsx` : affichage du temps | `jest.useFakeTimers()` + `advanceTimersByTime(65_000)` → « 00:01:05 » | ⭐⭐⭐ |
-| Double tap coureur | Deux `press` rapides → `postTimerRunner` appelé **une** fois (rouge aujourd'hui) | ⭐⭐ |
+| `_route_user.test.ts:78` | « 401 - format non conforme ZOD » | 400 |
+| `_route_timerpause.test.ts:141` | « renvoie 400 - … startedAt : Null » | 403 |
+| `_route_timerpauseId.test.ts:82` | « renvoie 500 via P2002 - Conflit » | `P2002` sur un `deleteMany` n'arrive jamais ; c'est un test « erreur inattendue → 500 » |
+| `_btnandlist.test.tsx:111` et `:162` | « Button runner disabled si chrono en PAUSE » (deux fois) | L'affichage d'un message d'erreur, pas l'état `disabled` |
+| `_[id]run.test.tsx:115,151` | « … chrono défile » | Aucune assertion sur le temps affiché |
 
-### 3.3 Backend : zéro test
+Le titre est la documentation du test : quand il échouera dans six mois, c'est lui que tu liras en premier.
 
-Voir `reviewBackend.md` §Tests. Les handlers Next sont des fonctions `(Request) => Response` : très faciles à tester avec Vitest, sans serveur. Le test d'IDOR (« un utilisateur ne peut pas lire la séance d'un autre ») est le plus rentable de tout le projet.
+### 2.5 Couverture manquante qui compte
+
+| Cible | Pourquoi |
+| --- | --- |
+| `POST /timerrunner` : 404, 409 `Finish`, 409 chrono inactif / en pause, 409 `P2002` | Les règles de BACK-06 n'ont **aucun** test : seul le chemin heureux est couvert |
+| `DELETE /api/user` : body non-JSON, Upstash HS, Bearer invalide | Les trois bugs de `reviewBackend.md` §1.2-1.3 |
+| `PATCH /timerpause/:id` | Importé mais jamais testé (`PATCH` inutilisé dans `_route_timerpauseId.test.ts`) |
+| `run/[id].tsx` : play → pause → play, reprise d'une séance avec pause ouverte | Le cœur métier de l'app |
+| `AuthContext` (lecture SecureStore, `onUnauthorized`) | TEST-06 #114 |
+| `parseBody` | Mocké dans `_servicesApi.test.tsx`, jamais testé directement (204, corps vide, texte, JSON) |
+| `apiFetch` : timeout (`AbortController`) | Testable avec `jest.useFakeTimers()` + `advanceTimersByTime(10000)` |
 
 ---
 
@@ -253,36 +178,23 @@ Voir `reviewBackend.md` §Tests. Les handlers Next sont des fonctions `(Request)
 
 | Point | Où | Action |
 | --- | --- | --- |
-| `"test": "jest --watchAll"` | `package.json:12` | Mode interactif : bloque une CI. Ajoute `"test:ci": "jest --ci --coverage"` |
-| Config Jest orpheline | `/jest.config.js` (racine) | Pointe vers `jest.setup.ts` qui n'existe pas ; la vraie config est dans `frontend/chronoapp/package.json`. Supprimer |
-| `setUpTests()` appelé 2 fois | `jest.setup.js:5-8` | Garder un seul appel |
-| `afterEach(cleanup)` | tous les fichiers | RNTL le fait automatiquement → supprimer |
-| Fuite en fin de suite | « worker process has failed to exit gracefully » | `setInterval` de `RunPage` / `setTimeout` de `BtnAndList` non nettoyés. `npx jest --detectOpenHandles` pour localiser ; souvent résolu en corrigeant le composant (cleanup des timers) |
-| `console.error` attendus qui polluent la sortie | `BtnAndList`, `run/[id]` | `jest.spyOn(console, "error").mockImplementation(() => {})` dans les tests d'erreur, puis vérifier qu'il a été appelé |
-| Fixtures dupliquées | `seance`, `seanceFinish`, `seanceNoStart`… dans 5 fichiers | `tests/fixtures.ts` avec une factory : `makeSeance({ state: "Finish" })` |
-| Fixtures incohérentes | `createdAt: new Date()` vs `"2026-10-03T…"` | Toujours des `string` ISO : c'est ce que renvoie l'API (et ça révèle le problème de types `Date`) |
-| `describe("… - affichage des erreurs")` | tous les fichiers | Le nom ne correspond plus (navigation, succès…) → `describe("Login")` + sous-`describe` |
-| Noms de fichiers `_[id]run.test.tsx` | `tests/` | Les `[]` posent problème dans certains shells/globs → `run.test.tsx`, `result.test.tsx` |
+| `"test": "jest --watchAll"` | `frontend/chronoapp/package.json:12` | Bloque une CI → ajouter `"test:ci": "jest --ci"` (TEST-07 #115) |
+| Config Jest orpheline | `/jest.config.js` (racine) | Pointe vers `jest.setup.ts`, inexistant → supprimer |
+| `setUpTests()` appelé 2 fois | `jest.setup.js:5-8` | Un seul appel |
+| `afterEach(cleanup)` | fichiers RNTL | Automatique dans RNTL → supprimer |
+| `console.error` attendus dans la sortie | `services/api.ts:52`, écrans | `jest.spyOn(console, "error").mockImplementation(() => {})` dans les tests d'erreur |
+| `any` + imports inutilisés | 4 fichiers de tests backend (`npx eslint .`) | Typer `cb` : `(cb: (tx: typeof prismaMock) => unknown) => cb(prismaMock)` |
+| `vite-tsconfig-paths` | `vitest.config.mts` | Vitest le signale : remplaçable par `resolve.tsconfigPaths: true` |
+| `_deleteUser.test.tsx:1` | Commentaire `// app/exercices/page.test.tsx` | Reste d'un autre projet |
+| Pas de CI | `.github/workflows/` | Voir ci-dessous |
 
-### Proposition de CI minimale
-
-`.github/workflows/ci.yml` — c'est elle qui donnera du sens aux PR Dependabot :
+### CI minimale (CI-02, #100)
 
 ```yaml
+# .github/workflows/ci.yml
 name: CI
 on: [pull_request]
 jobs:
-  frontend:
-    runs-on: ubuntu-latest
-    defaults: { run: { working-directory: frontend/chronoapp } }
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm, cache-dependency-path: frontend/chronoapp/package-lock.json }
-      - run: npm ci
-      - run: npx tsc --noEmit
-      - run: npm run lint
-      - run: npx jest --ci
   backend:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: backend/chronoapp } }
@@ -294,18 +206,30 @@ jobs:
       - run: npx prisma generate
       - run: npx tsc --noEmit
       - run: npm run lint
+      - run: npx vitest run
+  frontend:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: frontend/chronoapp } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: frontend/chronoapp/package-lock.json }
+      - run: npm ci        # échouera tant que .npmrc n'est pas dans frontend/chronoapp/ (reviewFrontend.md §🟡)
+      - run: npx tsc --noEmit
+      - run: npx expo lint
+      - run: npx jest --ci
 ```
+
+Le lint échouera au premier passage (27 erreurs backend, 6 frontend) : c'est voulu, c'est la liste de ce qu'il faut corriger avant d'activer la protection de branche.
 
 ---
 
 ## 📋 Plan d'action tests
 
-1. [ ] Corriger les 4 faux positifs (§1.1 → §1.3) — **casser le code pour vérifier qu'ils rougissent**
-2. [ ] Ajouter `eslint-plugin-jest` (`jest/valid-expect`, `jest/no-disabled-tests`)
-3. [ ] `toHaveStyle` → `toBeDisabled` / `toBeEnabled`
-4. [ ] `tests/api.test.ts` : 401, réseau, header, **204 (rouge → fix en TDD)**
-5. [ ] `ViewChrono` + schémas Zod avec `it.each`
-6. [ ] `tests/fixtures.ts` + dates en `string`
-7. [ ] Script `test:ci`, suppression de `/jest.config.js`, un seul `setUpTests()`
-8. [ ] Workflow CI GitHub Actions
-9. [ ] Premiers tests backend (IDOR, 204, calcul de durée)
+1. [ ] Rouvrir #97 : corriger les 3 faux positifs restants **en vérifiant qu'ils deviennent rouges** quand on casse le code (§1)
+2. [ ] Écrire d'abord (rouge) les tests du reset sans pause, puis faire BACK-04 (§1.1)
+3. [ ] Changer les tests qui figent l'énumération et le 404 du reset **avant** de changer le code (§2.2)
+4. [ ] `afterEach` depuis `vitest` ; dates fixes (§2.1)
+5. [ ] Mocks `fetch` réalistes dans `_deleteUser.test.tsx` (§2.3)
+6. [ ] Tests des règles 409 de `POST /timerrunner` et des bugs de `DELETE /api/user` (§2.5)
+7. [ ] `eslint-plugin-jest` (TEST-04), `test:ci`, puis le workflow CI (CI-02)

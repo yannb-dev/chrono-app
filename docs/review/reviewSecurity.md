@@ -1,243 +1,169 @@
-# Revue pédagogique — Sécurité
+# Revue pédagogique — Sécurité et conformité (API Next.js + app Expo)
 
-> Périmètre : backend `backend/chronoapp/` + app mobile `frontend/chronoapp/` + chaîne de dépendances.
-> Date : 2026-10-03 · Contexte : mise en production (API publique + publication Play Store).
-> Complète `../security/security.md` (checklist) et `../security/securityPlus.md` (approfondissements) : ici on confronte **le code réel** à ces checklists.
-
----
+> Périmètre : authentification, routes API, pages web publiques, secrets, dépendances, conformité Play Store / RGPD · Date : 2026-10-27 · Contexte : 2ᵉ revue, juste avant publication. Revue précédente : [`archive/2026-10-04/reviewSecurity.md`](archive/2026-10-04/reviewSecurity.md) · Checklists de référence : [`../security/security.md`](../security/security.md), [`../security/securityPlus.md`](../security/securityPlus.md).
 
 ## Synthèse
 
-| Sévérité | Nb | Exemples |
-| --- | --- | --- |
-| 🔴 Critique / à corriger avant prod | 3 | CVE critique Next.js, rate limit contournable sur le reset, suppression de compte sans ré-authentification |
-| 🟠 Important | 6 | JWT (algo, durée, logout), en-têtes HTTP, dates client, fail-open Upstash, énumération à l'inscription |
-| 🟡 Défense en profondeur | 6 | Rate limit métier, purge des tokens, Sentry, dépendance Upstash côté mobile… |
-| 📱 Conformité Play Store | 4 | Suppression de compte **via le web**, politique de confidentialité, Data safety |
+| Sévérité | # | Point | Statut |
+| --- | --- | --- | --- |
+| 🔴 | 1.1 | Énumération de comptes sur la page web de suppression | Nouveau |
+| 🔴 | 1.2 | Clé Resend exposée (hors dépôt, signalée dans #164) | À régénérer |
+| 🟠 | 2.1 | `DELETE /api/user` : Upstash hors `try` (fail-open → 500) | Rechute SEC-06 |
+| 🟠 | 2.2 | Dates client sans borne haute (intégrité des durées) | SEC/BACK-05 partielle |
+| 🟠 | 2.3 | `env.ts` non chargé sur les routes d'auth | SEC-05 partielle |
+| 🟠 | 2.4 | Politique de confidentialité incomplète (Upstash, Resend) | Nouveau |
+| 🟠 | 2.5 | HSTS à `max-age=300` | Valeur de test |
+| 🟡 | 3.x | Énumération à l'inscription, logout global, purge des tokens, dépendances | Ouvert (SEC-07, SEC-08, BACK-13) |
+
+`npm audit --omit=dev` : **backend 7 high**, **frontend 7 (4 high, 3 moderate)** — toutes **transitives**, détail §4.
 
 ---
 
 ## ✅ Ce qui est déjà au niveau
 
-C'est un socle solide, rare chez un junior — à mettre en avant en entretien :
-
-| Contrôle | Où | Pourquoi c'est bien |
-| --- | --- | --- |
-| bcrypt (coût 10) + limite **72 octets** | `registerSchema.ts:9` | bcrypt tronque silencieusement après 72 octets ; tu le valides en **octets** (`Buffer.byteLength`), pas en caractères |
-| Hash factice si l'email n'existe pas | `login/route.ts:46` | Temps de réponse constant → pas d'énumération par timing |
-| Message unique « Identifications invalides » | `login/route.ts:55` | Ne révèle pas si c'est l'email ou le mot de passe |
-| Rate limit IP **et** email (sliding window) | `lib/rateLimit.ts` | Bloque le brute-force et le credential stuffing distribué |
-| `tokenVersion` vérifié à chaque requête | `lib/auth.ts:25` | JWT révocables (le point faible classique des JWT) |
-| Token de reset : 256 bits, hashé SHA-256, 30 min, usage unique atomique | `passwordresettoken/route.ts` | Une fuite de la base ne donne pas de liens valides ; pas de double usage concurrent |
-| Token dans le **fragment** `#token=` + `history.replaceState` | `lib/mail.ts:7`, `app/page.tsx:21` | Le fragment n'est jamais envoyé au serveur → absent des logs et du `Referer` |
-| Réponse identique que le compte existe ou non (reset) | `passwordresettoken/route.ts:83` | Anti-énumération |
-| Ownership dans tous les `where` | toutes les routes | Pas d'IDOR |
-| Prisma (requêtes paramétrées) | partout | Pas d'injection SQL |
-| Messages 500 génériques | partout | Pas de fuite de stack trace |
-| JWT dans **SecureStore** | `context/AuthContext.tsx` | Keystore Android chiffré, pas AsyncStorage en clair |
-| `.env*` ignoré par git | `.gitignore` | Secrets hors du dépôt |
+1. **Next.js à jour** (16.4.2) : la CVE critique de la revue précédente est close (SEC-01).
+2. **IP fiable pour le rate limit** (`lib/getClientIp.ts`) : `ipAddress()` de `@vercel/functions` d'abord (header posé par Vercel, non falsifiable par le client), `x-forwarded-for` seulement en repli hors Vercel, et refus explicite (`400`) quand l'IP est inconnue. Le contournement de SEC-02 est fermé.
+3. **Fail-closed** sur les limiteurs de login, register, reset et des routes métier : Upstash en panne → 503, pas de passe-droit.
+4. **JWT** : `algorithms: ["HS256"]` figé, payload validé par Zod, révocation par `tokenVersion` (incrémenté au reset password).
+5. **Ré-authentification** pour supprimer le compte (SEC-03), côté mobile et web.
+6. **Login résistant au timing** : `bcrypt.compare` avec un hash factice quand l'utilisateur n'existe pas (`login/route.ts:61-66`), même message pour « inconnu » et « mauvais mot de passe ».
+7. **Reset password** : token aléatoire 32 octets, stocké **haché** (SHA-256), 30 min, usage unique garanti par `updateMany` conditionnel, lien en fragment `#token=` (jamais envoyé au serveur ni dans les logs), `history.replaceState` pour l'effacer de la barre d'adresse.
+8. **En-têtes** sur toutes les routes (`next.config.ts`) + **CSP à nonce** via `proxy.ts` sur les pages sensibles, `Cache-Control: no-store` et `Referrer-Policy: no-referrer` sur `/reset` et `/delete-user`.
+9. **Sentry** sans PII, avec masquage des tokens (voir `reviewFrontend.md` §✅5).
+10. **Dependabot** opérationnel (8 commits `chore(deps…)` fusionnés depuis le 2026-10-04).
 
 ---
 
 ## 🔴 Critique — à traiter avant la mise en production
 
-### S1. Vulnérabilité critique dans la version de Next.js installée
-
-`npm audit` (backend) :
-
-```
-next      critical  Remote Code Execution in next/og ImageResponse   (16.3.5 installé, 16.3.8 dispo)
-prisma    high      via @prisma/config → deepmerge-ts (stack exhaustion)
-```
-
-Tu n'utilises pas `next/og`, donc l'exploitation est peu probable — mais un scanner ne fait pas la différence, et la correction est un **patch** :
-
-```bash
-cd backend/chronoapp && npm install next@latest eslint-config-next@latest
-```
-
-Pour Prisma, `npm audit` propose un *downgrade* vers 6.12 (`isSemVerMajor: true`) : **ne lance pas `npm audit fix --force`**. Attends un correctif amont (Dependabot te l'apportera).
-
-Côté mobile, 60 alertes, mais **toutes** proviennent de l'outillage de build (`brace-expansion`, `node-forge`, `uuid`… dans la CLI Expo/Metro), pas du code embarqué dans l'APK. Là encore `audit fix --force` proposerait `expo@44` — un retour de 13 versions qui casserait tout.
-
-> 🎓 **Leçon** : lire une alerte = se demander *« ce code s'exécute-t-il en production, avec des entrées contrôlées par un attaquant ? »*. Le Dependabot configuré (`.github/dependabot.yml`) fera le suivi ; voir la section dédiée en fin de document.
-
-### S2. Le rate limit du reset password est contournable
+### 1.1 La page web de suppression permet de tester si un email a un compte
 
 ```ts
-// passwordresettoken/route.ts:28-31
-const ip =
-  req.headers.get("x-forwarded-for") ||   // ← chaîne brute "1.2.3.4, 5.6.7.8"
-  req.headers.get("x-rel-ip") ||          // ← typo : x-real-ip
-  "unknown";
+// app/api/user/route.ts:126-146 — branche web (sans token)
+const user = await prisma.user.findUnique({ where: { email } });
+if (!user) return NextResponse.json({ message: "Utilisateur introuvable" }, { status: 404 });
+const control = await bcrypt.compare(password, user.password);
+if (!control) return NextResponse.json({ message: "Mot de passe incorrect" }, { status: 403 });
 ```
 
-Trois problèmes :
-1. `x-forwarded-for` est **fourni par le client**. Ici tu prends la chaîne complète : un attaquant envoie `X-Forwarded-For: <aléatoire>` à chaque requête → nouvelle clé de rate limit à chaque fois → limite IP inopérante. (Les autres routes utilisent `getClientIp()` qui prend le 1ᵉʳ élément ; c'est mieux mais il faut savoir **quel proxy** l'écrit — sur Vercel, utilise `x-real-ip` ou `ipAddress()` de `@vercel/functions`, qui sont posés par la plateforme.)
-2. Même limiteur pour l'IP et l'email avec le même préfixe `ratelimit:IpEmail` → les deux types de clés partagent le même espace.
-3. Conséquence : quelqu'un peut **inonder la boîte mail d'une victime** (limité à 3/h par email, ça va) et surtout **consommer ton quota Resend** en variant les emails.
+**Mécanisme** : la réponse dit « ce compte n'existe pas » (404) ou « ce compte existe, mauvais mot de passe » (403). Le formulaire affiche le message tel quel (`formDeleteUser.tsx:48`). En plus, quand l'utilisateur n'existe pas, `bcrypt.compare` n'est pas appelé : la réponse est ~100 ms plus rapide, donc l'énumération reste possible même si tu unifies le message.
+
+**Scénario** : la page `/delete-user` est publique (exigée par Google, référencée dans la fiche store). Quelqu'un qui a une liste d'emails peut savoir lesquels sont inscrits, à 5 essais/min/IP et 5/min/email : lent, mais pas bloqué. C'est exactement ce que tu as soigneusement évité sur le login et le reset — cette route est passée à travers.
+
+**Correction** : reprends le patron du login.
 
 ```ts
-const ip = getClientIp(req);   // réutilise le helper existant, corrigé pour ta plateforme
-const ipCheck = await resetPasswordRateLimitIp.limit(ip);
-const emailCheck = await resetPasswordRateLimitEmail.limit(safeData.data.email);
-```
-
-Et ce même handler renvoie `safeData.error.message` (`:23`) : c'est le détail brut de Zod. Renvoie un message fixe comme dans les autres routes.
-
-### S3. Suppression de compte sans ré-authentification
-
-`DELETE /api/user` ne demande que le JWT. Un token volé (téléphone déverrouillé prêté, malware) = compte et données supprimés définitivement. Le mot « chronoapp » à taper protège contre l'erreur de manipulation, pas contre un attaquant.
-
-```ts
-// body: { password }
-const user = await prisma.user.findUnique({ where: { id: userId } });
-if (!user || !(await bcrypt.compare(password, user.password))) {
-  return NextResponse.json({ message: "Mot de passe incorrect" }, { status: 403 });
+const DUMMY_HASH = "$2b$10$VUj4JXqrv6THyQGneEsax.HzWPKLVwA3JxHMM9hzEJVCktvJxVYKi"; // à partager dans lib/
+const user = await prisma.user.findUnique({ where: { email }, select: { id: true, password: true } });
+const ok = await bcrypt.compare(password, user?.password ?? DUMMY_HASH);
+if (!user || !ok) {
+  return NextResponse.json({ message: "Identifiants invalides" }, { status: 401 });
 }
+await prisma.user.delete({ where: { id: user.id } });
 ```
 
-Détail complet : `../security/securityPlus.md` §7.
+Mets à jour les tests `404 - utilisateur introuvable` et `403 - mot de passe incorrect` de la branche web : ils figent aujourd'hui le comportement vulnérable (voir `reviewTestingLibrary.md` §2.2).
+
+> 🎓 **Concept** : l'anti-énumération est une propriété de **l'application entière**, pas d'une route. Chaque endpoint qui accepte un email sans être authentifié (login, register, reset, suppression web, et plus tard vérification d'email) doit répondre de façon indiscernable — même message, même code, même durée. Fais-en une checklist dans `docs/security/security.md`.
+
+### 1.2 Clé Resend exposée — à régénérer
+
+L'issue #164 indique qu'une vraie clé `re_…` figurait en clair dans un document d'architecture (hors dépôt). Elle a été retirée, mais **retirer un secret ne le révoque pas** : il a pu être copié, synchronisé, mis en cache.
+
+J'ai vérifié le dépôt (`git grep` sur les motifs de clés) : aucune clé n'est commitée. Il reste donc une action **hors code** :
+
+1. Resend → API Keys → révoquer l'ancienne clé, en créer une nouvelle (droit « Sending access » seulement, restreinte au domaine `chronoappsport.fr`) ;
+2. Vercel → variable `RESEND_TOKEN` (Production **et** Preview) → redéployer ;
+3. Même réflexe pour le mot de passe du compte testeur Google mentionné dans #164 : il est dans un fichier `.env.local` d'un outil de documentation, pas dans le dépôt, mais change-le avant de le donner à la Play Console.
+
+> 🎓 **Concept** : un secret qui a été visible **une fois** est compromis. La seule correction est la rotation, puis la recherche de l'endroit où il a fuité pour que ça ne recommence pas.
 
 ---
 
 ## 🟠 Important
 
-### S4. JWT : figer l'algorithme, raccourcir, permettre le logout
+### 2.1 `DELETE /api/user` : rate limit hors `try`
 
-```ts
-// lib/auth.ts:13
-jwt.verify(token, process.env.JWT_SECRET!)
-```
+C'est la seule route où `limit()` n'est pas protégé : si Upstash ne répond pas, le handler rejette → 500 non maîtrisée (vérifié par un test temporaire). Le résultat reste « bloquant » (pas de suppression), mais sans message, et la route échappe à la règle fail-closed que tu as posée partout. Détail et correction : `reviewBackend.md` §1.2.
 
-- **Algorithme non figé** → `jwt.verify(token, secret, { algorithms: ["HS256"] })`. (jsonwebtoken v9 bloque déjà `none`, mais l'explicite protège des confusions d'algorithme ; cf. `../security/securityPlus.md` §2.)
-- **`JWT_SECRET!`** : si la variable manque en prod, `jwt.sign` throw à chaque login → 500 sans explication. Vérifie les variables **au démarrage** (un `lib/env.ts` avec un schéma Zod sur `process.env` est un excellent exercice).
-- **Durée 7 jours, sans refresh** : acceptable pour une app mobile perso. Mais le **logout** côté app supprime seulement le token local ; le JWT reste valide 7 jours. Tu as déjà l'outil : un `POST /api/auth/logout` qui fait `tokenVersion: { increment: 1 }` (= « déconnecter tous mes appareils »).
-- Le secret doit faire **≥ 32 octets aléatoires** : `openssl rand -base64 48`.
+### 2.2 Intégrité des données : borne haute manquante sur les dates
 
-### S5. En-têtes de sécurité appliqués à `/` seulement
+Un client modifié peut envoyer `startedAt` dans le futur ou un `endedAt` de pause dans 10 h, et obtenir des durées négatives ou absurdes. Ce n'est pas une fuite de données, mais c'est l'intégrité de **la seule donnée métier** de l'app. Détail : `reviewBackend.md` §2.1.
 
-```ts
-// next.config.ts:8
-source: "/",
-```
+### 2.3 `lib/env.ts` n'est pas chargé par `login`, `register`, `passwordresettoken`
 
-`source: "/"` ne matche **que** la racine. Les routes `/api/*` et les assets n'ont rien. La page `/` (reset password) est la seule page HTML, donc c'est la plus importante, mais complète :
+Ces routes lisent `process.env.JWT_SECRET!`, `process.env.RESEND_TOKEN`, `process.env.APP_URL` directement. Le cas le plus grave : si `JWT_SECRET` manque sur un environnement Preview, `jwt.sign(…, undefined)` lève une erreur → 500 sur le login, sans message clair. Correction : `env.X` partout (`reviewBackend.md` §2.6). `APP_URL` doit être un `z.string().url()` : il construit le lien du mail de reset.
 
-```ts
-source: "/(.*)",
-headers: [
-  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
-  { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "Referrer-Policy", value: "no-referrer" },
-  { key: "X-Frame-Options", value: "DENY" },
-  { key: "Content-Security-Policy", value: "default-src 'self'; frame-ancestors 'none'; form-action 'self'" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-],
-```
+### 2.4 Politique de confidentialité : deux sous-traitants manquants
 
-(Teste la CSP en local : Next en dev a besoin de `'unsafe-eval'` — tu peux la conditionner à `NODE_ENV`.)
+`app/privacy/page.tsx:116-129` liste Vercel, Neon, Expo/Google, Sentry. Or :
 
-### S6. Intégrité des données : dates fournies par le client
+- **Upstash** reçoit l'**adresse IP** et l'**email** (clés des limiteurs `ratelimit:loginEMAIL:<email>`, etc.) ;
+- **Resend** reçoit l'**email** pour l'envoi du lien de reset.
 
-`startedAt`, `pausedAt`, `endedAt` sont acceptés tels quels (`z.coerce.date()`). Un client modifié peut écrire des durées négatives ou des dates en l'an 3000. Ce n'est pas une faille de confidentialité, mais c'est une **faille d'intégrité** : la règle « ne jamais faire confiance au client » s'applique aussi aux données métier. Détails et correctifs : `reviewBackend.md` §2.2.
+Le RGPD (art. 13) impose de nommer les destinataires des données ; Google compare aussi la politique avec le formulaire **Data safety**. Ajoute les deux, précise la finalité (« protection contre les abus », « envoi des emails de réinitialisation ») et la durée (les clés Upstash expirent avec la fenêtre : 1 min à 1 h). Vérifie que le formulaire Data safety déclare bien « Adresse email » et « Identifiants de l'appareil ou autres » (IP) comme **collectés**, finalité « Sécurité / prévention de la fraude ».
 
-### S7. Upstash indisponible = 500 non maîtrisé
+### 2.5 HSTS à `max-age=300`
 
-`await loginRateLimitIP.limit(ip)` est **hors du `try`** dans login / register / reset. Si Redis ne répond pas, la route plante. Décide consciemment :
-- **fail-closed** (refuser le login si le rate limit est indisponible) → plus sûr, moins disponible ;
-- **fail-open** (laisser passer en loguant) → plus disponible.
-
-Pour une auth, fail-closed avec un 503 explicite est le choix classique. L'important est que ce soit **un choix**, pas un accident.
-
-### S8. Énumération des comptes à l'inscription
-
-`register/route.ts:48` renvoie `409 "Un compte existe pour cette adresse mail"`, alors que le reset password est soigneusement anti-énumération. Les deux politiques se contredisent : un attaquant utilise simplement `/register` pour tester une liste d'emails (limité à 5/h/IP, ce qui freine sans empêcher avec des IP tournantes).
-
-Options : accepter ce compromis (très courant, UX meilleure) **en le documentant**, ou passer à une inscription avec vérification d'email où la réponse est toujours « Vérifiez votre boîte mail » (`../security/securityPlus.md` §5). Note : sans vérification d'email, n'importe qui peut créer un compte avec l'adresse d'un tiers.
-
-Petit plus : dans `register`, `bcrypt.hash` est calculé **avant** le `findUnique` → du CPU dépensé pour rien sur chaque doublon.
-
-### S9. Pas de vérification de l'adresse email
-
-Conséquence directe de S8 : `test@exemple.com` peut être « volée » par le premier venu. Le flux reset password suppose que l'email appartient bien à l'utilisateur. Pour une V1 c'est acceptable ; à inscrire dans la roadmap.
+`next.config.ts:5` : 5 minutes, c'est une valeur de test (prudente au début, à raison). Vercel sert déjà tout en HTTPS : passe à `max-age=63072000; includeSubDomains` (2 ans) une fois que tu as vérifié que tous les sous-domaines sont en HTTPS. N'ajoute `preload` que si tu comptes t'inscrire sur hstspreload.org (difficile à annuler).
 
 ---
 
-## 🟡 Défense en profondeur
+## 🟡 Défense en profondeur (issues ouvertes, inchangé)
 
-| # | Point | Où | Action |
+| Point | Issue | Commentaire |
+| --- | --- | --- |
+| Énumération à l'inscription (409 « Un compte existe ») | SEC-08 #106 | Acceptable pour une petite app si c'est **documenté** comme choix ; la vraie solution est la vérification d'email |
+| Déconnexion de tous les appareils | SEC-07 #105 | `tokenVersion: { increment: 1 }` existe déjà : il ne manque qu'un endpoint |
+| Purge des tokens de reset expirés | BACK-13 #104 | Cron Vercel quotidien `deleteMany({ where: { expiresAt: { lt: new Date() } } })` |
+| JWT 7 jours sans refresh | — | Acceptable avec la révocation ; à revoir si l'app grandit |
+| Pas de rate limit par `userId` sur la suppression mobile | — | Seulement par IP ; ajouter `userId` est trivial |
+
+---
+
+## 4. Dépendances (`npm audit --omit=dev`, exécuté le 2026-10-27)
+
+### Backend — 7 high, toutes transitives
+
+| Paquet vulnérable | Amené par | Runtime ? | Correctif proposé | Verdict |
+| --- | --- | --- | --- | --- |
+| `deepmerge-ts < 8` | `prisma` (CLI) → `@prisma/config` | Non (build/migrations) | `prisma@7` (**majeure**) | Attendre une 6.x corrigée ou planifier la migration Prisma 7 ; risque faible |
+| `zod < 4.6.6` (copie interne) | `@vercel/functions` → `@vercel/oidc` → `@vercel/cli-config` | Oui, mais seul `ipAddress()` est utilisé | `@vercel/functions@3.6.1` = **rétrogradation** | ❌ Ne pas appliquer `--force` ; attendre la mise à jour de `@vercel/cli-config` |
+
+### Frontend — 4 high, 3 moderate
+
+| Paquet | Amené par | Runtime dans l'app ? | Verdict |
 | --- | --- | --- | --- |
-| S10 | Pas de rate limit sur les routes métier | `POST /seance`, `/timerrunner`, `/timerpause` | Un compte peut créer des millions de séances → remplir la base. `Ratelimit.slidingWindow(60, "1 m")` par `userId` |
-| S11 | Pas de pagination sur `GET /seance` | `seance/route.ts:16` | `take: 50` + `orderBy: { createdAt: "desc" }`, sinon la réponse grossit sans limite (et inclut toutes les pauses/coureurs) |
-| S12 | Tokens de reset jamais purgés | `PasswordResetToken` | Cron de purge (`../security/securityPlus.md` §14) |
-| S13 | `@upstash/redis` dans l'app mobile | `frontend/package.json:28` | Inutilisé. Danger : la seule façon de l'utiliser côté mobile serait d'embarquer le token Upstash dans l'APK (`EXPO_PUBLIC_*` = **public**, extractible en 2 min). Supprime-le |
-| S14 | Sentry | `app/_layout.tsx` | `sendDefaultPii` est bien commenté 👍. Ajoute un `beforeSend` qui retire l'en-tête `Authorization` des breadcrumbs `fetch`, et baisse `tracesSampleRate` |
-| S15 | Logs | `register/route.ts:17` etc. | `console.error(safeData.error)` : vérifie que Zod ne logue pas l'`input` (mot de passe). En Zod 4, `reportInput` est `false` par défaut → OK, mais ne l'active jamais sur les schémas d'auth |
+| `node-forge ≤ 1.4.0` | `@expo/cli` (signature de code) | Non (outil de build) | `npm audit fix` (non cassant) suffit |
+| `zod < 4.6.6` | `@expo/cli` (copie zod 3) | Non | Attendre Expo ; `--force` installerait **expo@54** (rétrogradation de 3 SDK) ❌ |
+| `zod` direct | ton `package.json` | Oui | Faux positif local : le lockfile verrouille `4.6.6`, mais ton `node_modules` est resté en `4.6.5` → `npm ci` |
+| `decode-uri-component ≤ 0.4.2` | `expo-router` → `query-string@7` | Oui (parsing d'URL) | Moderate ; suivre les mises à jour `expo-router` via Dependabot |
 
-### Côté mobile : ce qu'il faut savoir
-
-- **Tout ce qui est dans l'APK est public** : URL d'API, DSN Sentry, toute variable `EXPO_PUBLIC_*`. Aucun secret ne doit y être. Aujourd'hui c'est respecté ✔.
-- **HTTPS uniquement** : Android bloque le HTTP en clair par défaut (`usesCleartextTraffic=false`) depuis l'API 28. Ne l'active pas pour la prod ; vérifie que `EXPO_PUBLIC_API_URL` de l'environnement EAS `production` est bien en `https://`.
-- **Certificate pinning** : pas nécessaire pour ce niveau de risque.
-- **Keystore de signature** : laisse EAS le gérer (`eas credentials`) et **télécharge une sauvegarde**. Perdre la clé d'upload = procédure de reset auprès de Google.
+> ⚠️ **Faux remède** : `npm audit fix --force` proposerait ici `expo@54.0.38` et `@vercel/functions@3.6.1` — deux **rétrogradations**. Lis toujours la ligne « Will install … » avant d'accepter.
 
 ---
 
-## 📱 Conformité Google Play (sécurité / vie privée)
+## 📱 Conformité Google Play
 
-Ces points ne sont pas des failles, mais **ils bloquent la publication** :
-
-1. **Suppression de compte accessible hors de l'app** : depuis 2024, toute app permettant de créer un compte doit fournir *dans l'app* **et via une URL web** un moyen de demander la suppression du compte. Tu as le premier (`account.tsx`) ; il te manque une page web — ton backend Next sert déjà une page, une route `/delete-account` (formulaire email + mot de passe → suppression) ferait l'affaire.
-2. **Politique de confidentialité** : URL publique obligatoire (données collectées : email, mot de passe hashé, données de séance ; sous-traitants : Vercel/Railway, Upstash, Resend, Sentry). Elle peut être servie par ton backend Next.
-3. **Formulaire Data safety** dans la Play Console : déclarer email (collecté, obligatoire, pour la gestion de compte), données de diagnostic (Sentry), chiffrement en transit (oui, HTTPS), suppression possible (oui).
-4. **RGPD** : export des données et suppression — voir `../security/securityPlus.md` §18.
-
----
-
-## 🤖 Dependabot — ce qui a été configuré
-
-Fichier créé : `.github/dependabot.yml`.
-
-| Écosystème | Dossier | Fréquence | Stratégie |
-| --- | --- | --- | --- |
-| npm | `/backend/chronoapp` | hebdo (lundi 7h) | Groupes `next` (+ eslint-config-next), `prisma` (+ @prisma/client, **toujours à la même version**), reste minor/patch groupé |
-| npm | `/frontend/chronoapp` | hebdo (lundi 7h) | Groupe `expo-sdk` ; `react`, `react-native`, `react-native-*`, `typescript` **ignorés** |
-| github-actions | `/` | mensuel | Prêt pour quand tu ajouteras une CI |
-
-**Pourquoi ignorer `react-native` & co côté mobile ?** Chaque SDK Expo fixe une version précise de React Native, Reanimated, Screens, etc. Les monter individuellement casse le build EAS. On les met à jour **uniquement** lors d'une montée de SDK, avec :
-
-```bash
-npx expo install expo@^58 && npx expo install --fix && npx expo-doctor
-```
-
-**Pourquoi ignorer les majeures ?** Une majeure = breaking changes à lire. Dependabot t'ouvrirait une PR qui ne compile pas. Tu les fais à la main, volontairement.
-
-### À activer dans GitHub (le fichier seul ne suffit pas)
-
-`Settings → Code security` du dépôt `yannb-dev/chrono-app` :
-- [ ] **Dependency graph** : activé
-- [ ] **Dependabot alerts** : activé → alertes de vulnérabilités (indépendantes du fichier YAML)
-- [ ] **Dependabot security updates** : activé → PR automatiques de correctifs de sécurité
-- [ ] **Secret scanning** + **Push protection** : bloque un push contenant une clé (Resend, Upstash, JWT…)
-- [ ] Créer les labels `backend`, `frontend`, `ci` (`dependencies` est créé automatiquement) — sinon Dependabot ignore les labels manquants
-
-### Workflow pour traiter une PR Dependabot
-
-1. Lire le changelog lié dans la PR.
-2. `gh pr checkout <n>` → `npm ci` → `npm test` / `npm run build` / `npx expo-doctor`.
-3. Merger. **Sans CI, Dependabot ne teste rien à ta place** : la prochaine étape logique est un workflow GitHub Actions qui lance `npm run lint`, `tsc --noEmit` et `jest --ci` sur chaque PR (voir `reviewTestingLibrary.md`).
+| Exigence | État |
+| --- | --- |
+| Suppression de compte **dans l'app** | ✅ `account.tsx` |
+| Suppression de compte **via le web**, sans installer l'app | ✅ `/delete-user` (corriger l'énumération §1.1) |
+| Politique de confidentialité publique, liée dans l'app | ✅ `/privacy` + lien dans `account.tsx` — **compléter** §2.4 |
+| Data safety cohérent avec la politique | ⚠️ À revérifier après §2.4 |
+| Pas d'identifiant publicitaire | ✅ `blockedPermissions: AD_ID` |
+| Compte de test pour la revue Google | ⚠️ Changer le mot de passe exposé (§1.2) |
 
 ---
 
 ## 📋 Checklist avant mise en production
 
-- [ ] S1 — `next` ≥ 16.3.8
-- [ ] S2 — `getClientIp` corrigé pour Vercel + limiteurs séparés sur le reset
-- [ ] S3 — mot de passe exigé pour supprimer le compte
-- [ ] S4 — `algorithms: ["HS256"]`, validation des variables d'env au démarrage, endpoint logout
-- [ ] S5 — en-têtes sur `/(.*)` + HSTS
-- [ ] S7 — `limit()` dans le `try`, choix fail-open/closed explicite
-- [ ] S13 — retirer `@upstash/redis` du mobile
-- [ ] Play Store — page web de suppression de compte + politique de confidentialité + Data safety
-- [ ] GitHub — alerts, security updates, secret scanning activés
+- [ ] Rotation de la clé Resend et du mot de passe testeur (§1.2)
+- [ ] Réponse uniforme + hash factice sur la suppression web (§1.1)
+- [ ] `DELETE /api/user` : rate limit dans `try`, body `catch`, 401 si Bearer invalide (§2.1)
+- [ ] Bornes hautes des dates (§2.2)
+- [ ] `env.X` dans toutes les routes (§2.3)
+- [ ] Upstash + Resend dans la politique de confidentialité, Data safety relu (§2.4)
+- [ ] HSTS 2 ans (§2.5)
+- [ ] `npm ci` dans le frontend, `npm audit fix` (non forcé) pour `node-forge`
+- [ ] CI qui lance tests + lint sur chaque PR (CI-02, #100) — c'est elle qui empêchera la prochaine régression du type « 404 sur le reset »

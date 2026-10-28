@@ -1,102 +1,62 @@
-# Revue pédagogique — Backend (Next.js API + Prisma)
+# Revue pédagogique — Backend (API Next.js 16 + Prisma 6 + PostgreSQL)
 
-> Périmètre : `backend/chronoapp/` — 12 route handlers, `lib/`, schéma Prisma, config Next.
-> Date : 2026-10-03 · Contexte : pré-déploiement (Play Store côté mobile, API sur Vercel/Railway).
-
----
+> Périmètre : `backend/chronoapp/` (12 routes API, `lib/`, schéma Prisma, pages web `/reset`, `/delete-user`, `/privacy`) · Date : 2026-10-27 · Contexte : 2ᵉ revue, avant publication Play Store. Revue précédente : [`archive/2026-10-04/reviewBackend.md`](archive/2026-10-04/reviewBackend.md).
 
 ## Vue d'ensemble
 
 | Domaine | Note | Commentaire court |
 | --- | --- | --- |
-| Structure / découpage | 🟢 | `lib/` (auth, prisma, rateLimit, schema) bien séparé des routes |
-| Validation (Zod) | 🟢 | `safeParse` partout, `req.json().catch(() => null)` systématique |
-| Ownership (IDOR) | 🟢 | `userId` dans **chaque** `where` — c'est le point le plus important et il est acquis |
-| Codes HTTP | 🔴 | `NextResponse.json({ status: 204 })` → renvoie en réalité un **200** |
-| Gestion d'erreurs | 🟠 | Bonne détection P2025, mais requêtes Prisma hors `try` dans 2 routes |
-| Logique métier | 🟠 | Reset de séance non atomique (3 requêtes côté client), timestamps fournis par le client |
-| Modèle de données | 🟠 | `userId` sans relation sur `TimerRunner`/`TimerPause`, pas d'index, pas de contrainte d'unicité |
-| Tests | 🔴 | Aucun test backend |
+| Codes HTTP (201/204/404/409) | 🟢 | Corrigé depuis la revue précédente : vrais 201/204, `count === 0` → 404 |
+| Gestion d'erreurs (`try`, Prisma) | 🟠 | Bon partout **sauf** `DELETE /api/user` (body et Upstash hors `try`) |
+| Atomicité | 🔴 | `POST /timerrunner` est transactionnel ✅, mais le reset de séance ne l'est toujours pas, et il est **cassé** depuis le passage au 404 |
+| Confiance au client (dates) | 🟠 | Borne basse posée ; **aucune borne haute** → durées négatives encore possibles |
+| Règles métier | 🟠 | `POST /timerrunner` complet ✅ ; `POST /timerpause` et `PATCH /seance` encore permissifs |
+| Modèle de données | 🟠 | `@@unique([seanceId, numberRunner])` ✅ ; index et relations `userId` toujours absents (BACK-08) |
+| Tests backend | 🟢 | 105 tests Vitest, tous verts — énorme progrès (0 il y a 3 semaines) |
 
 ---
 
-## ✅ Ce qui est bien fait (à garder comme référence)
+## ✅ Ce qui est bien fait
 
-1. **Pattern de route homogène** : auth → params → validation → `try { prisma } catch { P2025 → 404, sinon 500 }`. Toutes les routes se lisent pareil, c'est exactement ce qu'on attend en entreprise.
-2. **Ownership dans la requête elle-même** (`where: { id, userId }`) plutôt qu'un `findUnique` puis un `if (seance.userId !== userId)`. Une seule requête, impossible d'oublier le contrôle.
-3. **`lib/auth.ts`** : vérification JWT + `tokenVersion` en base → les tokens sont révocables (changement de mot de passe = déconnexion de tous les appareils). C'est un niveau au-dessus de la plupart des projets junior.
-4. **Reset password** (`passwordresettoken/route.ts`) : token aléatoire 32 octets, **seul le hash SHA-256 est stocké**, expiration 30 min, `updateMany` conditionnel dans une `$transaction` pour éviter la double utilisation (race condition). Envoi du mail dans `after()` pour ne pas bloquer la réponse. Très propre.
-5. **Login** : hash factice quand l'utilisateur n'existe pas (`login/route.ts:46`) → temps de réponse identique, pas d'énumération par timing.
-6. **Singleton Prisma** (`lib/prisma.ts`) pour éviter l'épuisement de connexions en dev avec le hot-reload.
+1. **`POST /api/timerrunner` en transaction interactive** (`app/api/timerrunner/route.ts:71-124`) : lecture de la séance, contrôles métier, agrégat des pauses et `create` dans le même `$transaction`. Les erreurs métier passent par un `HttpError` levé dans la transaction puis converti en réponse dans le `catch` : c'est le bon patron (le `throw` fait aussi le rollback).
+2. **Règles métier différenciées** (`timerrunner/route.ts:80-100`) : 404 si séance absente, 409 si terminée, 409 si chrono non actif ou en pause, 409 sur `P2002` (coureur déjà enregistré). C'est exactement la grille 404 / 409 / 500 travaillée en V-03.
+3. **Contrainte d'unicité en base** (`schema.prisma:66`, migration `20261006…`) : le doublon de coureur est désormais impossible même avec deux requêtes simultanées — la base est la dernière ligne de défense, pas le client.
+4. **Vrais codes 201 / 204** partout (`new NextResponse(null, { status: 204 })`, `NextResponse.json(x, { status: 201 })`) : le piège `json({ status })` a disparu.
+5. **Rate limit fail-closed** sur toutes les routes d'écriture (sauf une, voir 1.2) : `try { limit } catch { 503 }` (`seance/route.ts:50-67`). Le service tiers en panne ne laisse plus passer les requêtes.
+6. **Reset password robuste** (`passwordresettoken/route.ts:156-171`) : `updateMany` conditionnel (`usedAt: null`, `expiresAt > now`) + `count === 0` → rejet, puis `tokenVersion: { increment: 1 }` dans la même transaction. C'est une protection contre la double utilisation du lien en concurrence, niveau professionnel.
+7. **Suppression de compte avec ré-authentification** (`user/route.ts`) : mot de passe exigé côté mobile, email + mot de passe côté web.
+8. **Ownership partout** : chaque `where` contient `userId` (y compris `findUnique({ where: { id, userId } })`).
+9. **`lib/env.ts`** : validation Zod des variables d'environnement, avec messages clairs.
 
 ---
 
 ## 🔴 Priorité 1 — Bugs réels
 
-### 1.1 Les réponses « 201 » et « 204 » sont en réalité des 200
+### 1.1 Le reset d'une séance échoue dès qu'il n'y a pas de pause (régression)
 
 ```ts
-// seance/route.ts:82, timerpause/[id]/route.ts:114, timerrunner/[id]/route.ts:53,
-// timerrunner/byseance/[id]/route.ts:26, user/route.ts:18
-return NextResponse.json({ status: 204 });
-
-// register/route.ts:57
-if (user) return NextResponse.json({ status: 201 });
+// app/api/timerpause/[id]/route.ts:117-126
+const { count } = await prisma.timerPause.deleteMany({
+  where: { seanceId: id, userId: userId },
+});
+if (count === 0) {
+  return NextResponse.json({ message: "Pauses introuvables" }, { status: 404 });
+}
+// même logique dans app/api/timerrunner/byseance/[id]/route.ts:25-30
 ```
-
-`NextResponse.json(body, init)` : le **premier** argument est le corps, le **second** les options. Ici `{ status: 204 }` est envoyé comme **body JSON** avec un code HTTP **200**.
 
 ```ts
-// ✅ 204 = "No Content" → pas de corps du tout
-return new NextResponse(null, { status: 204 });
-
-// ✅ 201 avec corps
-return NextResponse.json({ id: user.id, email: user.email }, { status: 201 });
+// frontend/chronoapp/app/run/[id].tsx:213-215 — enchaîné par le client
+await deleteTimerPause(seanceGet.id);      // 404 si aucune pause
+await deleteAllTimerRunner(seanceGet.id);  // 404 si aucun coureur
+await patchSeance(safePatch.data, seanceGet.id);
 ```
 
-> ⚠️ **Effet de bord côté mobile** : `apiFetch` fait `return response.json()` sans condition. Aujourd'hui ça « marche » *par accident* parce que le backend renvoie un JSON. Si tu corriges le backend seul, `response.json()` plantera sur un 204 vide. → Corriger les **deux** dans la même PR (voir `reviewFrontend.md` §1.1).
+**Mécanisme** : en corrigeant BACK-07 (« 404 manquants »), `count === 0` est devenu un 404. Or pour ces deux routes, « rien à supprimer » est un cas **normal** du reset. `apiFetch` lève un `HttpError` sur tout statut non-2xx.
 
-Bonus : dans `register/route.ts:57`, si `user` était falsy la fonction retournerait `undefined` → Next renvoie une erreur 500 générique. Un `create` Prisma retourne toujours l'objet ou throw, donc le `if` est inutile.
+**Scénario concret** : l'utilisateur lance le chrono, ne fait aucune pause, appuie sur reset → écran « Oups… Pauses introuvables ». Le chrono local est déjà arrêté (`clearInterval` ligne 196), mais la séance reste `InProgress` en base avec son `startedAt`. Même chose s'il a fait une pause mais n'a enregistré aucun coureur (2ᵉ appel en 404). Le test backend `renvoie 404 - Aucun timerPause` fige ce comportement, et le test front du reset ne peut pas le voir (voir `reviewTestingLibrary.md` §1.1).
 
-### 1.2 Requêtes Prisma en dehors du `try`
-
-```ts
-// timerpause/[id]/route.ts:55  et  timerrunner/route.ts:25-53
-const searchPausedAt = await prisma.timerPause.findUnique(...) // ← hors try
-try { ... }
-```
-
-Si la base est indisponible, l'exception remonte sans passer par ton `catch` → réponse 500 HTML de Next, pas ton `{ message: "Erreur serveur" }`, et pas de log contextualisé. **Règle** : tout `await prisma.*` doit être dans le `try`.
-
-### 1.3 `GET /api/timerrunner/[id]` renvoie `null` en 200
-
-```ts
-// timerrunner/[id]/route.ts:26
-return NextResponse.json(timerSessionSearch, { status: 200 }); // peut être null
-```
-
-Ajoute le même `if (!x) return 404` que dans `seance/[id]`. (C'est exactement le gap « 404 vs 500 » noté dans ton profil — tu le fais bien ailleurs, il manque ici.)
-
-### 1.4 Code mort : `P2025` sur `deleteMany`
-
-`deleteMany` ne lève **jamais** P2025 : il renvoie `{ count: 0 }`. Les blocs `if (err.code === "P2025")` dans `seance/route.ts:84`, `timerpause/[id]/route.ts:116`, `timerrunner/byseance/[id]/route.ts:28` ne s'exécutent jamais. Si tu veux un 404 :
-
-```ts
-const { count } = await prisma.timerPause.deleteMany({ where: { seanceId: id, userId } });
-if (count === 0) return NextResponse.json({ message: "Aucune pause" }, { status: 404 });
-```
-
-(P2025 n'existe que pour `update`, `delete`, `findUniqueOrThrow`… les opérations sur **un** enregistrement.)
-
----
-
-## 🟠 Priorité 2 — Logique métier et modèle
-
-### 2.1 Le reset d'une séance n'est pas atomique
-
-Côté mobile (`run/[id].tsx:226-228`) tu enchaînes 3 appels : `DELETE timerpause` → `DELETE timerrunner/byseance` → `PATCH seance`. Si le 2ᵉ échoue (réseau), la séance est dans un état incohérent (pauses supprimées, coureurs toujours là, chrono toujours « InProgress »).
-
-**C'est un cas d'école pour `$transaction`**, que tu maîtrises déjà :
+**Correction** — c'est le moment de faire **BACK-04** (#81), qui règle le bug ET l'atomicité :
 
 ```ts
 // app/api/seance/[id]/reset/route.ts
@@ -107,151 +67,191 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   try {
     const seance = await prisma.$transaction(async (tx) => {
-      await tx.timerPause.deleteMany({ where: { seanceId: id, userId } });
-      await tx.timerRunner.deleteMany({ where: { seanceId: id, userId } });
-      return tx.seance.update({
-        where: { id, userId },
-        data: { startedAt: null, state: "NoStart" },
-      });
+      const found = await tx.seance.findUnique({ where: { id, userId }, select: { state: true } });
+      if (!found) throw new HttpError(404, "Séance introuvable");
+      if (found.state === "Finish") throw new HttpError(409, "Séance terminée");
+
+      await tx.timerPause.deleteMany({ where: { seanceId: id, userId } });   // 0 ligne = OK
+      await tx.timerRunner.deleteMany({ where: { seanceId: id, userId } });  // 0 ligne = OK
+      return tx.seance.update({ where: { id, userId }, data: { startedAt: null, state: "NoStart" } });
     });
-    return NextResponse.json(seance);
+    return NextResponse.json(seance, { status: 200 });
   } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025") {
-      return NextResponse.json({ message: "Séance introuvable" }, { status: 404 });
-    }
+    if (err instanceof HttpError) return NextResponse.json({ message: err.message }, { status: err.status });
     console.error("Erreur POST API/SEANCE/RESET", err);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
 ```
 
-> 🎓 **Concept** : une action utilisateur = un endpoint = une transaction. Le client ne doit pas orchestrer la cohérence de la base.
+Côté client, `handleReset` n'appelle plus qu'**un** endpoint (même PR — changement de contrat). Les deux `DELETE` « en masse » peuvent alors être supprimés ou, s'ils restent, renvoyer **204 même quand `count === 0`** (un `DELETE` est idempotent : supprimer « tout » quand il n'y a rien n'est pas une erreur).
 
-### 2.2 Le serveur fait confiance aux dates du client
+> 🎓 **Concept** : un 404 signifie « la **ressource** visée n'existe pas ». Sur une route qui vise une **collection** (« toutes les pauses de la séance X »), la bonne question est « la séance X existe-t-elle et m'appartient-elle ? », pas « y avait-il des lignes à supprimer ? ». Et : **une action utilisateur = une requête = une transaction** (V-02). Trois appels enchaînés par le client, c'est trois occasions de laisser la base à moitié modifiée.
 
-`startedAt`, `pausedAt`, `endedAt` viennent du téléphone (`z.coerce.date()`). Conséquences possibles :
-- horloge du téléphone décalée → durées fausses ;
-- `endedAt < pausedAt` → `pauseDurationMs` **négatif** (`timerpause/[id]/route.ts:68`) ;
-- `PATCH` d'une pause déjà terminée → elle est recalculée.
-
-Deux options pédagogiques :
-- **Simple** : le serveur pose lui-même `new Date()` (le client envoie juste l'intention « pause » / « reprise »). Le chrono devient la vérité serveur.
-- **Garde-fous** si tu gardes l'heure client : `.refine(d => Math.abs(d.getTime() - Date.now()) < 60_000)` + vérifier `endedAt > pausedAt` + `where: { id, userId, endedAt: null }` dans le PATCH.
-
-### 2.3 `POST /api/timerrunner` — règles manquantes
+### 1.2 `DELETE /api/user` : body et rate limit hors `try` → 500 brut
 
 ```ts
-// timerrunner/route.ts
+// app/api/user/route.ts:21
+const body = await req.json();            // pas de .catch()
+// :42 et :113-114
+const IpCheck = await userRateLimitIpMobil.limit(ip);   // pas de try/catch
 ```
-- `numberRunner` n'est pas borné côté serveur (`z.number().int()`) : on peut enregistrer le coureur n°999 sur une séance de 10.
-- Rien n'empêche d'enregistrer **deux fois le même coureur** (double tap sur le bouton → 2 POST). Ajoute une contrainte en base :
-  ```prisma
-  model TimerRunner {
-    // ...
-    @@unique([seanceId, numberRunner])
-  }
-  ```
-  puis gère `P2002` (violation d'unicité) → `409 Conflict`.
-- Une séance `Finish` accepte encore des coureurs.
-- « Le chronomètre n'est pas actif » renvoie **404**, alors que la ressource existe. Le bon code est **409 Conflict** (état incompatible) ou **422**.
 
-### 2.4 Modèle Prisma
+**Vérifié par un test temporaire** (écrit puis supprimé) : un body non-JSON et un Upstash indisponible font tous deux **rejeter** le handler. Next répond alors une 500 générique, sans message JSON, et le cas n'est pas journalisé proprement.
 
-```prisma
-model TimerRunner {
-  userId String          // ← simple String, pas de relation
-  seance Seance @relation(...)
+C'est la seule route qui a échappé à SEC-06 (fail-closed) et au patron `req.json().catch(() => null)` que tu appliques partout ailleurs.
+
+```ts
+const body = await req.json().catch(() => null);
+// …
+try {
+  const ipCheck = await userRateLimitIpMobil.limit(ip);
+  if (!ipCheck.success) return NextResponse.json({ message: "Trop de tentatives…" }, { status: 429 });
+} catch {
+  return NextResponse.json({ message: "Service temporairement indisponible" }, { status: 503 });
 }
 ```
-- `userId` n'est pas une clé étrangère : la base n'empêche pas une valeur incohérente. Soit tu ajoutes la relation `user User @relation(...)`, soit tu considères que l'ownership passe par `seance.userId` et tu supprimes la colonne (dénormalisation à justifier).
-- **Index** : toutes tes requêtes filtrent par `userId` et/ou `seanceId`. Postgres n'indexe pas automatiquement les FK :
-  ```prisma
-  @@index([userId])          // Seance
-  @@index([seanceId])        // TimerRunner, TimerPause
-  ```
-- Mélange de conventions : `timerRunners` vs `timerpauses`, `colorRunner` vs `pauseDurationMs`. Choisis camelCase partout (`timerPauses`). Un `prisma format` réindente aussi les modèles `Seance`/`TimerRunner`.
-- Les `PasswordResetToken` expirés ne sont jamais purgés (voir `../security/securityPlus.md` §14).
 
-### 2.5 Incohérence REST sur `/api/timerpause/[id]`
+### 1.3 `DELETE /api/user` : un token expiré tombe dans la branche « web »
 
-| Méthode | `[id]` désigne… |
-| --- | --- |
-| `GET` | l'id de la **séance** |
-| `PATCH` | l'id de la **pause** |
-| `DELETE` | l'id de la **séance** |
+```ts
+// app/api/user/route.ts:19-23 et :94-95
+const userId = await getUserIdFromRequest(req);
+if (userId) { /* branche mobile : { password } */ }
+else { const safeValue = DeleteControlUserEmailPasswordSchema.safeParse(body); /* exige email */ }
+```
 
-Même URL, deux sens différents → source de bugs. Tu as déjà le bon modèle avec `/timerrunner/byseance/[id]` : fais pareil (`/timerpause/byseance/[id]`) ou mieux, imbrique : `/api/seance/[id]/pauses`.
+**Scénario** : l'utilisateur mobile a un token expiré (7 jours) ou révoqué (reset password ailleurs), il veut supprimer son compte → le serveur ne voit pas de `userId`, passe en mode web, ne trouve pas d'`email` → **400 « Format non conforme »**. Le client ne reçoit pas de 401, donc pas de déconnexion automatique : message incompréhensible.
 
-### 2.6 Cohérence front/back des limites
+**Correction** : décider du mode selon la **présence** du header, pas selon sa validité.
 
-`SeanceSchema.totalRunner` : `max(40)` côté back, `max(20)` côté front. Pas grave (le back est plus permissif), mais une seule source de vérité serait mieux. Piste d'apprentissage : un dossier `shared/schema` importé par les deux projets.
+```ts
+const hasBearer = req.headers.get("authorization")?.startsWith("Bearer ");
+if (hasBearer) {
+  const userId = await getUserIdFromRequest(req);
+  if (!userId) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+  // … branche mobile
+} else {
+  // … branche web
+}
+```
+
+Mieux encore : deux handlers séparés (`DELETE /api/user` authentifié, `POST /api/account/delete` pour la page web). Deux contrats différents = deux routes. L'énumération de comptes dans la branche web est traitée dans `reviewSecurity.md` §1.1.
 
 ---
 
-## 🟡 Priorité 3 — Qualité de code
+## 🟠 Priorité 2 — Logique métier et modèle
+
+### 2.1 BACK-05 fermée mais critère non atteint : durées négatives encore possibles
+
+```ts
+// lib/schema/seanceSchema.ts:13-16
+startedAt: z.coerce.date().refine((d) => d.getTime() >= Date.now() - ONE_HOUR_MS).nullable(),
+// lib/schema/timerPauseSchema.ts:14-16
+export const TimerPauseSchemaUpdate = z.object({ endedAt: z.coerce.date() });   // aucune borne
+```
+
+Seule la borne **basse** existe. Deux scénarios donnent encore une `duration` négative (critère de fin de #82) :
+
+- `PATCH /seance/:id` avec `startedAt` = demain → tout coureur enregistré aujourd'hui a `endedAt - startedAt < 0` ;
+- `PATCH /timerpause/:id` avec `endedAt` = dans 10 h → `pauseDurationMs` énorme → `chrono - somPauses < 0` au coureur suivant.
+
+`POST /timerrunner` ne vérifie pas non plus `endedAt >= startedAt`.
+
+```ts
+// lib/schema/dates.ts — une seule définition réutilisée partout
+const ONE_HOUR_MS = 60 * 60 * 1000;
+const CLOCK_SKEW_MS = 60 * 1000;
+export const recentDate = z.coerce.date().refine(
+  (d) => d.getTime() >= Date.now() - ONE_HOUR_MS && d.getTime() <= Date.now() + CLOCK_SKEW_MS,
+  { message: "Date hors de la fenêtre autorisée" },
+);
+```
+
+et dans `timerrunner/route.ts`, avant le `create` : `if (result < 0) throw new HttpError(409, "Durée incohérente")`.
+
+> 🎓 **Concept** (V-05) : une borne de validation a **deux côtés**. Se demander systématiquement « quelle est la valeur minimale ? **et** maximale ? » — pour un nombre, une date, une longueur de chaîne. L'alternative la plus sûre reste que le serveur pose `new Date()` lui-même.
+
+### 2.2 `POST /api/timerpause` : règles manquantes et mauvais codes
+
+```ts
+// app/api/timerpause/route.ts:61-89
+const controleSeance = await prisma.seance.findUnique({ where: { id, userId } });
+if (controleSeance?.startedAt) { /* … create */ }
+else { return NextResponse.json({ message: "Le chronomètre n'est pas lancé…" }, { status: 403 }); }
+```
+
+| Cas | Comportement actuel | Attendu |
+| --- | --- | --- |
+| Séance inexistante / d'un autre utilisateur | 403 « chrono pas lancé » | **404** |
+| Chrono non lancé | 403 | **409** (403 = « tu n'as pas le droit », pas « état incompatible ») |
+| Séance `Finish` | pause créée | **409** |
+| Une pause déjà ouverte (`endedAt: null`) | 2ᵉ pause créée | **409** |
+
+Le cas « deux pauses ouvertes » arrive vraiment avec un double tap sur pause (voir `reviewFrontend.md` §1.2) et fausse ensuite le calcul. Reprends la structure de `POST /timerrunner` : transaction + `HttpError` + `tx.timerPause.findFirst({ where: { seanceId, endedAt: null } })`.
+
+### 2.3 `PATCH /api/seance/[id]` : aucune transition d'état contrôlée
+
+`SeanceUpdateSchema.partial()` accepte n'importe quel passage : `Finish → NoStart`, `InProgress` avec `startedAt: null`, ou un nouveau `startedAt` alors que des coureurs sont déjà enregistrés (leurs durées deviennent fausses). Le double tap sur « play » envoie justement deux `PATCH` avec deux `startedAt` différents (`reviewFrontend.md` §1.2).
+
+Minimum : refuser toute modification d'une séance `Finish` (409) et refuser un `startedAt` si la séance est déjà `InProgress`. Idéalement, remplacer le `PATCH` générique par des actions explicites : `POST /seance/:id/start`, `/reset` (1.1), `/finish`.
+
+> 🎓 **Concept** : un `PATCH` « libre » sur un champ `state` transforme le client en machine à états. La machine à états appartient au serveur : il connaît les transitions autorisées.
+
+### 2.4 BACK-09 fermée mais pagination absente
+
+```ts
+// app/api/seance/route.ts:22-25
+const response = await prisma.seance.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
+```
+
+Le tri est là, la borne (`take`) non — critère « liste triée **et bornée** » de #86. Ajoute `take: 50` (ou une pagination par curseur `?cursor=`), et un `select` qui ne renvoie que ce que la liste affiche.
+
+### 2.5 Modèle Prisma (BACK-08, #85, toujours ouverte)
+
+`TimerRunner.userId` et `TimerPause.userId` sont des `String` sans relation ni index, alors que toutes les requêtes filtrent dessus. Rien à ajouter au détail de la revue précédente ([archive §2.4](archive/2026-10-04/reviewBackend.md)).
+
+### 2.6 `lib/env.ts` n'est chargé que par `lib/auth.ts` (SEC-05 partielle)
+
+```ts
+// app/api/auth/login/route.ts:76      process.env.JWT_SECRET!
+// lib/mail.ts:4 et :7                 process.env.RESEND_TOKEN, process.env.APP_URL
+```
+
+`login`, `register` et `passwordresettoken` n'importent pas `lib/auth.ts` → la validation ne s'exécute pas sur ces routes. Une variable manquante donne toujours une erreur obscure, ce que SEC-05 voulait éviter. Remplace chaque `process.env.X` par `env.X` (le simple import déclenche la validation), et passe `APP_URL` en `z.string().url()`.
+
+---
+
+## 🟡 Priorité 3 — Qualité
 
 | Fichier | Point | Correction |
 | --- | --- | --- |
-| `seance/route.ts:23,63,92` etc. | `console.error({ err }, { status: 500 })` — le 2ᵉ argument n'a pas de sens ici | `console.error("Erreur GET API/SEANCE", err)` |
-| `timerpause/[id]/route.ts:27,125` | Message « Erreur du POST » dans un GET/DELETE | Copier-coller : renomme |
-| `seance/[id]/route.ts:90` | Schéma `patchSchema` recréé à chaque requête | Le déclarer dans `lib/schema/seanceSchema.ts` |
-| `seance/[id]/route.ts:92` | « Au moins un cham » | typo |
-| `seance/[id]/route.ts:64` & co | Mélange `Response.json` / `NextResponse.json` | Un seul des deux (`NextResponse`) |
-| `user/route.ts:14`, `timerpause/[id]/route.ts:110` | Variables `userDelete`, `timerPause` non utilisées | Supprimer (ESLint te le signale) |
-| `login/route.ts:28` | `.trim().toLowerCase()` déjà fait par Zod | Redondant |
-| `passwordresettoken/route.ts:132` | `new Date(searchPasswordResetToken?.expiresAt)` — c'est déjà une `Date`, et le `?.` est inutile après le `if` | `if (searchPasswordResetToken.expiresAt < new Date())` |
-| `passwordresettoken/route.ts:117-139` | 3 `if` qui renvoient le même message | Fusionner en un seul `if (!t \|\| t.usedAt \|\| t.expiresAt < now)` |
-| `app/error.tsx:7` | `error: React.ReactNode` | `error: Error & { digest?: string }` |
-| `app/page.tsx:34` | `height={1800}` | `180` |
-| `app/page.tsx:7` | `type token` en minuscule | Convention : `type Token` |
-| `package.json` | `eslint-config-next` 16.2.12 vs `next` ^16.3.5 | Aligner (Dependabot les groupe maintenant) |
+| `timerrunner/route.ts:14-21` vs `lib/errors.ts` | Deux classes `HttpError` différentes dans le backend | Une seule `lib/httpError.ts` côté serveur ; `lib/errors.ts` (copie du front) sert aux formulaires web |
+| `seance/route.ts:29,97,125`, `seance/[id]/route.ts:71`, `timerrunner/[id]/route.ts:67`, `timerrunner/byseance/[id]/route.ts:34` | `console.error({ err }, { status: 500 })` (6 occurrences) | `console.error("Erreur GET API/SEANCE", err)` |
+| `timerrunner/[id]/route.ts:62` | Message « Séance introuvable » pour un coureur | « Coureur introuvable » |
+| `timerpause/[id]/route.ts:26,130` | Logs « POST » dans un GET / DELETE | Corriger le libellé |
+| `timerpause/[id]/route.ts:91-97` | P2025 (pause déjà terminée) → 404 | 409 « Pause déjà terminée » |
+| `seance/route.ts:116-121` | `DELETE /seance` → 404 si l'historique est vide | 204 (idempotent) — l'utilisateur voit « Séances introuvables » en vidant une liste vide |
+| `register/route.ts:55-69` | `findUnique` puis `create` : deux inscriptions simultanées → `P2002` → 500 | Attraper `P2002` → 409 (et hacher **après** le contrôle d'existence) |
+| `login/route.ts:37` | Rate limit sur `value.email.trim().toLowerCase()` (donnée brute) | `safeValue.data.email` (déjà normalisé par Zod) |
+| `lib/schema/deleteSchema.ts` / `deleteUserSchema.ts` | Deux schémas quasi identiques | Garder `DeleteControlUserEmailPasswordSchema`, le réutiliser dans le formulaire web |
+| `app/error.tsx:10-13` | « Impossible de charger la page de connexion » sur toutes les pages ; `error: React.ReactNode` | Message générique ; `error: Error & { digest?: string }` |
+| `app/component/paswwordReset.tsx` | Faute dans le nom ; `setState` synchrone dans l'effet (erreur ESLint) | `useSyncExternalStore` ou lecture du hash dans un état initial paresseux `useState(() => …)` côté client |
+| `app/privacy/page.tsx` | 23 erreurs ESLint `react/no-unescaped-entities` | `&apos;` / `’` typographique |
+| `backend/chronoapp/.expo/`, `/.expo/`, `frontend/.expo/` | Dossiers Expo suivis par git (et `.expo/cache/` non suivi dans le backend) | Les retirer (`git rm -r --cached`) et ajouter `.expo/` au `.gitignore` racine |
 
-### Refactor suggéré : un helper pour l'auth
-
-Les 4 lignes `getUserIdFromRequest` + `if (!userId) return 401` sont répétées **15 fois**. Un petit wrapper :
-
-```ts
-// lib/withAuth.ts
-type Handler<P> = (req: Request, ctx: { params: Promise<P> }, userId: string) => Promise<Response>;
-
-export function withAuth<P>(handler: Handler<P>) {
-  return async (req: Request, ctx: { params: Promise<P> }) => {
-    const userId = await getUserIdFromRequest(req);
-    if (!userId) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
-    return handler(req, ctx, userId);
-  };
-}
-
-// usage
-export const GET = withAuth<{ id: string }>(async (req, { params }, userId) => { ... });
-```
-
-> 🎓 **Concept** : fonction d'ordre supérieur (HOF) — même idée qu'un middleware Express.
-
----
-
-## 🧪 Tests backend (absents)
-
-Le frontend a 9 fichiers de tests, le backend **zéro**, alors que c'est lui qui porte les règles critiques (ownership, calcul des durées, reset password). Proposition (cohérente avec ta préférence TDD) :
-
-1. **Vitest** + mock de `@/lib/prisma` (ou une base Postgres de test via Docker).
-2. Appeler directement les handlers : `const res = await POST(new Request("http://x/api/seance", { method: "POST", headers: { authorization: "Bearer ..." }, body: JSON.stringify({...}) }))`.
-3. Cas prioritaires :
-   - sans token → 401 ;
-   - séance d'un autre user → 404 (test d'IDOR) ;
-   - `DELETE` → **204 sans body** (ce test aurait attrapé le bug §1.1) ;
-   - `POST timerrunner` : durée = `endedAt - startedAt - Σpauses` ;
-   - reset password : token expiré / déjà utilisé → 400.
+`npx eslint .` : **27 erreurs, 8 warnings** (23 dans `privacy/page.tsx`, 1 dans `paswwordReset.tsx`, 3 `any` dans les tests). `tsc --noEmit` : 0 erreur.
 
 ---
 
 ## 📋 Plan d'action backend
 
-1. [ ] Corriger 204/201 (**+ `apiFetch` côté mobile dans la même PR**)
-2. [ ] Rentrer tous les `await prisma` dans les `try`
-3. [ ] Endpoint `POST /api/seance/[id]/reset` en `$transaction`
-4. [ ] `@@unique([seanceId, numberRunner])` + gestion P2002
-5. [ ] `@@index` sur `userId` / `seanceId`
-6. [ ] Validation des dates (ou heure serveur)
-7. [ ] Harmoniser les routes `/timerpause`
-8. [ ] Premiers tests Vitest sur les handlers
+1. [ ] **Endpoint `POST /seance/:id/reset` transactionnel** (BACK-04) + appel unique côté client — **même PR** que `run/[id].tsx` (règle 1.1)
+2. [ ] `DELETE /api/user` : `req.json().catch`, rate limit dans `try`, 401 si Bearer invalide (1.2, 1.3) + réponse uniforme web (`reviewSecurity.md` §1.1)
+3. [ ] Bornes hautes sur toutes les dates + refus d'une `duration < 0` (2.1) — rouvrir #82 ou nouvelle issue
+4. [ ] Règles de `POST /timerpause` (404/409, pause ouverte unique) en transaction (2.2)
+5. [ ] Transitions d'état de séance contrôlées côté serveur (2.3)
+6. [ ] `take` sur `GET /seance` (2.4), `env.X` partout (2.6)
+7. [ ] BACK-08 (index + relations), puis la passe qualité (tableau 🟡)
+
+> 💡 Exercice TDD aligné sur ton niveau : écris d'abord dans `test/_route_seanceReset.test.ts` le test « 200 quand la séance n'a ni pause ni coureur » (rouge : la route n'existe pas), puis « 409 si `Finish` », puis implémente. Tu as déjà tout l'outillage (`prismaMock`, `$transaction.mockImplementation`).
