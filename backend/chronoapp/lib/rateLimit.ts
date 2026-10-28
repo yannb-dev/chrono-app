@@ -58,16 +58,28 @@ export const userRateLimitIpWeb = new Ratelimit({
   prefix: "ratelimit:userIpWeb",
 });
 
-export const seanceRateLimitUserId = new Ratelimit({
+export const seanceRateLimitUserIdPOST = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(60, "60 s"),
-  prefix: "ratelimit:seanceUserId",
+  prefix: "ratelimit:seanceUserIdPOST",
 });
 
-export const seanceRateLimitIpMobile = new Ratelimit({
+export const seanceRateLimitIpMobilePOST = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(60, "60 s"),
-  prefix: "ratelimit:seanceIpMobile",
+  prefix: "ratelimit:seanceIpMobilePOST",
+});
+
+export const seanceRateLimitUserIdGET = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(60, "60 s"),
+  prefix: "ratelimit:seanceUserIdGET",
+});
+
+export const seanceRateLimitIpMobileGET = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(60, "60 s"),
+  prefix: "ratelimit:seanceIpMobileGET",
 });
 
 export const timerrunnerRateLimitUserId = new Ratelimit({
