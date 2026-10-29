@@ -71,10 +71,26 @@ export async function POST(req: Request) {
         { status: 404 },
       );
 
-    if (!controleSeance?.startedAt)
+    if (!controleSeance.startedAt)
       return NextResponse.json(
         { message: "Le chronomètre n'est pas lancé pour cette seance" },
-        { status: 403 },
+        { status: 409 },
+      );
+
+    if (controleSeance.state === "Finish")
+      return NextResponse.json(
+        { message: "La séance est terminé, impossible de créer une pause" },
+        { status: 409 },
+      );
+
+    const pauseInProgress = await prisma.timerPause.findFirst({
+      where: { seanceId: controleSeance.id, endedAt: null },
+    });
+
+    if (pauseInProgress)
+      return NextResponse.json(
+        { message: "Pause déjà en cours" },
+        { status: 409 },
       );
 
     if (
