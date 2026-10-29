@@ -45,6 +45,7 @@ export async function POST(req: Request) {
       );
     }
   } catch {
+    // fail-closed sur (auth)
     return NextResponse.json(
       { message: "Service temporairement indisponible" },
       { status: 503 },
