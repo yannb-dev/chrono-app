@@ -36,7 +36,6 @@ export default function Account() {
 
     try {
       await deleteUser(valueForm);
-
       await SecureStore.deleteItemAsync("accessToken");
       await logout();
     } catch (err) {
