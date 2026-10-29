@@ -22,12 +22,12 @@ export async function DELETE(
       },
     });
 
-    if (count === 0) {
-      return NextResponse.json(
-        { message: "Coureurs introuvables" },
-        { status: 404 },
-      );
-    }
+    // if (count === 0) {
+    //   return NextResponse.json(
+    //     { message: "Coureurs introuvables" },
+    //     { status: 404 },
+    //   );
+    // }
 
     return new NextResponse(null, { status: 204 });
   } catch (err) {

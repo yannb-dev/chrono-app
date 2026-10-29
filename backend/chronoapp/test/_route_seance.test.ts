@@ -267,50 +267,6 @@ describe("POST /api/seance", () => {
       data: { totalRunner: 15, colorRunner: "rgb(39, 91, 245)", userId },
     });
   });
-
-  //======= DELETE =============
-  //============================
-
-  describe("DELETE /api/seance", () => {
-    const userId = "idtest123+";
-    const makeDelete = (body: unknown) =>
-      new Request("http://localhost/api/seance", {
-        method: "DELETE",
-        headers: { "x-forwarded-for": "1.2.3.4" },
-        body: JSON.stringify(body),
-      });
-    // ==== TEST 1 ====
-    //
-    it("renvoie 401 Non autorisé", async () => {
-      userMock.mockResolvedValue(null as never);
-
-      const res = await DELETE(makeDelete({}));
-
-      expect(res.status).toBe(401);
-      expect(prismaMock.seance.findMany).not.toHaveBeenCalled();
-    });
-
-    // ==== TEST 2 ====
-    //
-
-    it("renvoie 404 - Aucune séance", async () => {
-      userMock.mockResolvedValue(userId as never);
-      prismaMock.seance.deleteMany.mockResolvedValue({ count: 0 });
-      const res = await DELETE(makeDelete({}));
-
-      expect(res.status).toBe(404);
-    });
-
-    // ==== TEST 3 ====
-    //
-    it("renvoie 204 - Séance supprimé", async () => {
-      userMock.mockResolvedValue(userId as never);
-      prismaMock.seance.deleteMany.mockResolvedValue({ count: 4 });
-      const res = await DELETE(makeDelete({}));
-
-      expect(res.status).toBe(204);
-    });
-  });
 });
 
 //======= DELETE ===========
@@ -339,13 +295,13 @@ describe("DELETE /api/seance", () => {
 
   // // ==== TEST 2 ====
   // //
-  it("filtre par userId (ownership)", async () => {
+  it("renvoi 204 - Aucune séance", async () => {
     userMock.mockResolvedValue("idtest123+" as never);
     prismaMock.seance.deleteMany.mockResolvedValue({ count: 0 } as never);
 
     const res = await DELETE(makeDelete({}));
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(204);
     expect(prismaMock.seance.deleteMany).toHaveBeenCalled();
   });
 });

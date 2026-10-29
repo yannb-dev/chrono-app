@@ -144,12 +144,12 @@ export async function DELETE(req: Request) {
       },
     });
 
-    if (count === 0) {
-      return NextResponse.json(
-        { message: "Séances introuvables" },
-        { status: 404 },
-      );
-    }
+    // if (count === 0) {
+    //   return NextResponse.json(
+    //     { message: "Séances introuvables" },
+    //     { status: 404 },
+    //   );
+    // }
 
     return new NextResponse(null, { status: 204 });
   } catch (err) {

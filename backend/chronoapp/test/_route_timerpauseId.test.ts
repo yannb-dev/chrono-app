@@ -244,13 +244,13 @@ describe("DELETE /api/timerpause/aze123+", () => {
 
   //     //     // ==== TEST 3 ====
   //     //     //
-  it("renvoie 404 - Aucun timerPause", async () => {
+  it("renvoie 204  - Aucun timerPause", async () => {
     userMock.mockResolvedValue(userId as never);
     prismaMock.timerPause.deleteMany.mockResolvedValue({ count: 0 } as never);
 
     const res = await DELETE(makeDelete({}), makeParams("aze123+"));
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(204);
   });
 
   //     //     // ==== TEST 4 ====

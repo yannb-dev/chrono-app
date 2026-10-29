@@ -46,12 +46,12 @@ describe("DELETE /api/timerrunner/byseance/123Aze", () => {
   //     //     // ==== TEST 2 ====
   //     //     //
 
-  it("renvoie 404 - Aucun timerRunner", async () => {
+  it("renvoie 204 - Aucun timerRunner", async () => {
     userMock.mockResolvedValue(userId as never);
     prismaMock.timerRunner.deleteMany.mockResolvedValue({ count: 0 });
     const res = await DELETE(makeDelete({}), makeParams("123Aze"));
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(204);
   });
 
   //     //     // ==== TEST 3 ====
