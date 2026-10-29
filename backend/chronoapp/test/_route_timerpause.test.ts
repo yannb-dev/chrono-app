@@ -160,7 +160,7 @@ describe("POST /api/timerpause", () => {
 
   //   //   // ==== TEST 5 ====
   //   //   //
-  it("renvoie 403 - Une séance trouvé mais startedAt : Null", async () => {
+  it("renvoie 409 - Une séance trouvé mais startedAt : Null", async () => {
     const userMock = vi.mocked(getUserIdFromRequest);
 
     const returnSeance = {
@@ -179,7 +179,71 @@ describe("POST /api/timerpause", () => {
 
     const res = await POST(makePost(goodValue));
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(409);
+    expect(prismaMock.seance.findUnique).toHaveBeenCalled();
+  });
+
+  //   //   // ==== TEST 5 ====
+  //   //   //
+  it("renvoie 409 - Un timerpause trouvé mais endedAt : Null", async () => {
+    const userMock = vi.mocked(getUserIdFromRequest);
+
+    const returnSeance = {
+      id: "aze123++",
+      createdAt: NOW,
+      totalRunner: 20,
+      colorRunner: "rgb",
+      startedAt: NOW,
+      state: "NoStart",
+      userId: "ul",
+    };
+
+    const returnTimerPause = {
+      id: "oiu789+",
+      userId: "u1",
+      pausedAt: PAUSE_AT_GOOD,
+      endedAt: null,
+      pauseDurationMs: null,
+      seanceId: "aze123+",
+    };
+
+    userMock.mockResolvedValue("u1" as never);
+    limitMockUserId.mockResolvedValue(ok as never);
+
+    prismaMock.seance.findUnique.mockResolvedValue(returnSeance as never);
+    prismaMock.timerPause.findFirst.mockResolvedValue(
+      returnTimerPause as never,
+    );
+
+    const res = await POST(makePost(goodValue));
+
+    expect(res.status).toBe(409);
+    expect(prismaMock.seance.findUnique).toHaveBeenCalled();
+    expect(prismaMock.timerPause.findFirst).toHaveBeenCalled();
+  });
+
+  //   //   // ==== TEST 5 ====
+  //   //   //
+  it("renvoie 409 - Un séance trouvé mais state : Finish", async () => {
+    const userMock = vi.mocked(getUserIdFromRequest);
+
+    const returnSeance = {
+      id: "aze123++",
+      createdAt: NOW,
+      totalRunner: 20,
+      colorRunner: "rgb",
+      startedAt: NOW,
+      state: "Finish",
+      userId: "ul",
+    };
+
+    userMock.mockResolvedValue("u1" as never);
+    limitMockUserId.mockResolvedValue(ok as never);
+    prismaMock.seance.findUnique.mockResolvedValue(returnSeance as never);
+
+    const res = await POST(makePost(goodValue));
+
+    expect(res.status).toBe(409);
     expect(prismaMock.seance.findUnique).toHaveBeenCalled();
   });
 
@@ -249,11 +313,13 @@ describe("POST /api/timerpause", () => {
     userMock.mockResolvedValue("u1" as never);
     limitMockUserId.mockResolvedValue(ok as never);
     prismaMock.seance.findUnique.mockResolvedValue(returnSeance as never);
+    prismaMock.timerPause.findFirst.mockResolvedValue(null as never);
     prismaMock.timerPause.create.mockResolvedValue(newTimerPause as never);
 
     const res = await POST(makePost({ ...goodValue, pausedAt: PAUSE_AT_GOOD }));
 
     expect(prismaMock.seance.findUnique).toHaveBeenCalled();
+
     expect(prismaMock.timerPause.create).toHaveBeenCalled();
     expect(res.status).toBe(201);
   });
