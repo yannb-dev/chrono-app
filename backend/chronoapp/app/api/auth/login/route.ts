@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-
+import { env } from "@/lib/env";
 import getClientIp from "@/lib/getClientIp";
 
 import { loginRateLimitIP } from "@/lib/rateLimit";
@@ -33,9 +33,7 @@ export async function POST(req: Request) {
 
   try {
     const IpCheck = await loginRateLimitIP.limit(ip);
-    const EmailCheck = await loginRateLimitEmail.limit(
-      value.email.trim().toLowerCase(),
-    );
+    const EmailCheck = await loginRateLimitEmail.limit(safeValue.data.email);
 
     if (!IpCheck.success || !EmailCheck.success) {
       return NextResponse.json(
@@ -73,7 +71,7 @@ export async function POST(req: Request) {
 
     const token = jwt.sign(
       { userId: userSearch.id, tokenVersion: userSearch.tokenVersion },
-      process.env.JWT_SECRET!,
+      env.JWT_SECRET,
       {
         expiresIn: "7d",
       },
