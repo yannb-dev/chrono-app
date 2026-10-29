@@ -79,7 +79,14 @@ export default function Privacy() {
             </div>
             <div className="w-full flex border-b border-green-400">
               <div className="w-[30%] p-2">Adresse e-mail</div>
-              <div className="w-[70%] p-2">Créer un compte et se connecter</div>
+              <div className="w-[70%] p-2">
+                Créer un compte et se connecter, envoyer un email de reset,
+                prévenir de la fraude
+              </div>
+            </div>
+            <div className="w-full flex border-b border-green-400">
+              <div className="w-[30%] p-2">IP</div>
+              <div className="w-[70%] p-2">Prévention de la fraude</div>
             </div>
             <div className="w-full flex border-b border-green-400">
               <div className="w-[30%] p-2">Identifiant de compte</div>
@@ -126,6 +133,12 @@ export default function Privacy() {
             <li>
               <strong>Sentry :</strong> détections et corrections des bugs,
               informations utilisateur direct non transmises.
+            </li>
+            <li>
+              <strong>Upstash :</strong> protection contre les abus.
+            </li>
+            <li>
+              <strong>Resend :</strong> envoi des emails de réinitialisation.
             </li>
           </ul>
         </div>
