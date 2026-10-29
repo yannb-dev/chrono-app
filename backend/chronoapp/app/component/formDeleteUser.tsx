@@ -27,7 +27,7 @@ export default function FormDeleteUser() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/user", {
+      const response = await fetch("/api/userWeb", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -117,13 +117,13 @@ export default function FormDeleteUser() {
         onSubmit={handleSubmit(onSubmit)}
       >
         <input
-          className="w-100 border-b border-gray-200 mb-4 outline-none   text-gray-900"
+          className="w-full border-b border-gray-200 mb-4 outline-none   text-gray-900"
           {...register("email")}
           placeholder="Email"
         />
         {errors.email?.message && <p>{errors.email.message}</p>}
         <input
-          className="w-100 border-b border-gray-200 outline-none text-gray-900"
+          className="w-full border-b border-gray-200 outline-none text-gray-900"
           {...register("password")}
           placeholder="Mot de passe"
           type="password"

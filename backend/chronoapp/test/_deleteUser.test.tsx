@@ -114,7 +114,7 @@ describe("Page DELETE-USER", () => {
     ).toBeInTheDocument();
 
     expect(fetch).toHaveBeenCalledWith(
-      "/api/user",
+      "/api/userWeb",
       expect.objectContaining({ method: "DELETE" }),
     );
   });
@@ -138,7 +138,7 @@ describe("Page DELETE-USER", () => {
     await user.click(await screen.findByText("Supprimer"));
 
     expect(fetch).toHaveBeenCalledWith(
-      "/api/user",
+      "/api/userWeb",
       expect.objectContaining({ method: "DELETE" }),
     );
     expect(screen.getByText("Utilisateur introuvable")).toBeInTheDocument();
@@ -161,7 +161,7 @@ describe("Page DELETE-USER", () => {
     await user.click(await screen.findByText("Supprimer"));
 
     expect(fetch).toHaveBeenCalledWith(
-      "/api/user",
+      "/api/userWeb",
       expect.objectContaining({ method: "DELETE" }),
     );
     expect(screen.getByText("Aucun réseau")).toBeInTheDocument();
