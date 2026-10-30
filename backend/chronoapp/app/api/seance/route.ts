@@ -53,6 +53,7 @@ export async function GET(req: Request) {
       where: { userId: userId },
       orderBy: { createdAt: "desc" },
       select: { createdAt: true, state: true, colorRunner: true, id: true },
+      take: 50,
     });
 
     return NextResponse.json(response, { status: 200 });
