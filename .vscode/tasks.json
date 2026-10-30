@@ -4,7 +4,7 @@
     {
       "label": "Backend",
       "type": "shell",
-      "command": "npm run dev",
+      "command": "npm test",
       "isBackground": true,
       "options": {
         "cwd": "${workspaceFolder}/backend/chronoapp"
@@ -21,39 +21,6 @@
     },
     {
       "label": "Front",
-      "type": "shell",
-      "command": "npx expo start",
-      "isBackground": true,
-      "options": {
-        "cwd": "${workspaceFolder}/frontend/chronoapp"
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "group": "dev"
-      },
-      "runOptions": {
-        "runOn": "folderOpen"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Claude",
-      "type": "shell",
-      "command": "claude",
-      "isBackground": true,
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "group": "dev"
-      },
-      "runOptions": {
-        "runOn": "folderOpen"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Testing",
       "type": "shell",
       "command": "npm test",
       "isBackground": true,

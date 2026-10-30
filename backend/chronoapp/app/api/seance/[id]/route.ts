@@ -101,7 +101,31 @@ export async function PATCH(
     );
   }
 
+  //
+
   try {
+    const seance = await prisma.seance.findUnique({
+      where: { id, userId },
+    });
+
+    if (
+      safeValuePatch.data.state === "InProgress" &&
+      seance?.startedAt &&
+      seance.state === "InProgress"
+    ) {
+      return NextResponse.json(
+        { message: "La séance est déjà lancé" },
+        { status: 409 },
+      );
+    }
+
+    if (seance?.state === "Finish" && seance.startedAt) {
+      return NextResponse.json(
+        { message: "La séance est terminé, elle ne peut être modifiée" },
+        { status: 409 },
+      );
+    }
+
     const udpateSeance = await prisma.seance.update({
       where: { id, userId: userId },
       data: safeValuePatch.data,
