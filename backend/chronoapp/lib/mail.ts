@@ -1,10 +1,11 @@
 // lib/mail.ts
 import { Resend } from "resend";
+import { env } from "./env";
 
-const resend = new Resend(process.env.RESEND_TOKEN);
+const resend = new Resend(env.RESEND_TOKEN);
 
 export async function sendVerificationEmail(toEmail: string, token: string) {
-  const verifyUrl = `${process.env.APP_URL}/reset/#token=${token}`;
+  const verifyUrl = `${env.APP_URL}/reset/#token=${token}`;
 
   const { data, error } = await resend.emails.send({
     from: "ChronoAppSport <noreply@chronoappsport.fr>",
