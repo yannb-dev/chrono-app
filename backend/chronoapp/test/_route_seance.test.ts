@@ -112,7 +112,7 @@ describe("GET /api/seance", () => {
 
   // // ==== TEST 2 ====
   // //
-  it("filtre par userId (ownership)", async () => {
+  it("filtre par userId (ownership) et renvoi que 50 séances", async () => {
     userMock.mockResolvedValue("idtest123+" as never);
     prismaMock.seance.findMany.mockResolvedValue([
       { id: "o1", name: "Test", userId: "idtest123+" },
@@ -125,6 +125,7 @@ describe("GET /api/seance", () => {
       where: { userId: "idtest123+" },
       orderBy: { createdAt: "desc" },
       select: { createdAt: true, state: true, colorRunner: true, id: true },
+      take: 50,
     });
   });
 });
