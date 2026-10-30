@@ -175,7 +175,7 @@ describe("PATCH /api/seance/[id]", () => {
 
     expect(res.status).toBe(409);
     expect(body.message).toBe(
-      "La séance est terminé, elle ne peut être modifié",
+      "La séance est terminé, elle ne peut être modifiée",
     );
     expect(prismaMock.seance.findUnique).toHaveBeenCalledWith({
       where: { id: "123Aze", userId },

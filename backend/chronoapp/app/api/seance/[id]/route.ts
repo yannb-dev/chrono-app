@@ -121,7 +121,7 @@ export async function PATCH(
 
     if (seance?.state === "Finish" && seance.startedAt) {
       return NextResponse.json(
-        { message: "La séance est terminé, elle ne peut être modifié" },
+        { message: "La séance est terminé, elle ne peut être modifiée" },
         { status: 409 },
       );
     }
