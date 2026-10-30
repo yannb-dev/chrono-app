@@ -7,6 +7,7 @@ import { GET, PATCH, DELETE } from "@/app/api/seance/[id]/route";
 vi.mock("@/lib/auth", () => ({ default: vi.fn() }));
 import getUserIdFromRequest from "@/lib/auth";
 import { Prisma } from "@prisma/client";
+import { IoMdBody } from "react-icons/io";
 
 const userMock = vi.mocked(getUserIdFromRequest);
 
@@ -99,7 +100,19 @@ describe("PATCH /api/seance/[id]", () => {
     vi.useRealTimers();
   });
 
-  //   // ==== TEST 3 ====
+  //   // ==== TEST 1 ====
+  //   //
+  it("renvoie 401 -Non autorisé", async () => {
+    const userMock = vi.mocked(getUserIdFromRequest);
+    userMock.mockResolvedValue(null as never);
+
+    const res = await PATCH(makePatch(goodValue), makeParams("123Aze"));
+
+    expect(res.status).toBe(401);
+    expect(prismaMock.seance.create).not.toHaveBeenCalled();
+  });
+
+  //   // ==== TEST 2 ====
   //   //
   it("renvoie 400 si le body est invalide", async () => {
     const userMock = vi.mocked(getUserIdFromRequest);
@@ -113,14 +126,60 @@ describe("PATCH /api/seance/[id]", () => {
 
   //   // ==== TEST 4 ====
   //   //
-  it("renvoie 401 -Non autorisé", async () => {
+  it("renvoi 409, la séance a déjà une valeur startedAt", async () => {
     const userMock = vi.mocked(getUserIdFromRequest);
-    userMock.mockResolvedValue(null as never);
+    const userId = "idtest123+";
+    const seance = {
+      id: "s1",
+      totalRunner: 15,
+      colorRunner: "rgb(39, 91, 245)",
+      userId,
+      startedAt: new Date("2026-01-01T10:10:20Z"),
+      state: "InProgress",
+      createdAt: new Date("2026-01-01T10:10:20Z"),
+    };
+
+    userMock.mockResolvedValue(userId as never);
+    prismaMock.seance.findUnique.mockResolvedValue(seance as never);
 
     const res = await PATCH(makePatch(goodValue), makeParams("123Aze"));
+    const body = await res.json();
 
-    expect(res.status).toBe(401);
-    expect(prismaMock.seance.create).not.toHaveBeenCalled();
+    expect(res.status).toBe(409);
+    expect(body.message).toBe("La séance est déjà lancé");
+    expect(prismaMock.seance.findUnique).toHaveBeenCalledWith({
+      where: { id: "123Aze", userId },
+    });
+  });
+
+  //   // ==== TEST 3 ====
+  //   //
+  it("renvoi 409, la séance est déjà FINISH", async () => {
+    const userMock = vi.mocked(getUserIdFromRequest);
+    const userId = "idtest123+";
+    const seance = {
+      id: "123Aze",
+      totalRunner: 15,
+      colorRunner: "rgb(39, 91, 245)",
+      userId,
+      startedAt: new Date("2026-01-01T10:10:20Z"),
+      state: "Finish",
+      createdAt: new Date("2026-01-01T10:10:20Z"),
+    };
+
+    userMock.mockResolvedValue(userId as never);
+    prismaMock.seance.findUnique.mockResolvedValue(seance as never);
+
+    const res = await PATCH(makePatch(goodValue), makeParams("123Aze"));
+    const body = await res.json();
+
+    expect(res.status).toBe(409);
+    expect(body.message).toBe(
+      "La séance est terminé, elle ne peut être modifié",
+    );
+    expect(prismaMock.seance.findUnique).toHaveBeenCalledWith({
+      where: { id: "123Aze", userId },
+    });
   });
 
   //   // ==== TEST 5 ====
@@ -134,7 +193,7 @@ describe("PATCH /api/seance/[id]", () => {
       colorRunner: "rgb(39, 91, 245)",
       userId,
       startedAt: new Date("2026-01-01T10:10:20Z"),
-      state: "InProgress",
+      state: "Finish",
       createdAt: new Date("2026-01-01T10:10:20Z"),
     };
 
