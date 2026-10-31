@@ -10,6 +10,7 @@ import { patchTimerPause } from "@/services/api";
 import { deleteTimerPause } from "@/services/api";
 import { postTimerPause } from "@/services/api";
 import { deleteAllTimerRunner } from "@/services/api";
+import { ResetSeance } from "@/services/api";
 
 import { PatchChronoSchema } from "@/lib/schema/patchChronoSchema";
 import { EndedPausedSchema } from "@/lib/schema/endedSchema";
@@ -210,9 +211,7 @@ export default function RunPage() {
 
     if (safePatch.success) {
       try {
-        await deleteTimerPause(seanceGet.id);
-        await deleteAllTimerRunner(seanceGet.id);
-        await patchSeance(safePatch.data, seanceGet.id);
+        await ResetSeance(seanceGet.id);
 
         setElapsed(0);
         setReset(true);
@@ -226,7 +225,7 @@ export default function RunPage() {
         } else {
           setDetailError("Une erreur inattendue est survenue");
         }
-        console.error("Erreur du fetch api/timerPause", err);
+        console.error("Erreur du fetch api/resetSeance", err);
         setError(true);
       }
     } else {

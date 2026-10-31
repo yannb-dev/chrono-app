@@ -7,7 +7,6 @@ import { GET, PATCH, DELETE } from "@/app/api/seance/[id]/route";
 vi.mock("@/lib/auth", () => ({ default: vi.fn() }));
 import getUserIdFromRequest from "@/lib/auth";
 import { Prisma } from "@prisma/client";
-import { IoMdBody } from "react-icons/io";
 
 const userMock = vi.mocked(getUserIdFromRequest);
 
@@ -109,7 +108,7 @@ describe("PATCH /api/seance/[id]", () => {
     const res = await PATCH(makePatch(goodValue), makeParams("123Aze"));
 
     expect(res.status).toBe(401);
-    expect(prismaMock.seance.create).not.toHaveBeenCalled();
+    expect(prismaMock.seance.findUnique).not.toHaveBeenCalled();
   });
 
   //   // ==== TEST 2 ====
@@ -121,7 +120,7 @@ describe("PATCH /api/seance/[id]", () => {
     const res = await PATCH(makePatch(badValue), makeParams("123Aze"));
 
     expect(res.status).toBe(400);
-    expect(prismaMock.seance.create).not.toHaveBeenCalled();
+    expect(prismaMock.seance.findUnique).not.toHaveBeenCalled();
   });
 
   //   // ==== TEST 4 ====

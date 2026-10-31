@@ -120,6 +120,14 @@ export function postResetPassword(data: ResetPasswordSchema) {
   });
 }
 
+// ResetSeance =================================
+
+export function ResetSeance(id: string) {
+  return apiFetch(`/api/resetseance/${id}`, {
+    method: "DELETE",
+  });
+}
+
 // Seance ====================================
 
 export function postSeance(data: FormSchema) {
