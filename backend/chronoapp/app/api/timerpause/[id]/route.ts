@@ -114,16 +114,9 @@ export async function DELETE(
 
   const { id } = await params;
   try {
-    const { count } = await prisma.timerPause.deleteMany({
+    await prisma.timerPause.deleteMany({
       where: { seanceId: id, userId: userId },
     });
-
-    // if (count === 0) {
-    //   return NextResponse.json(
-    //     { message: "Pauses introuvables" },
-    //     { status: 404 },
-    //   );
-    // }
 
     return new NextResponse(null, { status: 204 });
   } catch (err) {

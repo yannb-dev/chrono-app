@@ -262,8 +262,6 @@ describe("POST /api/timerpause", () => {
       userId: "u1",
     };
 
-    const returnSeanceNull = null;
-
     const newTimerPause = {
       id: "oiu789+",
       userId: "u1",

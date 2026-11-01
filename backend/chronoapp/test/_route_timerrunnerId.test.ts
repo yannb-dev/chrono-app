@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { prismaMock } from "@/test/prismaMock";
 import { GET, DELETE } from "@/app/api/timerrunner/[id]/route";
 

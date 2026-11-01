@@ -1,28 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import FormResetPassword from "../component/formResetPassword";
 import Image from "next/image";
 
-type token = string | null;
+const noopSubscribe = () => () => {};
+
+function readTokenFromHash(): string | null {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.hash.slice(1)).get("token");
+}
 
 export default function PasswordReset() {
-  const [token, setToken] = useState<token>();
-  const [ready, setReady] = useState(false);
+  const isClient = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+
+  const [token] = useState<string | null>(readTokenFromHash);
 
   useEffect(() => {
-    const hash = window.location.hash;
-    const found = new URLSearchParams(hash.slice(1)).get("token");
+    if (token) history.replaceState(null, "", window.location.pathname);
+  }, [token]);
 
-    setToken(found);
-    setReady(true);
-
-    if (found) {
-      history.replaceState(null, "", window.location.pathname);
-    }
-  }, []);
-
-  if (!ready) return null;
+  if (!isClient) return null;
 
   if (!token)
     return (
@@ -31,11 +33,11 @@ export default function PasswordReset() {
           src="/images/android-icon-foreground.png"
           alt="Logo de l'application"
           width={180}
-          height={1800}
+          height={180}
         />
         <div className="h-30 w-[50%] flex justify-center items-center border border-green-400 bg-gray-100 rounded-sm mt-20">
           <h1 className="text-gray-900 text-sm">
-            Lien invalide, veuiller relancer une demande de réinitialisation de
+            Lien invalide, veuillez relancer une demande de réinitialisation de
             mot de passe
           </h1>
         </div>
@@ -50,7 +52,6 @@ export default function PasswordReset() {
         width={180}
         height={180}
       />
-
       <FormResetPassword token={token} />
     </div>
   );
