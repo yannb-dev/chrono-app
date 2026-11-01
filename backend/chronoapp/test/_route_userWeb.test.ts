@@ -6,11 +6,7 @@ import bcrypt from "bcryptjs";
 import { prismaMock } from "@/test/prismaMock";
 import { DELETE } from "@/app/api/userWeb/route";
 import getUserIdFromRequest from "@/lib/auth";
-import {
-  userRateLimitIpMobil,
-  userRateLimitIpWeb,
-  userRateLimitEmailWeb,
-} from "@/lib/rateLimit";
+import { userRateLimitIpWeb, userRateLimitEmailWeb } from "@/lib/rateLimit";
 
 // ---------- MOCKS ----------
 vi.mock("bcryptjs", () => ({

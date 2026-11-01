@@ -1,6 +1,6 @@
 // app/exercices/page.test.tsx
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import FormDeleteUser from "@/app/component/formDeleteUser";
 import userEvent from "@testing-library/user-event";
 import { prisma } from "@/lib/prisma";
@@ -32,12 +32,6 @@ describe("Page DELETE-USER", () => {
 
   // ==== VALEURS FICTIVES ====
   //
-
-  const userA = {
-    id: "cmpdskfk5687",
-    email: "test@gmail.com",
-    password: "123Test+",
-  };
 
   const valueValid = {
     email: "test@gmail.com",

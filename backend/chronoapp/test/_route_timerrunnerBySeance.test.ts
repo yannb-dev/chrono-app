@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { prismaMock } from "@/test/prismaMock";
 import { DELETE } from "@/app/api/timerrunner/byseance/[id]/route";
 

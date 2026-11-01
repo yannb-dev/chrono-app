@@ -199,13 +199,6 @@ describe("PATCH /api/auth/passwordresettoken", () => {
       body: JSON.stringify(body),
     });
 
-  const makePatchInvalidIp = (body: unknown) =>
-    new Request("http://localhost/api/auth/passwordresettoken", {
-      method: "POST",
-      headers: {},
-      body: JSON.stringify(body),
-    });
-
   beforeEach(() => {
     prismaMock.$transaction.mockImplementation(async (cb: any) =>
       cb(prismaMock),

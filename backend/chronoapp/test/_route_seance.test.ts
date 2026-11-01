@@ -26,13 +26,13 @@ const userMock = vi.mocked(getUserIdFromRequest);
 //=======================
 
 describe("GET /api/seance", () => {
-  const makeGet = (body: unknown) =>
+  const makeGet = () =>
     new Request("http://localhost/api/seance", {
       method: "GET",
       headers: { "x-forwarded-for": "1.2.3.4" },
     });
 
-  const makeGetInvalid = (body: unknown) =>
+  const makeGetInvalid = () =>
     new Request("http://localhost/api/seance", {
       method: "GET",
       headers: {},
@@ -54,7 +54,7 @@ describe("GET /api/seance", () => {
   it("renvoie 401 Non autorisé", async () => {
     userMock.mockResolvedValue(null as never);
 
-    const res = await GET(makeGet({}));
+    const res = await GET(makeGet());
 
     expect(res.status).toBe(401);
     expect(prismaMock.seance.findMany).not.toHaveBeenCalled();
@@ -66,7 +66,7 @@ describe("GET /api/seance", () => {
     const userMock = vi.mocked(getUserIdFromRequest);
     userMock.mockResolvedValue("u1" as never);
 
-    const res = await GET(makeGetInvalid({}));
+    const res = await GET(makeGetInvalid());
 
     expect(res.status).toBe(400);
     expect(prismaMock.seance.findMany).not.toHaveBeenCalled();
@@ -78,7 +78,7 @@ describe("GET /api/seance", () => {
     userMock.mockResolvedValue("idtest123+" as never);
     limitMockIp.mockResolvedValue(blocked as never);
 
-    const res = await GET(makeGet({}));
+    const res = await GET(makeGet());
 
     expect(res.status).toBe(429);
     expect(prismaMock.seance.findMany).not.toHaveBeenCalled();
@@ -91,7 +91,7 @@ describe("GET /api/seance", () => {
     userMock.mockResolvedValue("idtest123+" as never);
     limitMockUserId.mockResolvedValue(blocked as never);
 
-    const res = await GET(makeGet({}));
+    const res = await GET(makeGet());
 
     expect(res.status).toBe(429);
     expect(prismaMock.seance.findMany).not.toHaveBeenCalled();
@@ -104,7 +104,7 @@ describe("GET /api/seance", () => {
     userMock.mockResolvedValue("idtest123+" as never);
     limitMockUserId.mockRejectedValue(new Error("Upstash down") as never);
 
-    const res = await GET(makeGet({}));
+    const res = await GET(makeGet());
 
     expect(res.status).toBe(503);
     expect(prismaMock.seance.findMany).not.toHaveBeenCalled();
@@ -118,7 +118,7 @@ describe("GET /api/seance", () => {
       { id: "o1", name: "Test", userId: "idtest123+" },
     ] as never);
 
-    const res = await GET(makeGet({}));
+    const res = await GET(makeGet());
 
     expect(res.status).toBe(200);
     expect(prismaMock.seance.findMany).toHaveBeenCalledWith({
@@ -274,7 +274,7 @@ describe("POST /api/seance", () => {
 //=======================
 
 describe("DELETE /api/seance", () => {
-  const makeDelete = (body: unknown) =>
+  const makeDelete = () =>
     new Request("http://localhost/api/seance", {
       method: "DELETE",
       headers: { "x-forwarded-for": "1.2.3.4" },
@@ -288,7 +288,7 @@ describe("DELETE /api/seance", () => {
   it("renvoie 401 Non autorisé", async () => {
     userMock.mockResolvedValue(null as never);
 
-    const res = await DELETE(makeDelete({}));
+    const res = await DELETE(makeDelete());
 
     expect(res.status).toBe(401);
     expect(prismaMock.seance.deleteMany).not.toHaveBeenCalled();
@@ -300,7 +300,7 @@ describe("DELETE /api/seance", () => {
     userMock.mockResolvedValue("idtest123+" as never);
     prismaMock.seance.deleteMany.mockResolvedValue({ count: 0 } as never);
 
-    const res = await DELETE(makeDelete({}));
+    const res = await DELETE(makeDelete());
 
     expect(res.status).toBe(204);
     expect(prismaMock.seance.deleteMany).toHaveBeenCalled();

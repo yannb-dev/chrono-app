@@ -18,7 +18,7 @@ export default function Privacy() {
             Politique de confidentialité de <strong>CHRONOAPP</strong>
           </h1>
           <p className="text-sm ml-2">
-            Cette page explique quelles données l'application collecte,
+            Cette page explique quelles données l&apos;application collecte,
             pourquoi, avec qui elles sont traitées et comment vous pouvez les
             consulter ou les supprimer.
           </p>
@@ -56,8 +56,8 @@ export default function Privacy() {
             Qui est responsable des données
           </h2>
           <p className="ml-2">
-            L'application est éditée par <strong>yannB-Dev</strong>. Pour toute
-            question sur les données, écrire à yannblondeaudev@gmail.com.
+            L&apos;application est éditée par <strong>yannB-Dev</strong>. Pour
+            toute question sur les données, écrire à yannblondeaudev@gmail.com.
           </p>
         </div>
         <div id="donnee" className="w-full mt-8">
@@ -65,8 +65,8 @@ export default function Privacy() {
             Données collectées et raisons
           </h2>
           <p className="ml-2">
-            Voici la liste complète, identique à la déclaration "Sécurité des
-            données" du Google Play Store.
+            Voici la liste complète, identique à la déclaration &quot;Sécurité
+            des données&apos; du Google Play Store.
           </p>
           <div className="w-full mt-4 ml-2 border border-green-400 rounded-sm bg-gray-100 text-xs">
             <div className="w-full flex border-b border-green-400">
@@ -96,7 +96,7 @@ export default function Privacy() {
               </div>
             </div>
             <div className="w-full flex border-b border-green-400">
-              <div className="w-[30%] p-2">Activité dans l'app</div>
+              <div className="w-[30%] p-2">Activité dans l&apos;app</div>
               <div className="w-[70%] p-2">
                 Enregistrer les séances et les temps des coureurs pour une
                 lecture ultérieure.
@@ -106,12 +106,13 @@ export default function Privacy() {
               <div className="w-[30%] p-2">Rapport de bug</div>
               <div className="w-[70%] p-2">
                 Sauvegarder les bugs afin de les identifer et de les corriger.
-                Aucune donnée sensible n'est tranféré vers le gestionnaire.
+                Aucune donnée sensible n&apos;est tranféré vers le gestionnaire.
               </div>
             </div>
           </div>
           <p className="mt-4 ml-2 text-xs font-bold text-red-500">
-            L'application n'affiche aucune publicité et ne vend aucune donnée.
+            L&apos;application n&apos;affiche aucune publicité et ne vend aucune
+            donnée.
           </p>
         </div>
         <div id="partage" className="w-full mt-8">
@@ -122,13 +123,14 @@ export default function Privacy() {
           </p>
           <ul className="p-6">
             <li>
-              <strong>Vercel :</strong> hébergement de l'API.
+              <strong>Vercel :</strong> hébergement de l&apos;API.
             </li>
             <li>
               <strong>Neon :</strong> base de données.
             </li>
             <li>
-              <strong>Expo & Google :</strong> déploiement de l'application.
+              <strong>Expo & Google :</strong> déploiement de
+              l&apos;application.
             </li>
             <li>
               <strong>Sentry :</strong> détections et corrections des bugs,
@@ -153,19 +155,19 @@ export default function Privacy() {
         <div id="security" className="w-full mt-8">
           <h2 className="text-lg font-bold mb-4">Sécurité</h2>
           <p className="ml-2">
-            Les échanges entre l'application et les serveurs sont chiffrés en
-            HTTPS. Le jeton de connexion est stocké dans l'espace sécurisé de
-            votre téléphone, et chaque requête vérifie que les données demandées
-            vous appartiennent.
+            Les échanges entre l&apos;application et les serveurs sont chiffrés
+            en HTTPS. Le jeton de connexion est stocké dans l&apos;espace
+            sécurisé de votre téléphone, et chaque requête vérifie que les
+            données demandées vous appartiennent.
           </p>
         </div>
         <div id="droit" className="w-full mt-8">
           <h2 className="text-lg font-bold mb-4">Vos droits</h2>
           <p className="ml-2">
-            Vous pouvez demander l'accès à vos données, leur corrections, leur
-            exports ou leur suppressions, et s'opposer à leur traitement. Écrire
-            à yannblondeaudev@gmail.com. En cas de désaccord, vous pouvez saisir
-            la CNIL.
+            Vous pouvez demander l&apos;accès à vos données, leur corrections,
+            leur exports ou leur suppressions, et s&apos;opposer à leur
+            traitement. Écrire à yannblondeaudev@gmail.com. En cas de désaccord,
+            vous pouvez saisir la CNIL.
           </p>
         </div>
         <div id="supprimer" className="w-full mt-8">
@@ -175,15 +177,15 @@ export default function Privacy() {
         <div className="w-full flex flex-col items-center p-6 mt-4 ml-2 mb-30 border border-green-400 rounded-sm bg-gray-100 text-xs">
           <div className="w-full">
             <h3 className="text-sm mb-4">
-              <strong>Depuis l'application</strong>{" "}
+              <strong>Depuis l&apos;application</strong>{" "}
             </h3>
             <ul className="list-decimal ml-10">
-              <li>Ouvrez l'application</li>
+              <li>Ouvrez l&apos;application</li>
               <li>
                 Se rendre sur la page <strong>compte</strong> puis appuyer sur
-                "supprimer"
+                &quot;supprimer&quot;
               </li>
-              <li>Entrez votre mot de passe et "valider"</li>
+              <li>Entrez votre mot de passe et &quot;valider&quot;</li>
             </ul>
             <h3 className="text-sm mb-4 mt-4">
               <strong>Depuis la page web</strong>
@@ -198,8 +200,8 @@ export default function Privacy() {
                   ChronoApp
                 </a>
               </li>
-              <li>Entrez votre email et votre mot de passe"</li>
-              <li>Confirmez la suppression de votre compte"</li>
+              <li>Entrez votre email et votre mot de passe</li>
+              <li>Confirmez la suppression de votre compte</li>
             </ul>
           </div>
           <div className="w-[80%] flex justify-center bg-amber-300 rounded-sm p-2 mt-6">

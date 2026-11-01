@@ -6,27 +6,14 @@ import { DELETE } from "@/app/api/resetseance/[id]/route";
 
 vi.mock("@/lib/auth", () => ({ default: vi.fn() }));
 import getUserIdFromRequest from "@/lib/auth";
-import { Prisma } from "@prisma/client";
 
 const userMock = vi.mocked(getUserIdFromRequest);
-
-const returnSeance = {
-  id: "123Aze",
-  createdAt: new Date(),
-  totalRunner: 20,
-  colorRunner: "rgb(39, 91, 245)",
-  startedAt: null,
-  state: "NoStart",
-  userId: "idtest123+",
-  timerRunners: [],
-  timerpauses: [],
-};
 
 // //======= PATCH ===========
 // //========================
 
 describe("DELETE /api/resetseance/[id]", () => {
-  const makePatch = (body: unknown) =>
+  const makePatch = () =>
     new Request("http://localhost/api/resetseance/123Aze", {
       method: "DELETE",
       headers: { "x-forwarded-for": "1.2.3.4" },
@@ -52,7 +39,7 @@ describe("DELETE /api/resetseance/[id]", () => {
     const userMock = vi.mocked(getUserIdFromRequest);
     userMock.mockResolvedValue(null as never);
 
-    const res = await DELETE(makePatch({}), makeParams("123Aze"));
+    const res = await DELETE(makePatch(), makeParams("123Aze"));
 
     expect(res.status).toBe(401);
     expect(prismaMock.seance.findUnique).not.toHaveBeenCalled();
@@ -76,7 +63,7 @@ describe("DELETE /api/resetseance/[id]", () => {
     userMock.mockResolvedValue(userId as never);
     prismaMock.seance.findUnique.mockResolvedValue(seance as never);
 
-    const res = await DELETE(makePatch({}), makeParams("123Aze"));
+    const res = await DELETE(makePatch(), makeParams("123Aze"));
     const body = await res.json();
 
     expect(res.status).toBe(409);
@@ -119,7 +106,7 @@ describe("DELETE /api/resetseance/[id]", () => {
     prismaMock.seance.findUnique.mockResolvedValue(seance as never);
     prismaMock.seance.update.mockResolvedValue(created as never);
 
-    const res = await DELETE(makePatch({}), makeParams("123Aze"));
+    const res = await DELETE(makePatch(), makeParams("123Aze"));
 
     expect(res.status).toBe(200);
     expect(prismaMock.$transaction).toHaveBeenCalled();

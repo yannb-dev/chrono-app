@@ -139,18 +139,11 @@ export async function DELETE(req: Request) {
   }
 
   try {
-    const { count } = await prisma.seance.deleteMany({
+    await prisma.seance.deleteMany({
       where: {
         userId: userId,
       },
     });
-
-    // if (count === 0) {
-    //   return NextResponse.json(
-    //     { message: "Séances introuvables" },
-    //     { status: 404 },
-    //   );
-    // }
 
     return new NextResponse(null, { status: 204 });
   } catch (err) {

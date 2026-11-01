@@ -66,12 +66,6 @@ describe("PATCH /api/timerpause[id]", () => {
       body: JSON.stringify(body),
     });
 
-  const makePatchWithoutIp = (body: unknown) =>
-    new Request("http://localhost/api/timerpause/aze123+", {
-      method: "PATCH",
-      body: JSON.stringify(body),
-    });
-
   const NOW = new Date("2026-01-01T10:00:00Z");
   const PAUSED_AT = new Date("2026-01-01T10:00:30Z");
   const ENDED_AT_GOOD = new Date("2026-01-01T10:00:40Z");
@@ -141,10 +135,6 @@ describe("PATCH /api/timerpause[id]", () => {
       pausedAt: PAUSED_AT,
     };
 
-    const updateTimerPause = {
-      pausedAt: ENDED_AT_BAD,
-    };
-
     userMock.mockResolvedValue("u1" as never);
 
     prismaMock.timerPause.findUnique.mockResolvedValue(
@@ -169,10 +159,6 @@ describe("PATCH /api/timerpause[id]", () => {
 
     const returnTimerPause = {
       pausedAt: PAUSED_AT,
-    };
-
-    const updateTimerPause = {
-      pausedAt: ENDED_AT_GOOD,
     };
 
     const returnUpdateTimerPause = {
