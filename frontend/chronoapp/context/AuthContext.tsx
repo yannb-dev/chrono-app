@@ -1,5 +1,12 @@
 // context/AuthContext.tsx
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import * as SecureStore from "expo-secure-store";
 import { setOnUnauthorized } from "@/lib/authEvents";
 import { router } from "expo-router";
@@ -24,30 +31,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const login = async (newToken: string) => {
+  const login = useCallback(async (newToken: string) => {
     await SecureStore.setItemAsync("accessToken", newToken);
     setToken(newToken);
-  };
+  }, []); // setToken est stable, rien d'autre à surveiller
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await SecureStore.deleteItemAsync("accessToken");
     setToken(null);
-  };
+  }, []);
 
   useEffect(() => {
-    setOnUnauthorized(() => {
-      logout();
+    setOnUnauthorized(async () => {
+      await logout();
       router.replace("/(auth)/login");
     });
-
     return () => setOnUnauthorized(null);
-  }, [logout]);
+  }, [logout]); // logout est maintenant stable : l'effet ne tourne qu'une fois
 
-  return (
-    <AuthContext.Provider value={{ token, isLoading, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({ token, isLoading, login, logout }),
+    [token, isLoading, login, logout],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

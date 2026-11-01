@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 // Appliqués à toutes les routes
 const globalHeaders = [
-  { key: "Strict-Transport-Security", value: "max-age=300" },
+  { key: "Strict-Transport-Security", value: "max-age=604800" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   {
     key: "Permissions-Policy",
