@@ -21,7 +21,7 @@
     "jsonwebtoken": "^9.0.3",
     "next": "^16.4.5",
     "postcss": "^8.5.28",
-    "prisma": "^6.19.3",
+    "prisma": "^7.10.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-hook-form": "^7.89.0",
